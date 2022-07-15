@@ -1,0 +1,17 @@
+/ {
+	chosen {
+		zephyr,sram = &dtcm_sram;
+	};
+
+};
+
+&flexram {
+	dtcm_sram: dtcm_sram@20008000 {
+		compatible = "mmio-sram";
+		reg = <0x20008000 DT_SIZE_K(96)>;
+	};
+};
+
+&dtcm {
+	reg = <0x20000000 DT_SIZE_K(32)>;
+};
