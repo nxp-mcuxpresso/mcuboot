@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: BSD-3-Clause
+#
+
+menu "MCUboot"
+    config MCUX_COMPONENT_middleware.mcuboot.bootutil
+        bool "Core MCUboot loader library"
+        select MCUX_COMPONENT_middleware.mcuboot.nxp_bootutil_port
+        default n
+        help
+            This option enables core bootutil library
+            that is used by the bootloader code.
+
+    config MCUX_COMPONENT_middleware.mcuboot.tinycrypt
+        bool "Use TinyCrypt instead of MbedTLS"
+        depends on !MCUX_COMPONENT_middleware.mbedtls
+        select MCUX_COMPONENT_middleware.mcuboot.mbedtls-asn1 if MCUX_COMPONENT_middleware.mcuboot.bootutil
+        help
+            The TinyCrypt Library provides a minimalistic implementation of
+            standard cryptography primitives.
+
+    config MCUX_COMPONENT_middleware.mcuboot.mbedtls-asn1
+        bool "Thin MbedTLS layer for ASN1 parsing"
+        help
+            This is needed when TinyCrypt it used together with
+            MCUboot bootutil library as TC does not support ASN1
+            parsing.
+
+    config MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
+        bool "Add support for encrypted XIP"
+        help
+            Enables code that implements support for running from
+            an encrypted mcuboot image. See documentation for details
+            and device compatibility.
+
+    config MCUX_COMPONENT_middleware.mcuboot.nxp_bootutil_port
+        bool
+        default n
+        help
+            NXP port layer for MCUboot
+
+    config MCUX_COMPONENT_middleware.mcuboot.nxp_app_support
+        bool "Application layer to support access to MCUboot update mechanism"
+        default n
+        help
+            This enabled code that contains API to control MCUboot update
+            mechanism from actively running application.
+
+    config MCUX_COMPONENT_middleware.mcuboot.stack_heap_default_mbedtls
+        bool "Default stack/heap setup for configuration with MbedTLS"
+        default n
+
+    config MCUX_COMPONENT_middleware.mcuboot.stack_heap_default_tinycrypt
+        bool "Default stack/heap setup for configuration with tinycrypt"
+        default n
+
+#    TODO - make this a configuration that propagates to source code
+#    config MCUX_COMPONENT_middleware.mcuboot.nxp_flash_remapping
+#        bool "Enable flash remapping feature"
+#        default y
+#        depends on MCUX_HW_DEVICE_MIMXRT1062 || MCUX_HW_DEVICE_MIMXRT1064 || \
+#                   MCUX_HW_DEVICE_MIMXRT1166 || MCUX_HW_DEVICE_MIMXRT1176 || \
+#                   MCUX_HW_DEVICE_MIMXRT595S || MCUX_HW_DEVICE_MIMXRT685S || \
+#                   MCUX_HW_DEVICE_MCXN947 || MCUX_HW_DEVICE_MCXN547 || \
+#                   MCUX_HW_DEVICE_RW612
+#        help
+#            If hardware supports flash remapping it is possible
+#            to use it together with MCUboot's DIRECT_XIP configuration
+#            to enable zero-overhead image swapping
+#
+#    config MCUX_COMPONENT_middleware.mcuboot.code_signing_rsa2048
+#        bool
+#
+#    config MCUX_COMPONENT_middleware.mcuboot.code_signing_ec256
+#        bool
+
+# Device Flash API automatically selected by device family
+
+    config MCUX_COMPONENT_middleware.mcuboot.bootutil.flashapi_rt
+        bool
+        default y
+        depends on MCUX_COMPONENT_middleware.mcuboot.bootutil
+        depends on !MCUX_COMPONENT_middleware.mcuboot.bootutil.flashapi_mcx
+        help
+            Layer that connects mcuboot flash API with device specific flash API.
+            This RT option is used on most devices.
+
+    config MCUX_COMPONENT_middleware.mcuboot.bootutil.flashapi_mcx
+        bool
+        depends on MCUX_COMPONENT_middleware.mcuboot.bootutil
+        depends on CONFIG_MCUX_HW_SOC_SERIES_MCX
+        help
+            Layer that connects mcuboot flash API with device specific flash API.
+            Version for MCX devices.
+
+endmenu

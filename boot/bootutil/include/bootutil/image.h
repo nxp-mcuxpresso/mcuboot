@@ -157,9 +157,15 @@ struct image_tlv {
 #define ENCRYPTIONFLAGS (IMAGE_F_ENCRYPTED_AES128 | IMAGE_F_ENCRYPTED_AES256)
 #define IS_ENCRYPTED(hdr) (((hdr)->ih_flags & IMAGE_F_ENCRYPTED_AES128) \
                         || ((hdr)->ih_flags & IMAGE_F_ENCRYPTED_AES256))
+
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
+/* Both slots are used for staging encrypted image */
+#define MUST_DECRYPT(fap, idx, hdr) (IS_ENCRYPTED(hdr))
+#else
 #define MUST_DECRYPT(fap, idx, hdr) \
     (flash_area_get_id(fap) == FLASH_AREA_IMAGE_SECONDARY(idx) && IS_ENCRYPTED(hdr))
-
+#endif
+      
 _Static_assert(sizeof(struct image_header) == IMAGE_HEADER_SIZE,
                "struct image_header not required size");
 

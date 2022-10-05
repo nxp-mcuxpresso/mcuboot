@@ -167,19 +167,19 @@ _Static_assert(sizeof(boot_img_magic) == BOOT_MAGIC_SZ, "Invalid size for image 
 #else
 #define ARE_SLOTS_EQUIVALENT()    1
 
-#if defined(MCUBOOT_DIRECT_XIP) && defined(MCUBOOT_ENC_IMAGES)
+#if defined(MCUBOOT_DIRECT_XIP) && defined(MCUBOOT_ENC_IMAGES) && !defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
 #error "Image encryption (MCUBOOT_ENC_IMAGES) is not supported when MCUBOOT_DIRECT_XIP is selected."
-#endif /* MCUBOOT_DIRECT_XIP && MCUBOOT_ENC_IMAGES */
+#endif /* MCUBOOT_DIRECT_XIP && MCUBOOT_ENC_IMAGES && !CONFIG_ENCRYPT_XIP_EXT_ENABLE */
 #endif /* MCUBOOT_DIRECT_XIP || MCUBOOT_RAM_LOAD */
 
 #define BOOT_MAX_IMG_SECTORS       MCUBOOT_MAX_IMG_SECTORS
 
-#define BOOT_LOG_IMAGE_INFO(slot, hdr)                                    \
-    BOOT_LOG_INF("%-9s slot: version=%u.%u.%u+%u",                        \
-                 ((slot) == BOOT_PRIMARY_SLOT) ? "Primary" : "Secondary", \
-                 (hdr)->ih_ver.iv_major,                                  \
-                 (hdr)->ih_ver.iv_minor,                                  \
-                 (hdr)->ih_ver.iv_revision,                               \
+#define BOOT_LOG_IMAGE_INFO(slot, hdr)                                      \
+    BOOT_LOG_INF("%s slot: version=%u.%u.%u+%u",                            \
+                 ((slot) == BOOT_PRIMARY_SLOT) ? "Primary  " : "Secondary", \
+                 (hdr)->ih_ver.iv_major,                                    \
+                 (hdr)->ih_ver.iv_minor,                                    \
+                 (hdr)->ih_ver.iv_revision,                                 \
                  (hdr)->ih_ver.iv_build_num)
 
 #if MCUBOOT_SWAP_USING_MOVE

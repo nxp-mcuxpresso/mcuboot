@@ -511,7 +511,14 @@ boot_image_check(struct boot_loader_state *state, struct image_header *hdr,
         if (rc < 0) {
             FIH_RET(fih_rc);
         }
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
+        /* Both slots are used for staging encrypted image */
+        uint32_t active_slot = state->slot_usage[BOOT_CURR_IMG(state)].active_slot;
+        if (rc == 0 && boot_enc_set_key(BOOT_CURR_ENC(state), active_slot, bs)) {
+#else
+        /* Only secondary slot is used for staging encrypted image */
         if (rc == 0 && boot_enc_set_key(BOOT_CURR_ENC(state), 1, bs)) {
+#endif
             FIH_RET(fih_rc);
         }
     }
@@ -790,6 +797,7 @@ boot_validate_slot(struct boot_loader_state *state, int slot,
     }
     if (!boot_is_header_valid(hdr, fap) || FIH_NOT_EQ(fih_rc, FIH_SUCCESS)) {
         if ((slot != BOOT_PRIMARY_SLOT) || ARE_SLOTS_EQUIVALENT()) {
+            BOOT_LOG_ERR("Image is invalid, erasing...");
             flash_area_erase(fap, 0, flash_area_get_size(fap));
             /* Image is invalid, erase it to prevent further unnecessary
              * attempts to validate and boot it.
@@ -1180,8 +1188,14 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
         }
     }
 #endif
+    
+    rc = BOOT_HOOK_CALL(boot_copy_region_pre_hook, 0, BOOT_CURR_IMG(state),
+                        BOOT_IMG_AREA(state, BOOT_PRIMARY_SLOT), size);
+    if (rc != 0) {
+        return rc;
+    }
 
-    BOOT_LOG_INF("Image %d copying the secondary slot to the primary slot: 0x%zx bytes",
+    BOOT_LOG_INF("Image %d copying the secondary slot to the primary slot: 0x%x bytes",
                  image_index, size);
     rc = boot_copy_region(state, fap_secondary_slot, fap_primary_slot, 0, 0, size);
     if (rc != 0) {
