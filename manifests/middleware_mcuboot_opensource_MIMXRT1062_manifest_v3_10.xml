@@ -1,25 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ksdk:manifest xmlns:ksdk="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="SDK_2.x_middleware_mcuboot_opensource_MIMXRT1062_manifest_v3_10" name="MCUBoot" brief="MCUBoot opensource bootloader" format_version="3.10" api_version="2.0.0" xsi:schemaLocation="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd http://nxp.com/mcuxpresso/sdk/sdk_manifest_v3.10.xsd">
-  <!--Timestamp (UTC): 2023-01-09 15:35:18.828425-->
-  <!--This manifest is generated based on sdk repo commit: dcc319a0105d6a9ebec0bc625dd7aae64718cd3d-->
+  <!--Timestamp (UTC): 2023-03-27 10:46:25.764083-->
+  <!--This manifest is generated based on sdk repo commit: 7a3cf97dd3582e3ee8a98ede814ff1f2a45ea519-->
   <externalDefinitions>
     <definition extID="MIMXRT1062xxxxA"/>
-    <definition extID="MIMXRT1062xxxxB"/>
     <definition extID="core0_MIMXRT1062xxxxA"/>
-    <definition extID="core0_MIMXRT1062xxxxB"/>
     <definition extID="middleware.mbedtls.MIMXRT1062"/>
     <definition extID="armgcc"/>
   </externalDefinitions>
   <ksdk id="MCUXpressoSDK2130_middleware_mcuboot_opensource_MIMXRT1062_manifest_v3_10" name="MCUXpressoSDK2130_middleware_mcuboot_opensource_MIMXRT1062_manifest_v3_10" version="2.13.0"/>
   <components>
-    <component id="middleware.mcuboot.MIMXRT1062" name="mcuboot" brief="mcuboot" version="1.9.0" full_name="MCUboot bootloader" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././" project_base_path="mcuboot">
+    <component id="middleware.mcuboot.MIMXRT1062" name="mcuboot" brief="mcuboot" version="1.9.0" full_name="MCUboot bootloader" devices="MIMXRT1062xxxxA" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././" project_base_path="mcuboot">
       <source exclude="true" relative_path="./" type="other">
         <files mask="LICENSE" hidden="true"/>
         <files mask="NOTICE" hidden="true"/>
         <files mask="README.md" hidden="true"/>
       </source>
     </component>
-    <component id="middleware.mcuboot.boot_serial.MIMXRT1062" name="mcuboot_boot_serial" brief="mcuboot serial boot support" version="1.9.0" full_name="Middleware mcuboot serial boot support" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
+    <component id="middleware.mcuboot.boot_serial.MIMXRT1062" name="mcuboot_boot_serial" brief="mcuboot serial boot support" version="1.9.0" full_name="Middleware mcuboot serial boot support" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
       <dependencies>
         <component_dependency value="middleware.mcuboot.bootutil.MIMXRT1062"/>
       </dependencies>
@@ -64,7 +62,7 @@
         <files mask="boot_serial_upload_bigger_image.c"/>
       </source>
     </component>
-    <component id="middleware.mcuboot.bootutil.MIMXRT1062" name="mcuboot_bootutil" brief="mcuboot" version="1.9.0" full_name="MCUboot bootloader" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" device_cores="core0_MIMXRT1062xxxxA core0_MIMXRT1062xxxxB" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././boot/bootutil" project_base_path="bootutil">
+    <component id="middleware.mcuboot.bootutil.MIMXRT1062" name="mcuboot_bootutil" brief="mcuboot" version="1.9.0" full_name="MCUboot bootloader" devices="MIMXRT1062xxxxA" device_cores="core0_MIMXRT1062xxxxA" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././boot/bootutil" project_base_path="bootutil">
       <dependencies>
         <component_dependency value="middleware.mbedtls.MIMXRT1062"/>
       </dependencies>
@@ -130,7 +128,7 @@
         <include_path relative_path="../../include" project_relative_path="include" type="c_include"/>
       </include_paths>
     </component>
-    <component id="middleware.mcuboot.docs.MIMXRT1062" name="mcuboot_docs" brief="mcuboot documentation" version="1.9.0" full_name="Middleware mcuboot documentation" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
+    <component id="middleware.mcuboot.docs.MIMXRT1062" name="mcuboot_docs" brief="mcuboot documentation" version="1.9.0" full_name="Middleware mcuboot documentation" devices="MIMXRT1062xxxxA" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
       <source relative_path="./docs" project_relative_path="docs" type="other">
         <files mask=".gitignore"/>
         <files mask="design.md"/>
@@ -155,7 +153,7 @@
         <files mask="_config.yml"/>
       </source>
     </component>
-    <component id="middleware.mcuboot.keys.MIMXRT1062" name="mcuboot_keys" brief="mcuboot crypto keys" version="1.9.0" full_name="Middleware mcuboot crypto keys" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
+    <component id="middleware.mcuboot.keys.MIMXRT1062" name="mcuboot_keys" brief="mcuboot crypto keys" version="1.9.0" full_name="Middleware mcuboot crypto keys" devices="MIMXRT1062xxxxA" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
       <source relative_path="./" type="other">
         <files mask="enc-aes128kw.b64"/>
         <files mask="enc-aes256kw.b64"/>
@@ -172,7 +170,7 @@
         <files mask="root-rsa-3072.pem"/>
       </source>
     </component>
-    <component id="middleware.mcuboot.scripts.MIMXRT1062" name="mcuboot_scripts" brief="mcuboot scripts" version="1.9.0" full_name="Middleware mcuboot scripts" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
+    <component id="middleware.mcuboot.scripts.MIMXRT1062" name="mcuboot_scripts" brief="mcuboot scripts" version="1.9.0" full_name="Middleware mcuboot scripts" devices="MIMXRT1062xxxxA" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
       <source relative_path="./scripts" project_relative_path="scripts" type="script">
         <files mask="assemble.py"/>
         <files mask="flash.sh"/>
@@ -208,7 +206,7 @@
         <files mask="__init__.py"/>
       </source>
     </component>
-    <component id="middleware.mcuboot.unused_files.MIMXRT1062" name="mcuboot_unused_files" brief="mcuboot files unused by projects" version="1.9.0" full_name="Middleware mcuboot unused_files" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
+    <component id="middleware.mcuboot.unused_files.MIMXRT1062" name="mcuboot_unused_files" brief="mcuboot files unused by projects" version="1.9.0" full_name="Middleware mcuboot unused_files" devices="MIMXRT1062xxxxA" user_visible="false" type="other" package_base_path=".././" project_base_path="mcuboot">
       <source relative_path="./" type="other">
         <files mask=".gitignore"/>
         <files mask=".gitmodules"/>
