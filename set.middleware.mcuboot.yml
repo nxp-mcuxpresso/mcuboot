@@ -1,0 +1,753 @@
+---
+middleware.mcuboot:
+  section-type: component
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: middleware/mcuboot_opensource/LICENSE
+      hidden: true
+      exclude: true
+      repo_relative_path: "./"
+      project_relative_path: "./"
+      package_relative_path: "./"
+      type: other
+    - source: middleware/mcuboot_opensource/NOTICE
+      hidden: true
+      exclude: true
+      repo_relative_path: "./"
+      project_relative_path: "./"
+      package_relative_path: "./"
+      type: other
+    - source: middleware/mcuboot_opensource/README.md
+      hidden: true
+      exclude: true
+      repo_relative_path: "./"
+      project_relative_path: "./"
+      package_relative_path: "./"
+      type: other
+    - source: middleware/mcuboot_opensource/middleware_mcuboot.cmake
+      type: workspace
+      toolchains: armgcc
+      hidden: true
+    package_base_path: middleware/mcuboot_opensource
+  belong_to: set.middleware.mcuboot
+  section_info:
+    description: mcuboot
+    version: 1.9.0
+    type: middleware
+    full_name: MCUboot bootloader
+    user_visible: never
+    taxonomy:
+      csub: mcuboot
+      cclass: File System
+      cgroup: MCUboot bootloader
+    display_name: mcuboot
+    vendor: NXP
+  meta-name: middleware.mcuboot
+  cmake_module_name: middleware_mcuboot
+middleware.mcuboot.docs:
+  section-type: container
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: middleware/mcuboot_opensource/docs/.gitignore
+    - source: middleware/mcuboot_opensource/docs/design.md
+    - source: middleware/mcuboot_opensource/docs/ecdsa.md
+    - source: middleware/mcuboot_opensource/docs/encrypted_images.md
+    - source: middleware/mcuboot_opensource/docs/Gemfile
+    - source: middleware/mcuboot_opensource/docs/Gemfile.lock
+    - source: middleware/mcuboot_opensource/docs/imgtool.md
+    - source: middleware/mcuboot_opensource/docs/index.md
+    - source: middleware/mcuboot_opensource/docs/PORTING.md
+    - source: middleware/mcuboot_opensource/docs/readme-mbed.md
+    - source: middleware/mcuboot_opensource/docs/readme-mynewt.md
+    - source: middleware/mcuboot_opensource/docs/readme-riot.md
+    - source: middleware/mcuboot_opensource/docs/readme-zephyr.md
+    - source: middleware/mcuboot_opensource/docs/release-notes.md
+    - source: middleware/mcuboot_opensource/docs/release.md
+    - source: middleware/mcuboot_opensource/docs/SECURITY.md
+    - source: middleware/mcuboot_opensource/docs/signed_images.md
+    - source: middleware/mcuboot_opensource/docs/SubmittingPatches.md
+    - source: middleware/mcuboot_opensource/docs/testplan-mynewt.md
+    - source: middleware/mcuboot_opensource/docs/testplan-zephyr.md
+    - source: middleware/mcuboot_opensource/docs/_config.yml
+    package_base_path: middleware/mcuboot_opensource
+  belong_to: set.middleware.mcuboot
+  section_info:
+    description: mcuboot documentation
+    version: 1.9.0
+    type: other
+    user_visible: never
+    full_name: Middleware mcuboot documentation
+    display_name: mcuboot_docs
+middleware.mcuboot.scripts:
+  section-type: container
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: middleware/mcuboot_opensource/scripts/assemble.py
+    - source: middleware/mcuboot_opensource/scripts/flash.sh
+    - source: middleware/mcuboot_opensource/scripts/gdb-boot.sh
+    - source: middleware/mcuboot_opensource/scripts/imgtool.nix
+    - source: middleware/mcuboot_opensource/scripts/imgtool.py
+    - source: middleware/mcuboot_opensource/scripts/jgdb.sh
+    - source: middleware/mcuboot_opensource/scripts/jl.sh
+    - source: middleware/mcuboot_opensource/scripts/mcubin.bt
+    - source: middleware/mcuboot_opensource/scripts/requirements.txt
+    - source: middleware/mcuboot_opensource/scripts/setup.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/boot_record.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/image.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/main.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/version.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/__init__.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/ecdsa.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/ecdsa_test.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/ed25519.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/ed25519_test.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/general.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/rsa.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/rsa_test.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/x25519.py
+    - source: middleware/mcuboot_opensource/scripts/imgtool/keys/__init__.py
+    package_base_path: middleware/mcuboot_opensource
+  belong_to: set.middleware.mcuboot
+  section_info:
+    description: mcuboot scripts
+    version: 1.9.0
+    type: other
+    user_visible: never
+    full_name: Middleware mcuboot scripts
+    display_name: mcuboot_scripts
+middleware.mcuboot.keys:
+  section-type: container
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: middleware/mcuboot_opensource/enc-aes128kw.b64
+    - source: middleware/mcuboot_opensource/enc-aes256kw.b64
+    - source: middleware/mcuboot_opensource/enc-ec256-priv.pem
+    - source: middleware/mcuboot_opensource/enc-ec256-pub.pem
+    - source: middleware/mcuboot_opensource/enc-rsa2048-priv.pem
+    - source: middleware/mcuboot_opensource/enc-rsa2048-pub.pem
+    - source: middleware/mcuboot_opensource/enc-x25519-priv.pem
+    - source: middleware/mcuboot_opensource/enc-x25519-pub.pem
+    - source: middleware/mcuboot_opensource/root-ec-p256-pkcs8.pem
+    - source: middleware/mcuboot_opensource/root-ec-p256.pem
+    - source: middleware/mcuboot_opensource/root-ed25519.pem
+    - source: middleware/mcuboot_opensource/root-rsa-2048.pem
+    - source: middleware/mcuboot_opensource/root-rsa-3072.pem
+    package_base_path: middleware/mcuboot_opensource
+  belong_to: set.middleware.mcuboot
+  section_info:
+    description: mcuboot crypto keys
+    version: 1.9.0
+    type: other
+    user_visible: never
+    full_name: Middleware mcuboot crypto keys
+    display_name: mcuboot_keys
+middleware.mcuboot.unused_files:
+  section-type: container
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: middleware/mcuboot_opensource/.gitignore
+    - source: middleware/mcuboot_opensource/.gitmodules
+    - source: middleware/mcuboot_opensource/.mbedignore
+    - source: middleware/mcuboot_opensource/.travis.yml-disabled
+    - source: middleware/mcuboot_opensource/go.mod
+    - source: middleware/mcuboot_opensource/CODE_OF_CONDUCT.md
+    - source: middleware/mcuboot_opensource/project.yml
+    - source: middleware/mcuboot_opensource/repository.yml
+    - source: middleware/mcuboot_opensource/boot/bootutil/CMakeLists.txt
+    - source: middleware/mcuboot_opensource/boot/bootutil/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/check-signed-off-by.sh
+    - source: middleware/mcuboot_opensource/ci/compare_versions.py
+    - source: middleware/mcuboot_opensource/ci/fih-tests_install.sh
+    - source: middleware/mcuboot_opensource/ci/fih-tests_run.sh
+    - source: middleware/mcuboot_opensource/ci/get_features.py
+    - source: middleware/mcuboot_opensource/ci/imgtool_install.sh
+    - source: middleware/mcuboot_opensource/ci/imgtool_run.sh
+    - source: middleware/mcuboot_opensource/ci/mynewt_install.sh
+    - source: middleware/mcuboot_opensource/ci/mynewt_run.sh
+    - source: middleware/mcuboot_opensource/ci/requirements.txt
+    - source: middleware/mcuboot_opensource/ci/sim_install.sh
+    - source: middleware/mcuboot_opensource/ci/sim_run.sh
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/docker-build/build.sh
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/docker-build/Dockerfile
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/damage_image.py
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/execute_test.sh
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/fi_make_manifest.sh
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/fi_tester_gdb.sh
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/generate_test_report.py
+    - source: middleware/mcuboot_opensource/ci/fih_test_docker/run_fi_test.sh
+    - source: middleware/mcuboot_opensource/ci/mynewt_keys/enc_kw/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_keys/enc_kw/src/keys.c
+    - source: middleware/mcuboot_opensource/ci/mynewt_keys/enc_rsa/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_keys/enc_rsa/src/keys.c
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/basic/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/basic/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/basic/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/bootserial/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/bootserial/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/bootserial/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/ecdsa/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/ecdsa/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/ecdsa/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/ecdsa_kw/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/ecdsa_kw/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/ecdsa_kw/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_kw/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_kw/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_kw/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_overwriteonly/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_overwriteonly/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_overwriteonly/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_rsaoaep/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_rsaoaep/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_rsaoaep/target.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_rsaoaep_bootstrap/pkg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_rsaoaep_bootstrap/syscfg.yml
+    - source: middleware/mcuboot_opensource/ci/mynewt_targets/rsa_rsaoaep_bootstrap/target.yml
+    - source: middleware/mcuboot_opensource/ext/fiat/LICENSE
+    - source: middleware/mcuboot_opensource/ext/fiat/METADATA
+    - source: middleware/mcuboot_opensource/ext/fiat/pkg.yml
+    - source: middleware/mcuboot_opensource/ext/fiat/README.chromium
+    - source: middleware/mcuboot_opensource/ext/fiat/README.md
+    - source: middleware/mcuboot_opensource/ext/fiat/src/curve25519.c
+    - source: middleware/mcuboot_opensource/ext/fiat/src/curve25519.h
+    - source: middleware/mcuboot_opensource/ext/fiat/src/curve25519_tables.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/pkg.yml
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/README
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/asn1.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/bignum.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/check_config.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/ecdsa.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/ecp.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/md.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/oid.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/pk.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/platform.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/platform_util.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/include/mbedtls/threading.h
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/src/asn1parse.c
+    - source: middleware/mcuboot_opensource/ext/mbedtls-asn1/src/platform_util.c
+    - source: middleware/mcuboot_opensource/ext/nrf/cc310_glue.c
+    - source: middleware/mcuboot_opensource/ext/nrf/cc310_glue.h
+    - source: middleware/mcuboot_opensource/ext/nrf/README.md
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/.gitignore
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/AUTHORS
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/config.mk
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/LICENSE
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/Makefile
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/README
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/VERSION
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/documentation/tinycrypt.rst
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/Makefile
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/pkg.yml
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/aes.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/cbc_mode.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/ccm_mode.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/cmac_mode.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/constants.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/ctr_mode.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/ctr_prng.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/ecc.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/ecc_dh.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/ecc_dsa.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/ecc_platform_specific.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/hmac.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/hmac_prng.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/sha256.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/include/tinycrypt/utils.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/aes_decrypt.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/aes_encrypt.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/cbc_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/ccm_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/cmac_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/ctr_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/ctr_prng.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/ecc.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/ecc_dh.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/ecc_dsa.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/ecc_platform_specific.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/hmac.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/hmac_prng.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/sha256.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/lib/source/utils.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/Makefile
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_aes.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_cbc_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_ccm_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_cmac_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_ctr_mode.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_ctr_prng.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_ecc_dh.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_ecc_dsa.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_ecc_utils.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_hmac.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_hmac_prng.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/test_sha256.c
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/include/test_ecc_utils.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt/tests/include/test_utils.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt-sha512/lib/pkg.yml
+    - source: middleware/mcuboot_opensource/ext/tinycrypt-sha512/lib/include/tinycrypt/sha512.h
+    - source: middleware/mcuboot_opensource/ext/tinycrypt-sha512/lib/source/sha512.c
+    - source: middleware/mcuboot_opensource/ptest/.gitignore
+    - source: middleware/mcuboot_opensource/ptest/Cargo.toml
+    - source: middleware/mcuboot_opensource/ptest/src/main.rs
+    - source: middleware/mcuboot_opensource/samples/mcuboot_config/mcuboot_config.template.h
+    - source: middleware/mcuboot_opensource/samples/zephyr/.gitignore
+    - source: middleware/mcuboot_opensource/samples/zephyr/build-boot.sh
+    - source: middleware/mcuboot_opensource/samples/zephyr/build-hello.sh
+    - source: middleware/mcuboot_opensource/samples/zephyr/Makefile
+    - source: middleware/mcuboot_opensource/samples/zephyr/overlay-ecdsa-p256.conf
+    - source: middleware/mcuboot_opensource/samples/zephyr/overlay-rsa.conf
+    - source: middleware/mcuboot_opensource/samples/zephyr/overlay-skip-primary-slot-validate.conf
+    - source: middleware/mcuboot_opensource/samples/zephyr/overlay-upgrade-only.conf
+    - source: middleware/mcuboot_opensource/samples/zephyr/README.md
+    - source: middleware/mcuboot_opensource/samples/zephyr/run-tests.go
+    - source: middleware/mcuboot_opensource/samples/zephyr/run-tests.sh
+    - source: middleware/mcuboot_opensource/samples/zephyr/test-compile.go
+    - source: middleware/mcuboot_opensource/samples/zephyr/bad-keys/bad-ec-p256.pem
+    - source: middleware/mcuboot_opensource/samples/zephyr/bad-keys/bad-rsa-2048.pem
+    - source: middleware/mcuboot_opensource/samples/zephyr/bad-keys/README.md
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/CMakeLists.txt
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/prj.conf
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/README.rst
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/sample.yaml
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/boards/.gitignore
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/boards/README.rst
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/src/main.c
+    - source: middleware/mcuboot_opensource/samples/zephyr/hello-world/src/Makefile
+    - source: middleware/mcuboot_opensource/samples/zephyr/mcutests/mcutests.go
+    - source: middleware/mcuboot_opensource/sim/.gitignore
+    - source: middleware/mcuboot_opensource/sim/Cargo.toml
+    - source: middleware/mcuboot_opensource/sim/README.rst
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/.gitignore
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/build.rs
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/Cargo.toml
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/csupport/bootsim.h
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/csupport/devicetree.h
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/csupport/keys.c
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/csupport/run.c
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/csupport/mcuboot_config/mcuboot_assert.h
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/csupport/mcuboot_config/mcuboot_logging.h
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/csupport/storage/flash_map.h
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/src/api.rs
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/src/area.rs
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/src/c.rs
+    - source: middleware/mcuboot_opensource/sim/mcuboot-sys/src/lib.rs
+    - source: middleware/mcuboot_opensource/sim/simflash/.gitignore
+    - source: middleware/mcuboot_opensource/sim/simflash/Cargo.toml
+    - source: middleware/mcuboot_opensource/sim/simflash/src/lib.rs
+    - source: middleware/mcuboot_opensource/sim/simflash/src/pdump.rs
+    - source: middleware/mcuboot_opensource/sim/src/caps.rs
+    - source: middleware/mcuboot_opensource/sim/src/depends.rs
+    - source: middleware/mcuboot_opensource/sim/src/ecdsa_pub_key-rs.txt
+    - source: middleware/mcuboot_opensource/sim/src/ed25519_pub_key-rs.txt
+    - source: middleware/mcuboot_opensource/sim/src/image.rs
+    - source: middleware/mcuboot_opensource/sim/src/lib.rs
+    - source: middleware/mcuboot_opensource/sim/src/main.rs
+    - source: middleware/mcuboot_opensource/sim/src/rsa3072_pub_key-rs.txt
+    - source: middleware/mcuboot_opensource/sim/src/rsa_pub_key-rs.txt
+    - source: middleware/mcuboot_opensource/sim/src/testlog.rs
+    - source: middleware/mcuboot_opensource/sim/src/tlv.rs
+    - source: middleware/mcuboot_opensource/sim/tests/core.rs
+    - source: middleware/mcuboot_opensource/testplan/mynewt/key_ec.pem
+    - source: middleware/mcuboot_opensource/testplan/mynewt/key_ec256.pem
+    - source: middleware/mcuboot_opensource/testplan/mynewt/key_ec256_2.pem
+    - source: middleware/mcuboot_opensource/testplan/mynewt/key_ec_2.pem
+    - source: middleware/mcuboot_opensource/testplan/mynewt/key_rsa.pem
+    - source: middleware/mcuboot_opensource/testplan/mynewt/key_rsa_2.pem
+    - source: middleware/mcuboot_opensource/testplan/mynewt/Makefile
+    - source: middleware/mcuboot_opensource/testplan/mynewt/project.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/apps/blinky/pkg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/apps/blinky/syscfg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/apps/blinky/src/main.c
+    - source: middleware/mcuboot_opensource/testplan/mynewt/apps/slinky/pkg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/apps/slinky/syscfg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/apps/slinky/src/main.c
+    - source: middleware/mcuboot_opensource/testplan/mynewt/apps/slinky/src/random_data.c
+    - source: middleware/mcuboot_opensource/testplan/mynewt/keys/pkg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/keys/ec/pkg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/keys/ec/src/keys.c
+    - source: middleware/mcuboot_opensource/testplan/mynewt/keys/ec256/pkg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/keys/ec256/src/keys.c
+    - source: middleware/mcuboot_opensource/testplan/mynewt/keys/rsa/pkg.yml
+    - source: middleware/mcuboot_opensource/testplan/mynewt/keys/rsa/src/keys.c
+    - source: middleware/mcuboot_opensource/zephyr/module.yml
+    package_base_path: middleware/mcuboot_opensource
+  belong_to: set.middleware.mcuboot
+  section_info:
+    description: mcuboot files unused by projects
+    version: 1.9.0
+    type: other
+    user_visible: never
+    full_name: Middleware mcuboot unused_files
+    display_name: mcuboot_unused_files
+set.middleware.mcuboot:
+  section-type: set
+  belong_to: set.middleware.mcuboot
+  section_info:
+    fixed_id: mcuboot_opensource
+    description: MCUBoot opensource bootloader
+    version: 1.9.0
+    type: middleware
+    full_name: MCUboot bootloader
+    display_name: MCUBoot
+    set_location:
+      repo_base_path: middleware/mcuboot_opensource
+    vendor: NXP
+    product:
+      kex_package:
+        kex_web_ui:
+          ui_control: true
+          ui_release_specific: true
+          ui_control_default: true
+          ui_category: Middleware
+        scr:
+        - scr.middleware.mcuboot
+      cmsis_pack:
+        vendor: NXP
+        supported: false
+        scr:
+        - scr.middleware.mcuboot
+    component_taxonomy:
+      mcuboot:
+        cclass: File System
+        cgroup: MCUboot bootloader
+license.MCUBoot:
+  section-type: license
+  belong_to: set.middleware.mcuboot
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    files:
+    - source: middleware/mcuboot_opensource/LICENSE
+    package_base_path: middleware/mcuboot_opensource
+  section_info:
+    Outgoing License: Apache-2.0
+scr.middleware.mcuboot:
+  belong_to: set.middleware.mcuboot
+  section-type: scr
+  contents:
+    license:
+    - license.MCUBoot
+    Name: MCUBoot
+    Version: 1.9.0
+    Format: source code
+    Description: MCUBoot - a bootloader for microcontrollers
+    Location: middleware/mcuboot_opensource
+    Origin: MCUBoot https://www.mcuboot.com/
+    Url: https://github.com/mcu-tools/mcuboot
+middleware.mcuboot.bootutil:
+  section-type: component
+  contents:
+    repo_base_path: middleware/mcuboot_opensource/boot/bootutil
+    project_base_path: bootutil
+    cc-include:
+    - repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+    - repo_relative_path: include
+      project_relative_path: include
+      package_relative_path: include
+    files:
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/bench.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/bootutil.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/bootutil_log.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/bootutil_test.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/bootutil_public.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/boot_record.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/boot_status.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/boot_hooks.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/boot_public_hooks.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/caps.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/enc_key.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/enc_key_public.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/fault_injection_hardening.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/fault_injection_hardening_delay_rng.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/ignore.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/image.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/security_cnt.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/sign_key.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/ramload.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/aes_ctr.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/aes_kw.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/common.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/ecdh_p256.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/ecdh_x25519.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/ecdsa_p256.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/hmac_sha256.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/sha256.h
+      repo_relative_path: include/bootutil/crypto
+      project_relative_path: include/bootutil/crypto
+      package_relative_path: include/bootutil/crypto
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/boot_record.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/bootutil_misc.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/bootutil_public.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/caps.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/encrypted.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/fault_injection_hardening.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/fault_injection_hardening_delay_rng_mbedtls.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/image_ec.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/image_ec256.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/image_ed25519.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/image_rsa.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/image_validate.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/loader.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/swap_misc.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/swap_move.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/swap_scratch.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/tlv.c
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/swap_priv.h
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/bootutil_priv.h
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/middleware_mcuboot_bootutil.cmake
+      type: workspace
+      toolchains: armgcc
+      hidden: true
+    package_base_path: middleware/mcuboot_opensource/boot/bootutil
+  belong_to: set.middleware.mcuboot
+  section_info:
+    description: mcuboot
+    version: 1.9.0
+    type: middleware
+    full_name: MCUboot bootloader
+    user_visible: never
+    taxonomy:
+      csub: bootutil
+      cclass: File System
+      cgroup: MCUboot bootloader
+    display_name: mcuboot_bootutil
+    vendor: NXP
+  dependency:
+    allOf:
+    - middleware.mbedtls
+  meta-name: middleware.mcuboot.bootutil
+  cmake_module_name: middleware_mcuboot_bootutil
+middleware.mcuboot.boot_serial:
+  section-type: container
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: middleware/mcuboot_opensource/boot/boot_serial/pkg.yml
+    - source: middleware/mcuboot_opensource/boot/boot_serial/syscfg.yml
+    - source: middleware/mcuboot_opensource/boot/boot_serial/include/boot_serial/boot_serial.h
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/boot_serial.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/boot_serial_priv.h
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/cbor_decode.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/cbor_decode.h
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/regenerate_serial_recovery_cbor.sh
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/serial_recovery.cddl
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/serial_recovery_cbor.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/src/serial_recovery_cbor.h
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/pkg.yml
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/syscfg.yml
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/boot_test.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/boot_test.h
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_empty_img_msg.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_empty_msg.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_img_msg.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_setup.c
+    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_upload_bigger_image.c
+    package_base_path: middleware/mcuboot_opensource
+  belong_to: set.middleware.mcuboot
+  section_info:
+    description: mcuboot serial boot support
+    version: 1.9.0
+    type: other
+    user_visible: never
+    full_name: Middleware mcuboot serial boot support
+    display_name: mcuboot_boot_serial
+  dependency:
+    allOf:
+    - middleware.mcuboot.bootutil
