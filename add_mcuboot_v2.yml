@@ -1,0 +1,526 @@
+---
+bundles.mcuboot:
+  section-type: component_support
+  bundle: true
+  contents: {}
+  component_info:
+    common:
+      full_name: MCUboot bootloader
+      class: File System
+      version: 1.9.0
+      description: MCUboot bootloader
+
+middleware.mcuboot.ui_control:
+  section-type: component_support
+  component_info:
+    common:
+      fixed_id: mcuboot_opensource
+      description: mcuboot
+      version: 1.9.0
+      type: middleware
+      full_name: MCUboot bootloader
+      change_log: "./ChangeLogKSDK.txt"
+      component_bundle: bundles.mcuboot
+      user_visible: false
+      ui_name: mcuboot
+      ui_description: MCUboot bootloader
+      ui_category: Middleware
+      ui_control: true
+      ui_release_specific: true
+      manifest_name: mcuboot_ui_control
+      ui_control_default: true
+      component_set_path:
+        repo_base_path: middleware/mcuboot_opensource
+
+middleware.mcuboot:
+  section-type: component
+  __requires__:
+  - middleware.mcuboot.ui_control
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: LICENSE
+      hidden: true
+      exclude: true
+    - source: NOTICE
+      hidden: true
+      exclude: true
+    - source: README.md
+      hidden: true
+      exclude: true
+  component_info:
+    common:
+      description: mcuboot
+      version: 1.9.0
+      type: middleware
+      full_name: MCUboot bootloader
+      change_log: "./ChangeLogKSDK.txt"
+      component_bundle: bundles.mcuboot
+      user_visible: false
+      manifest_name: mcuboot
+
+middleware.mcuboot.bootutil:
+  section-type: component
+  __requires__:
+  - middleware.mcuboot.ui_control middleware.mbedtls
+  contents:
+    repo_base_path: middleware/mcuboot_opensource/boot/bootutil
+    project_base_path: bootutil
+    cc-include:
+    - repo_relative_path: "src"
+    - repo_relative_path: "include"
+    files:
+    - source: include/bootutil/bench.h
+    - source: include/bootutil/bootutil.h
+    - source: include/bootutil/bootutil_log.h
+    - source: include/bootutil/bootutil_test.h
+    - source: include/bootutil/bootutil_public.h
+    - source: include/bootutil/boot_record.h
+    - source: include/bootutil/boot_status.h
+    - source: include/bootutil/boot_hooks.h
+    - source: include/bootutil/boot_public_hooks.h
+    - source: include/bootutil/caps.h
+    - source: include/bootutil/enc_key.h
+    - source: include/bootutil/enc_key_public.h
+    - source: include/bootutil/fault_injection_hardening.h
+    - source: include/bootutil/fault_injection_hardening_delay_rng.h
+    - source: include/bootutil/ignore.h
+    - source: include/bootutil/image.h
+    - source: include/bootutil/security_cnt.h
+    - source: include/bootutil/sign_key.h
+    - source: include/bootutil/ramload.h
+    - source: include/bootutil/crypto/aes_ctr.h
+    - source: include/bootutil/crypto/aes_kw.h
+    - source: include/bootutil/crypto/common.h
+    - source: include/bootutil/crypto/ecdh_p256.h
+    - source: include/bootutil/crypto/ecdh_x25519.h
+    - source: include/bootutil/crypto/ecdsa_p256.h
+    - source: include/bootutil/crypto/hmac_sha256.h
+    - source: include/bootutil/crypto/sha256.h
+    - source: src/boot_record.c
+    - source: src/bootutil_misc.c
+    - source: src/bootutil_public.c
+    - source: src/caps.c
+    - source: src/encrypted.c
+    - source: src/fault_injection_hardening.c
+    - source: src/fault_injection_hardening_delay_rng_mbedtls.c
+    - source: src/image_ec.c
+    - source: src/image_ec256.c
+    - source: src/image_ed25519.c
+    - source: src/image_rsa.c
+    - source: src/image_validate.c
+    - source: src/loader.c
+    - source: src/swap_misc.c
+    - source: src/swap_move.c
+    - source: src/swap_scratch.c
+    - source: src/tlv.c
+    - source: src/swap_priv.h
+    - source: src/bootutil_priv.h
+  component_info:
+    common:
+      description: mcuboot
+      version: 1.9.0
+      type: middleware
+      full_name: MCUboot bootloader
+      change_log: "./ChangeLogKSDK.txt"
+      component_bundle: bundles.mcuboot
+      user_visible: false
+      manifest_name: mcuboot_bootutil
+
+middleware.mcuboot.docs:
+  section-type: component
+  __requires__:
+  - middleware.mcuboot.ui_control
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: docs/.gitignore
+    - source: docs/design.md
+    - source: docs/ecdsa.md
+    - source: docs/encrypted_images.md
+    - source: docs/Gemfile
+    - source: docs/Gemfile.lock
+    - source: docs/imgtool.md
+    - source: docs/index.md
+    - source: docs/PORTING.md
+    - source: docs/readme-mbed.md
+    - source: docs/readme-mynewt.md
+    - source: docs/readme-riot.md
+    - source: docs/readme-zephyr.md
+    - source: docs/release-notes.md
+    - source: docs/release.md
+    - source: docs/SECURITY.md
+    - source: docs/signed_images.md
+    - source: docs/SubmittingPatches.md
+    - source: docs/testplan-mynewt.md
+    - source: docs/testplan-zephyr.md
+    - source: docs/_config.yml
+  component_info:
+    common:
+      description: mcuboot documentation
+      version: 1.9.0
+      type: other
+      change_log: "./ChangeLogKSDK.txt"
+      user_visible: false
+      manifest_name: mcuboot_docs
+      full_name: Middleware mcuboot documentation
+
+middleware.mcuboot.scripts:
+  section-type: component
+  __requires__:
+  - middleware.mcuboot.ui_control
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: scripts/assemble.py
+    - source: scripts/flash.sh
+    - source: scripts/gdb-boot.sh
+    - source: scripts/imgtool.nix
+    - source: scripts/imgtool.py
+    - source: scripts/jgdb.sh
+    - source: scripts/jl.sh
+    - source: scripts/mcubin.bt
+    - source: scripts/requirements.txt
+    - source: scripts/setup.py
+    - source: scripts/imgtool/boot_record.py
+    - source: scripts/imgtool/image.py
+    - source: scripts/imgtool/main.py
+    - source: scripts/imgtool/version.py
+    - source: scripts/imgtool/__init__.py
+    - source: scripts/imgtool/keys/ecdsa.py
+    - source: scripts/imgtool/keys/ecdsa_test.py
+    - source: scripts/imgtool/keys/ed25519.py
+    - source: scripts/imgtool/keys/ed25519_test.py
+    - source: scripts/imgtool/keys/general.py
+    - source: scripts/imgtool/keys/rsa.py
+    - source: scripts/imgtool/keys/rsa_test.py
+    - source: scripts/imgtool/keys/x25519.py
+    - source: scripts/imgtool/keys/__init__.py
+  component_info:
+    common:
+      description: mcuboot scripts
+      version: 1.9.0
+      type: other
+      change_log: "./ChangeLogKSDK.txt"
+      user_visible: false
+      manifest_name: mcuboot_scripts
+      full_name: Middleware mcuboot scripts
+
+middleware.mcuboot.boot_serial:
+  section-type: component
+  __requires__:
+  - middleware.mcuboot.ui_control middleware.mcuboot.bootutil
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: boot/boot_serial/pkg.yml
+    - source: boot/boot_serial/syscfg.yml
+    - source: boot/boot_serial/include/boot_serial/boot_serial.h
+    - source: boot/boot_serial/src/boot_serial.c
+    - source: boot/boot_serial/src/boot_serial_priv.h
+    - source: boot/boot_serial/src/cbor_decode.c
+    - source: boot/boot_serial/src/cbor_decode.h
+    - source: boot/boot_serial/src/regenerate_serial_recovery_cbor.sh
+    - source: boot/boot_serial/src/serial_recovery.cddl
+    - source: boot/boot_serial/src/serial_recovery_cbor.c
+    - source: boot/boot_serial/src/serial_recovery_cbor.h
+    - source: boot/boot_serial/test/pkg.yml
+    - source: boot/boot_serial/test/syscfg.yml
+    - source: boot/boot_serial/test/src/boot_test.c
+    - source: boot/boot_serial/test/src/boot_test.h
+    - source: boot/boot_serial/test/src/testcases/boot_serial_empty_img_msg.c
+    - source: boot/boot_serial/test/src/testcases/boot_serial_empty_msg.c
+    - source: boot/boot_serial/test/src/testcases/boot_serial_img_msg.c
+    - source: boot/boot_serial/test/src/testcases/boot_serial_setup.c
+    - source: boot/boot_serial/test/src/testcases/boot_serial_upload_bigger_image.c
+  component_info:
+    common:
+      description: mcuboot serial boot support
+      version: 1.9.0
+      type: other
+      change_log: "./ChangeLogKSDK.txt"
+      user_visible: false
+      manifest_name: mcuboot_boot_serial
+      full_name: Middleware mcuboot serial boot support
+
+middleware.mcuboot.keys:
+  section-type: component
+  __requires__:
+  - middleware.mcuboot.ui_control
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: enc-aes128kw.b64
+    - source: enc-aes256kw.b64
+    - source: enc-ec256-priv.pem
+    - source: enc-ec256-pub.pem
+    - source: enc-rsa2048-priv.pem
+    - source: enc-rsa2048-pub.pem
+    - source: enc-x25519-priv.pem
+    - source: enc-x25519-pub.pem
+    - source: root-ec-p256-pkcs8.pem
+    - source: root-ec-p256.pem
+    - source: root-ed25519.pem
+    - source: root-rsa-2048.pem
+    - source: root-rsa-3072.pem
+  component_info:
+    common:
+      description: mcuboot crypto keys
+      version: 1.9.0
+      type: other
+      change_log: "./ChangeLogKSDK.txt"
+      user_visible: false
+      manifest_name: mcuboot_keys
+      full_name: Middleware mcuboot crypto keys
+
+middleware.mcuboot.unused_files:
+  section-type: component
+  __requires__:
+  - middleware.mcuboot.ui_control
+  contents:
+    repo_base_path: middleware/mcuboot_opensource
+    project_base_path: mcuboot
+    files:
+    - source: .gitignore
+    - source: .gitmodules
+    - source: .mbedignore
+    - source: .travis.yml-disabled
+    - source: go.mod
+    - source: CODE_OF_CONDUCT.md
+    - source: project.yml
+    - source: repository.yml
+    - source: boot/bootutil/CMakeLists.txt
+    - source: boot/bootutil/pkg.yml
+    - source: ci/check-signed-off-by.sh
+    - source: ci/compare_versions.py
+    - source: ci/fih-tests_install.sh
+    - source: ci/fih-tests_run.sh
+    - source: ci/get_features.py
+    - source: ci/imgtool_install.sh
+    - source: ci/imgtool_run.sh
+    - source: ci/mynewt_install.sh
+    - source: ci/mynewt_run.sh
+    - source: ci/requirements.txt
+    - source: ci/sim_install.sh
+    - source: ci/sim_run.sh
+    - source: ci/fih_test_docker/docker-build/build.sh
+    - source: ci/fih_test_docker/docker-build/Dockerfile
+    - source: ci/fih_test_docker/damage_image.py
+    - source: ci/fih_test_docker/execute_test.sh
+    - source: ci/fih_test_docker/fi_make_manifest.sh
+    - source: ci/fih_test_docker/fi_tester_gdb.sh
+    - source: ci/fih_test_docker/generate_test_report.py
+    - source: ci/fih_test_docker/run_fi_test.sh
+    - source: ci/mynewt_keys/enc_kw/pkg.yml
+    - source: ci/mynewt_keys/enc_kw/src/keys.c
+    - source: ci/mynewt_keys/enc_rsa/pkg.yml
+    - source: ci/mynewt_keys/enc_rsa/src/keys.c
+    - source: ci/mynewt_targets/basic/pkg.yml
+    - source: ci/mynewt_targets/basic/syscfg.yml
+    - source: ci/mynewt_targets/basic/target.yml
+    - source: ci/mynewt_targets/bootserial/pkg.yml
+    - source: ci/mynewt_targets/bootserial/syscfg.yml
+    - source: ci/mynewt_targets/bootserial/target.yml
+    - source: ci/mynewt_targets/ecdsa/pkg.yml
+    - source: ci/mynewt_targets/ecdsa/syscfg.yml
+    - source: ci/mynewt_targets/ecdsa/target.yml
+    - source: ci/mynewt_targets/ecdsa_kw/pkg.yml
+    - source: ci/mynewt_targets/ecdsa_kw/syscfg.yml
+    - source: ci/mynewt_targets/ecdsa_kw/target.yml
+    - source: ci/mynewt_targets/rsa/pkg.yml
+    - source: ci/mynewt_targets/rsa/syscfg.yml
+    - source: ci/mynewt_targets/rsa/target.yml
+    - source: ci/mynewt_targets/rsa_kw/pkg.yml
+    - source: ci/mynewt_targets/rsa_kw/syscfg.yml
+    - source: ci/mynewt_targets/rsa_kw/target.yml
+    - source: ci/mynewt_targets/rsa_overwriteonly/pkg.yml
+    - source: ci/mynewt_targets/rsa_overwriteonly/syscfg.yml
+    - source: ci/mynewt_targets/rsa_overwriteonly/target.yml
+    - source: ci/mynewt_targets/rsa_rsaoaep/pkg.yml
+    - source: ci/mynewt_targets/rsa_rsaoaep/syscfg.yml
+    - source: ci/mynewt_targets/rsa_rsaoaep/target.yml
+    - source: ci/mynewt_targets/rsa_rsaoaep_bootstrap/pkg.yml
+    - source: ci/mynewt_targets/rsa_rsaoaep_bootstrap/syscfg.yml
+    - source: ci/mynewt_targets/rsa_rsaoaep_bootstrap/target.yml
+    - source: ext/fiat/LICENSE
+    - source: ext/fiat/METADATA
+    - source: ext/fiat/pkg.yml
+    - source: ext/fiat/README.chromium
+    - source: ext/fiat/README.md
+    - source: ext/fiat/src/curve25519.c
+    - source: ext/fiat/src/curve25519.h
+    - source: ext/fiat/src/curve25519_tables.h
+    - source: ext/mbedtls-asn1/pkg.yml
+    - source: ext/mbedtls-asn1/README
+    - source: ext/mbedtls-asn1/include/mbedtls/asn1.h
+    - source: ext/mbedtls-asn1/include/mbedtls/bignum.h
+    - source: ext/mbedtls-asn1/include/mbedtls/check_config.h
+    - source: ext/mbedtls-asn1/include/mbedtls/ecdsa.h
+    - source: ext/mbedtls-asn1/include/mbedtls/ecp.h
+    - source: ext/mbedtls-asn1/include/mbedtls/md.h
+    - source: ext/mbedtls-asn1/include/mbedtls/oid.h
+    - source: ext/mbedtls-asn1/include/mbedtls/pk.h
+    - source: ext/mbedtls-asn1/include/mbedtls/platform.h
+    - source: ext/mbedtls-asn1/include/mbedtls/platform_util.h
+    - source: ext/mbedtls-asn1/include/mbedtls/threading.h
+    - source: ext/mbedtls-asn1/src/asn1parse.c
+    - source: ext/mbedtls-asn1/src/platform_util.c
+    - source: ext/nrf/cc310_glue.c
+    - source: ext/nrf/cc310_glue.h
+    - source: ext/nrf/README.md
+    - source: ext/tinycrypt/.gitignore
+    - source: ext/tinycrypt/AUTHORS
+    - source: ext/tinycrypt/config.mk
+    - source: ext/tinycrypt/LICENSE
+    - source: ext/tinycrypt/Makefile
+    - source: ext/tinycrypt/README
+    - source: ext/tinycrypt/VERSION
+    - source: ext/tinycrypt/documentation/tinycrypt.rst
+    - source: ext/tinycrypt/lib/Makefile
+    - source: ext/tinycrypt/lib/pkg.yml
+    - source: ext/tinycrypt/lib/include/tinycrypt/aes.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/cbc_mode.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/ccm_mode.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/cmac_mode.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/constants.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/ctr_mode.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/ctr_prng.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/ecc.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/ecc_dh.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/ecc_dsa.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/ecc_platform_specific.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/hmac.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/hmac_prng.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/sha256.h
+    - source: ext/tinycrypt/lib/include/tinycrypt/utils.h
+    - source: ext/tinycrypt/lib/source/aes_decrypt.c
+    - source: ext/tinycrypt/lib/source/aes_encrypt.c
+    - source: ext/tinycrypt/lib/source/cbc_mode.c
+    - source: ext/tinycrypt/lib/source/ccm_mode.c
+    - source: ext/tinycrypt/lib/source/cmac_mode.c
+    - source: ext/tinycrypt/lib/source/ctr_mode.c
+    - source: ext/tinycrypt/lib/source/ctr_prng.c
+    - source: ext/tinycrypt/lib/source/ecc.c
+    - source: ext/tinycrypt/lib/source/ecc_dh.c
+    - source: ext/tinycrypt/lib/source/ecc_dsa.c
+    - source: ext/tinycrypt/lib/source/ecc_platform_specific.c
+    - source: ext/tinycrypt/lib/source/hmac.c
+    - source: ext/tinycrypt/lib/source/hmac_prng.c
+    - source: ext/tinycrypt/lib/source/sha256.c
+    - source: ext/tinycrypt/lib/source/utils.c
+    - source: ext/tinycrypt/tests/Makefile
+    - source: ext/tinycrypt/tests/test_aes.c
+    - source: ext/tinycrypt/tests/test_cbc_mode.c
+    - source: ext/tinycrypt/tests/test_ccm_mode.c
+    - source: ext/tinycrypt/tests/test_cmac_mode.c
+    - source: ext/tinycrypt/tests/test_ctr_mode.c
+    - source: ext/tinycrypt/tests/test_ctr_prng.c
+    - source: ext/tinycrypt/tests/test_ecc_dh.c
+    - source: ext/tinycrypt/tests/test_ecc_dsa.c
+    - source: ext/tinycrypt/tests/test_ecc_utils.c
+    - source: ext/tinycrypt/tests/test_hmac.c
+    - source: ext/tinycrypt/tests/test_hmac_prng.c
+    - source: ext/tinycrypt/tests/test_sha256.c
+    - source: ext/tinycrypt/tests/include/test_ecc_utils.h
+    - source: ext/tinycrypt/tests/include/test_utils.h
+    - source: ext/tinycrypt-sha512/lib/pkg.yml
+    - source: ext/tinycrypt-sha512/lib/include/tinycrypt/sha512.h
+    - source: ext/tinycrypt-sha512/lib/source/sha512.c
+    - source: ptest/.gitignore
+    - source: ptest/Cargo.toml
+    - source: ptest/src/main.rs
+    - source: samples/mcuboot_config/mcuboot_config.template.h
+    - source: samples/zephyr/.gitignore
+    - source: samples/zephyr/build-boot.sh
+    - source: samples/zephyr/build-hello.sh
+    - source: samples/zephyr/Makefile
+    - source: samples/zephyr/overlay-ecdsa-p256.conf
+    - source: samples/zephyr/overlay-rsa.conf
+    - source: samples/zephyr/overlay-skip-primary-slot-validate.conf
+    - source: samples/zephyr/overlay-upgrade-only.conf
+    - source: samples/zephyr/README.md
+    - source: samples/zephyr/run-tests.go
+    - source: samples/zephyr/run-tests.sh
+    - source: samples/zephyr/test-compile.go
+    - source: samples/zephyr/bad-keys/bad-ec-p256.pem
+    - source: samples/zephyr/bad-keys/bad-rsa-2048.pem
+    - source: samples/zephyr/bad-keys/README.md
+    - source: samples/zephyr/hello-world/CMakeLists.txt
+    - source: samples/zephyr/hello-world/prj.conf
+    - source: samples/zephyr/hello-world/README.rst
+    - source: samples/zephyr/hello-world/sample.yaml
+    - source: samples/zephyr/hello-world/boards/.gitignore
+    - source: samples/zephyr/hello-world/boards/README.rst
+    - source: samples/zephyr/hello-world/src/main.c
+    - source: samples/zephyr/hello-world/src/Makefile
+    - source: samples/zephyr/mcutests/mcutests.go
+    - source: sim/.gitignore
+    - source: sim/Cargo.toml
+    - source: sim/README.rst
+    - source: sim/mcuboot-sys/.gitignore
+    - source: sim/mcuboot-sys/build.rs
+    - source: sim/mcuboot-sys/Cargo.toml
+    - source: sim/mcuboot-sys/csupport/bootsim.h
+    - source: sim/mcuboot-sys/csupport/devicetree.h
+    - source: sim/mcuboot-sys/csupport/keys.c
+    - source: sim/mcuboot-sys/csupport/run.c
+    - source: sim/mcuboot-sys/csupport/mcuboot_config/mcuboot_assert.h
+    - source: sim/mcuboot-sys/csupport/mcuboot_config/mcuboot_logging.h
+    - source: sim/mcuboot-sys/csupport/storage/flash_map.h
+    - source: sim/mcuboot-sys/src/api.rs
+    - source: sim/mcuboot-sys/src/area.rs
+    - source: sim/mcuboot-sys/src/c.rs
+    - source: sim/mcuboot-sys/src/lib.rs
+    - source: sim/simflash/.gitignore
+    - source: sim/simflash/Cargo.toml
+    - source: sim/simflash/src/lib.rs
+    - source: sim/simflash/src/pdump.rs
+    - source: sim/src/caps.rs
+    - source: sim/src/depends.rs
+    - source: sim/src/ecdsa_pub_key-rs.txt
+    - source: sim/src/ed25519_pub_key-rs.txt
+    - source: sim/src/image.rs
+    - source: sim/src/lib.rs
+    - source: sim/src/main.rs
+    - source: sim/src/rsa3072_pub_key-rs.txt
+    - source: sim/src/rsa_pub_key-rs.txt
+    - source: sim/src/testlog.rs
+    - source: sim/src/tlv.rs
+    - source: sim/tests/core.rs
+    - source: testplan/mynewt/key_ec.pem
+    - source: testplan/mynewt/key_ec256.pem
+    - source: testplan/mynewt/key_ec256_2.pem
+    - source: testplan/mynewt/key_ec_2.pem
+    - source: testplan/mynewt/key_rsa.pem
+    - source: testplan/mynewt/key_rsa_2.pem
+    - source: testplan/mynewt/Makefile
+    - source: testplan/mynewt/project.yml
+    - source: testplan/mynewt/apps/blinky/pkg.yml
+    - source: testplan/mynewt/apps/blinky/syscfg.yml
+    - source: testplan/mynewt/apps/blinky/src/main.c
+    - source: testplan/mynewt/apps/slinky/pkg.yml
+    - source: testplan/mynewt/apps/slinky/syscfg.yml
+    - source: testplan/mynewt/apps/slinky/src/main.c
+    - source: testplan/mynewt/apps/slinky/src/random_data.c
+    - source: testplan/mynewt/keys/pkg.yml
+    - source: testplan/mynewt/keys/ec/pkg.yml
+    - source: testplan/mynewt/keys/ec/src/keys.c
+    - source: testplan/mynewt/keys/ec256/pkg.yml
+    - source: testplan/mynewt/keys/ec256/src/keys.c
+    - source: testplan/mynewt/keys/rsa/pkg.yml
+    - source: testplan/mynewt/keys/rsa/src/keys.c
+    - source: zephyr/module.yml
+  component_info:
+    common:
+      description: mcuboot files unused by projects
+      version: 1.9.0
+      type: other
+      change_log: "./ChangeLogKSDK.txt"
+      user_visible: false
+      manifest_name: mcuboot_unused_files
+      full_name: Middleware mcuboot unused_files
