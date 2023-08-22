@@ -7,7 +7,7 @@
     <definition extID="armgcc"/>
     <definition extID="middleware.mbedtls.MIMXRT1062"/>
   </externalDefinitions>
-  <ksdk id="MCUXpressoSDK2140_middleware_mcuboot_opensource_MIMXRT1062_manifest_v3_13" name="MCUXpressoSDK2140_middleware_mcuboot_opensource_MIMXRT1062_manifest_v3_13" version="2.14.0"/>
+  <ksdk id="MCUXpressoSDK2141_middleware_mcuboot_opensource_MIMXRT1062_manifest_v3_13" name="MCUXpressoSDK2141_middleware_mcuboot_opensource_MIMXRT1062_manifest_v3_13" version="2.14.1" revision="Provided by Script"/>
   <components>
     <component id="middleware.mcuboot.MIMXRT1062" name="mcuboot" brief="mcuboot" version="1.9.0" full_name="MCUboot bootloader" devices="MIMXRT1062xxxxA MIMXRT1062xxxxB" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path="../middleware/mcuboot_opensource" project_base_path="mcuboot">
       <source exclude="true" relative_path="./" type="other">
