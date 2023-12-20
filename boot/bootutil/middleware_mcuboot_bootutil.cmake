@@ -28,6 +28,12 @@ target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
 )
 
 #OR Logic component
+if(${MCUX_DEVICE} STREQUAL "RW610")
+    include(middleware_mbedtls_RW612)
+endif()
+if(${MCUX_DEVICE} STREQUAL "RW612")
+    include(middleware_mbedtls_RW612)
+endif()
 if(${MCUX_DEVICE} STREQUAL "MIMXRT1052")
     include(middleware_mbedtls_MIMXRT1052)
 endif()
