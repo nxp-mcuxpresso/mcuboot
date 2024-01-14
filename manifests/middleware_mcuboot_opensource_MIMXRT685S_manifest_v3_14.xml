@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ksdk:manifest xmlns:ksdk="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="SDK_2.x_middleware_mcuboot_opensource_MIMXRT685S_manifest_v3_14" name="MCUBoot" brief="MCUBoot opensource bootloader" format_version="3.14" api_version="2.0.0" xsi:schemaLocation="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd http://nxp.com/mcuxpresso/sdk/sdk_manifest_v3.14.xsd">
+
+  <externalDefinitions>
+    <definition extID="MIMXRT685S"/>
+    <definition extID="armgcc"/>
+    <definition extID="middleware.mbedtls.MIMXRT685S"/>
+  </externalDefinitions>
+  <ksdk id="MCUXpressoSDK2150_middleware_mcuboot_opensource_MIMXRT685S_manifest_v3_14" name="MCUXpressoSDK2150_middleware_mcuboot_opensource_MIMXRT685S_manifest_v3_14" version="2.15.0" revision="2.15.0"/>
+  <components>
+    <component id="middleware.mcuboot.MIMXRT685S" name="mcuboot" brief="mcuboot" version="1.10.0" full_name="MCUboot bootloader" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././" project_base_path="mcuboot">
+      <dependencies>
+        <device_dependency value="MIMXRT685S"/>
+      </dependencies>
+      <source exclude="true" relative_path="./" type="other">
+        <files mask="LICENSE" hidden="true"/>
+        <files mask="NOTICE" hidden="true"/>
+      </source>
+      <source exclude="true" relative_path="./" type="doc">
+        <files mask="README.md" hidden="true"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_mcuboot.cmake" hidden="true"/>
+      </source>
+    </component>
+    <!--<component id="middleware.mcuboot.docs.MIMXRT685S" name="mcuboot_docs" version="1.10.0" package_base_path=".././" project_base_path="mcuboot">
+  <source relative_path="./" type="other">
+    <files mask=".gitignore"/>
+    <files mask="design.md"/>
+    <files mask="ecdsa.md"/>
+    <files mask="encrypted_images.md"/>
+    <files mask="Gemfile"/>
+    <files mask="Gemfile.lock"/>
+    <files mask="imgtool.md"/>
+    <files mask="index.md"/>
+    <files mask="PORTING.md"/>
+    <files mask="readme-mbed.md"/>
+    <files mask="readme-mynewt.md"/>
+    <files mask="readme-riot.md"/>
+    <files mask="readme-zephyr.md"/>
+    <files mask="release-notes.md"/>
+    <files mask="release.md"/>
+    <files mask="SECURITY.md"/>
+    <files mask="signed_images.md"/>
+    <files mask="SubmittingPatches.md"/>
+    <files mask="testplan-mynewt.md"/>
+    <files mask="testplan-zephyr.md"/>
+    <files mask="_config.yml"/>
+  </source>
+</component>-->
+    <!--<component id="middleware.mcuboot.scripts.MIMXRT685S" name="mcuboot_scripts" version="1.10.0" package_base_path=".././" project_base_path="mcuboot">
+  <source relative_path="./" type="script">
+    <files mask="assemble.py"/>
+    <files mask="flash.sh"/>
+    <files mask="gdb-boot.sh"/>
+    <files mask="imgtool.py"/>
+    <files mask="jgdb.sh"/>
+    <files mask="jl.sh"/>
+    <files mask="setup.py"/>
+    <files mask="boot_record.py"/>
+    <files mask="image.py"/>
+    <files mask="main.py"/>
+    <files mask="version.py"/>
+    <files mask="__init__.py"/>
+    <files mask="ecdsa.py"/>
+    <files mask="ecdsa_test.py"/>
+    <files mask="ed25519.py"/>
+    <files mask="ed25519_test.py"/>
+    <files mask="general.py"/>
+    <files mask="privatebytes.py"/>
+    <files mask="rsa.py"/>
+    <files mask="rsa_test.py"/>
+    <files mask="x25519.py"/>
+    <files mask="__init__.py"/>
+  </source>
+  <source relative_path="./" type="other">
+    <files mask="imgtool.nix"/>
+    <files mask="mcubin.bt"/>
+  </source>
+  <source relative_path="./" type="doc">
+    <files mask="requirements.txt"/>
+  </source>
+</component>-->
+    <!--<component id="middleware.mcuboot.keys.MIMXRT685S" name="mcuboot_keys" version="1.10.0" package_base_path=".././" project_base_path="mcuboot">
+  <source relative_path="./" type="other">
+    <files mask="enc-aes128kw.b64"/>
+    <files mask="enc-aes256kw.b64"/>
+    <files mask="enc-ec256-priv.pem"/>
+    <files mask="enc-ec256-pub.pem"/>
+    <files mask="enc-rsa2048-priv.pem"/>
+    <files mask="enc-rsa2048-pub.pem"/>
+    <files mask="enc-x25519-priv.pem"/>
+    <files mask="enc-x25519-pub.pem"/>
+    <files mask="root-ec-p256-pkcs8.pem"/>
+    <files mask="root-ec-p256.pem"/>
+    <files mask="root-ed25519.pem"/>
+    <files mask="root-rsa-2048.pem"/>
+    <files mask="root-rsa-3072.pem"/>
+  </source>
+</component>-->
+    <!--<component id="middleware.mcuboot.unused_files.MIMXRT685S" name="mcuboot_unused_files" version="1.10.0" package_base_path=".././" project_base_path="mcuboot">
+  <source relative_path="./" type="other">
+    <files mask=".gitignore"/>
+    <files mask=".gitmodules"/>
+    <files mask=".mbedignore"/>
+    <files mask=".travis.yml-disabled"/>
+    <files mask="go.mod"/>
+    <files mask="CODE_OF_CONDUCT.md"/>
+    <files mask="project.yml"/>
+    <files mask="repository.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="Dockerfile"/>
+    <files mask="pkg.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="target.yml"/>
+    <files mask="LICENSE"/>
+    <files mask="METADATA"/>
+    <files mask="pkg.yml"/>
+    <files mask="README.chromium"/>
+    <files mask="README.md"/>
+    <files mask="pkg.yml"/>
+    <files mask="README"/>
+    <files mask="README.md"/>
+    <files mask=".gitignore"/>
+    <files mask="AUTHORS"/>
+    <files mask="LICENSE"/>
+    <files mask="Makefile"/>
+    <files mask="README"/>
+    <files mask="VERSION"/>
+    <files mask="tinycrypt.rst"/>
+    <files mask="Makefile"/>
+    <files mask="pkg.yml"/>
+    <files mask="Makefile"/>
+    <files mask="pkg.yml"/>
+    <files mask=".gitignore"/>
+    <files mask="Cargo.toml"/>
+    <files mask="main.rs"/>
+    <files mask=".gitignore"/>
+    <files mask="Makefile"/>
+    <files mask="overlay-ecdsa-p256.conf"/>
+    <files mask="overlay-rsa.conf"/>
+    <files mask="overlay-skip-primary-slot-validate.conf"/>
+    <files mask="overlay-upgrade-only.conf"/>
+    <files mask="README.md"/>
+    <files mask="run-tests.go"/>
+    <files mask="test-compile.go"/>
+    <files mask="bad-ec-p256.pem"/>
+    <files mask="bad-rsa-2048.pem"/>
+    <files mask="README.md"/>
+    <files mask="prj.conf"/>
+    <files mask="README.rst"/>
+    <files mask="sample.yaml"/>
+    <files mask=".gitignore"/>
+    <files mask="README.rst"/>
+    <files mask="Makefile"/>
+    <files mask="mcutests.go"/>
+    <files mask=".gitignore"/>
+    <files mask="Cargo.toml"/>
+    <files mask="README.rst"/>
+    <files mask=".gitignore"/>
+    <files mask="build.rs"/>
+    <files mask="Cargo.toml"/>
+    <files mask="api.rs"/>
+    <files mask="area.rs"/>
+    <files mask="c.rs"/>
+    <files mask="lib.rs"/>
+    <files mask=".gitignore"/>
+    <files mask="Cargo.toml"/>
+    <files mask="lib.rs"/>
+    <files mask="pdump.rs"/>
+    <files mask="caps.rs"/>
+    <files mask="depends.rs"/>
+    <files mask="image.rs"/>
+    <files mask="lib.rs"/>
+    <files mask="main.rs"/>
+    <files mask="testlog.rs"/>
+    <files mask="tlv.rs"/>
+    <files mask="core.rs"/>
+    <files mask="key_ec.pem"/>
+    <files mask="key_ec256.pem"/>
+    <files mask="key_ec256_2.pem"/>
+    <files mask="key_ec_2.pem"/>
+    <files mask="key_rsa.pem"/>
+    <files mask="key_rsa_2.pem"/>
+    <files mask="Makefile"/>
+    <files mask="project.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="syscfg.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="pkg.yml"/>
+    <files mask="module.yml"/>
+  </source>
+  <source relative_path="./" type="doc">
+    <files mask="CMakeLists.txt"/>
+    <files mask="requirements.txt"/>
+    <files mask="CMakeLists.txt"/>
+    <files mask="ecdsa_pub_key-rs.txt"/>
+    <files mask="ed25519_pub_key-rs.txt"/>
+    <files mask="rsa3072_pub_key-rs.txt"/>
+    <files mask="rsa_pub_key-rs.txt"/>
+  </source>
+  <source relative_path="./" type="script">
+    <files mask="check-signed-off-by.sh"/>
+    <files mask="compare_versions.py"/>
+    <files mask="fih-tests_install.sh"/>
+    <files mask="fih-tests_run.sh"/>
+    <files mask="get_features.py"/>
+    <files mask="imgtool_install.sh"/>
+    <files mask="imgtool_run.sh"/>
+    <files mask="mynewt_install.sh"/>
+    <files mask="mynewt_run.sh"/>
+    <files mask="sim_install.sh"/>
+    <files mask="sim_run.sh"/>
+    <files mask="build.sh"/>
+    <files mask="damage_image.py"/>
+    <files mask="execute_test.sh"/>
+    <files mask="fi_make_manifest.sh"/>
+    <files mask="fi_tester_gdb.sh"/>
+    <files mask="generate_test_report.py"/>
+    <files mask="run_fi_test.sh"/>
+    <files mask="config.mk"/>
+    <files mask="build-boot.sh"/>
+    <files mask="build-hello.sh"/>
+    <files mask="run-tests.sh"/>
+  </source>
+  <source relative_path="./" type="src">
+    <files mask="keys.c"/>
+    <files mask="keys.c"/>
+    <files mask="curve25519.c"/>
+    <files mask="asn1parse.c"/>
+    <files mask="platform_util.c"/>
+    <files mask="cc310_glue.c"/>
+    <files mask="aes_decrypt.c"/>
+    <files mask="aes_encrypt.c"/>
+    <files mask="cbc_mode.c"/>
+    <files mask="ccm_mode.c"/>
+    <files mask="cmac_mode.c"/>
+    <files mask="ctr_mode.c"/>
+    <files mask="ctr_prng.c"/>
+    <files mask="ecc.c"/>
+    <files mask="ecc_dh.c"/>
+    <files mask="ecc_dsa.c"/>
+    <files mask="ecc_platform_specific.c"/>
+    <files mask="hmac.c"/>
+    <files mask="hmac_prng.c"/>
+    <files mask="sha256.c"/>
+    <files mask="utils.c"/>
+    <files mask="test_aes.c"/>
+    <files mask="test_cbc_mode.c"/>
+    <files mask="test_ccm_mode.c"/>
+    <files mask="test_cmac_mode.c"/>
+    <files mask="test_ctr_mode.c"/>
+    <files mask="test_ctr_prng.c"/>
+    <files mask="test_ecc_dh.c"/>
+    <files mask="test_ecc_dsa.c"/>
+    <files mask="test_ecc_utils.c"/>
+    <files mask="test_hmac.c"/>
+    <files mask="test_hmac_prng.c"/>
+    <files mask="test_sha256.c"/>
+    <files mask="sha512.c"/>
+    <files mask="main.c"/>
+    <files mask="keys.c"/>
+    <files mask="run.c"/>
+    <files mask="main.c"/>
+    <files mask="main.c"/>
+    <files mask="random_data.c"/>
+    <files mask="keys.c"/>
+    <files mask="keys.c"/>
+    <files mask="keys.c"/>
+  </source>
+  <source relative_path="./" type="c_include">
+    <files mask="curve25519.h"/>
+    <files mask="curve25519_tables.h"/>
+    <files mask="asn1.h"/>
+    <files mask="bignum.h"/>
+    <files mask="check_config.h"/>
+    <files mask="ecdsa.h"/>
+    <files mask="ecp.h"/>
+    <files mask="md.h"/>
+    <files mask="oid.h"/>
+    <files mask="pk.h"/>
+    <files mask="platform.h"/>
+    <files mask="platform_util.h"/>
+    <files mask="threading.h"/>
+    <files mask="cc310_glue.h"/>
+    <files mask="aes.h"/>
+    <files mask="cbc_mode.h"/>
+    <files mask="ccm_mode.h"/>
+    <files mask="cmac_mode.h"/>
+    <files mask="constants.h"/>
+    <files mask="ctr_mode.h"/>
+    <files mask="ctr_prng.h"/>
+    <files mask="ecc.h"/>
+    <files mask="ecc_dh.h"/>
+    <files mask="ecc_dsa.h"/>
+    <files mask="ecc_platform_specific.h"/>
+    <files mask="hmac.h"/>
+    <files mask="hmac_prng.h"/>
+    <files mask="sha256.h"/>
+    <files mask="utils.h"/>
+    <files mask="test_ecc_utils.h"/>
+    <files mask="test_utils.h"/>
+    <files mask="sha512.h"/>
+    <files mask="mcuboot_config.template.h"/>
+    <files mask="bootsim.h"/>
+    <files mask="devicetree.h"/>
+    <files mask="mcuboot_assert.h"/>
+    <files mask="mcuboot_logging.h"/>
+    <files mask="flash_map.h"/>
+  </source>
+</component>-->
+    <component id="middleware.mcuboot.bootutil.MIMXRT685S" name="mcuboot_bootutil" brief="mcuboot" version="1.10.0" full_name="MCUboot bootloader" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././boot/bootutil" project_base_path="bootutil">
+      <dependencies>
+        <all>
+          <component_dependency value="middleware.mbedtls.MIMXRT685S"/>
+          <device_dependency value="MIMXRT685S"/>
+        </all>
+      </dependencies>
+      <source relative_path="../../include/bootutil" project_relative_path="include/bootutil" type="c_include">
+        <files mask="bench.h"/>
+        <files mask="bootutil.h"/>
+        <files mask="bootutil_log.h"/>
+        <files mask="bootutil_test.h"/>
+        <files mask="bootutil_public.h"/>
+        <files mask="boot_record.h"/>
+        <files mask="boot_status.h"/>
+        <files mask="boot_hooks.h"/>
+        <files mask="boot_public_hooks.h"/>
+        <files mask="caps.h"/>
+        <files mask="enc_key.h"/>
+        <files mask="enc_key_public.h"/>
+        <files mask="fault_injection_hardening.h"/>
+        <files mask="fault_injection_hardening_delay_rng.h"/>
+        <files mask="ignore.h"/>
+        <files mask="image.h"/>
+        <files mask="security_cnt.h"/>
+        <files mask="sign_key.h"/>
+        <files mask="ramload.h"/>
+        <files mask="mcuboot_status.h"/>
+      </source>
+      <source relative_path="../../include/bootutil/crypto" project_relative_path="include/bootutil/crypto" type="c_include">
+        <files mask="aes_ctr.h"/>
+        <files mask="aes_kw.h"/>
+        <files mask="common.h"/>
+        <files mask="ecdh_p256.h"/>
+        <files mask="ecdh_x25519.h"/>
+        <files mask="ecdsa_p256.h"/>
+        <files mask="hmac_sha256.h"/>
+        <files mask="sha256.h"/>
+      </source>
+      <source relative_path="../../src" project_relative_path="src" type="src">
+        <files mask="boot_record.c"/>
+        <files mask="bootutil_misc.c"/>
+        <files mask="bootutil_public.c"/>
+        <files mask="caps.c"/>
+        <files mask="encrypted.c"/>
+        <files mask="fault_injection_hardening.c"/>
+        <files mask="fault_injection_hardening_delay_rng_mbedtls.c"/>
+        <files mask="image_ec.c"/>
+        <files mask="image_ec256.c"/>
+        <files mask="image_ed25519.c"/>
+        <files mask="image_rsa.c"/>
+        <files mask="image_validate.c"/>
+        <files mask="loader.c"/>
+        <files mask="swap_misc.c"/>
+        <files mask="swap_move.c"/>
+        <files mask="swap_scratch.c"/>
+        <files mask="tlv.c"/>
+      </source>
+      <source relative_path="../../src" project_relative_path="src" type="c_include">
+        <files mask="bootutil_misc.h"/>
+        <files mask="swap_priv.h"/>
+        <files mask="bootutil_priv.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_mcuboot_bootutil.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="../../src" project_relative_path="src" type="c_include"/>
+        <include_path relative_path="../../include" project_relative_path="include" type="c_include"/>
+      </include_paths>
+    </component>
+  </components>
+</ksdk:manifest>

@@ -25,7 +25,7 @@ middleware.mcuboot:
       repo_relative_path: "./"
       project_relative_path: "./"
       package_relative_path: "./"
-      type: other
+      type: doc
     - source: middleware/mcuboot_opensource/middleware_mcuboot.cmake
       type: workspace
       toolchains: armgcc
@@ -34,7 +34,7 @@ middleware.mcuboot:
   belong_to: set.middleware.mcuboot
   section_info:
     description: mcuboot
-    version: 1.9.0
+    version: 1.10.0
     type: middleware
     full_name: MCUboot bootloader
     user_visible: never
@@ -77,7 +77,7 @@ middleware.mcuboot.docs:
   belong_to: set.middleware.mcuboot
   section_info:
     description: mcuboot documentation
-    version: 1.9.0
+    version: 1.10.0
     type: other
     user_visible: never
     full_name: Middleware mcuboot documentation
@@ -116,7 +116,7 @@ middleware.mcuboot.scripts:
   belong_to: set.middleware.mcuboot
   section_info:
     description: mcuboot scripts
-    version: 1.9.0
+    version: 1.10.0
     type: other
     user_visible: never
     full_name: Middleware mcuboot scripts
@@ -144,7 +144,7 @@ middleware.mcuboot.keys:
   belong_to: set.middleware.mcuboot
   section_info:
     description: mcuboot crypto keys
-    version: 1.9.0
+    version: 1.10.0
     type: other
     user_visible: never
     full_name: Middleware mcuboot crypto keys
@@ -388,7 +388,7 @@ middleware.mcuboot.unused_files:
   belong_to: set.middleware.mcuboot
   section_info:
     description: mcuboot files unused by projects
-    version: 1.9.0
+    version: 1.10.0
     type: other
     user_visible: never
     full_name: Middleware mcuboot unused_files
@@ -399,7 +399,7 @@ set.middleware.mcuboot:
   section_info:
     fixed_id: mcuboot_opensource
     description: MCUBoot opensource bootloader
-    version: 1.9.0
+    version: 1.10.0
     type: middleware
     full_name: MCUboot bootloader
     display_name: MCUBoot
@@ -441,7 +441,7 @@ scr.middleware.mcuboot:
     license:
     - license.MCUBoot
     Name: MCUBoot
-    Version: 1.9.0
+    Version: 1.10.0
     Format: source code
     Description: MCUBoot - a bootloader for microcontrollers
     Location: middleware/mcuboot_opensource
@@ -555,6 +555,11 @@ middleware.mcuboot.bootutil:
       project_relative_path: include/bootutil
       package_relative_path: include/bootutil
       type: c_include
+    - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/mcuboot_status.h
+      repo_relative_path: include/bootutil
+      project_relative_path: include/bootutil
+      package_relative_path: include/bootutil
+      type: c_include
     - source: middleware/mcuboot_opensource/boot/bootutil/include/bootutil/crypto/aes_ctr.h
       repo_relative_path: include/bootutil/crypto
       project_relative_path: include/bootutil/crypto
@@ -605,6 +610,11 @@ middleware.mcuboot.bootutil:
       project_relative_path: src
       package_relative_path: src
       type: src
+    - source: middleware/mcuboot_opensource/boot/bootutil/src/bootutil_misc.h
+      repo_relative_path: src
+      project_relative_path: src
+      package_relative_path: src
+      type: c_include
     - source: middleware/mcuboot_opensource/boot/bootutil/src/bootutil_public.c
       repo_relative_path: src
       project_relative_path: src
@@ -698,7 +708,7 @@ middleware.mcuboot.bootutil:
   belong_to: set.middleware.mcuboot
   section_info:
     description: mcuboot
-    version: 1.9.0
+    version: 1.10.0
     type: middleware
     full_name: MCUboot bootloader
     user_visible: never
@@ -713,41 +723,3 @@ middleware.mcuboot.bootutil:
     - middleware.mbedtls
   meta-name: middleware.mcuboot.bootutil
   cmake_module_name: middleware_mcuboot_bootutil
-middleware.mcuboot.boot_serial:
-  section-type: container
-  contents:
-    repo_base_path: middleware/mcuboot_opensource
-    project_base_path: mcuboot
-    files:
-    - source: middleware/mcuboot_opensource/boot/boot_serial/pkg.yml
-    - source: middleware/mcuboot_opensource/boot/boot_serial/syscfg.yml
-    - source: middleware/mcuboot_opensource/boot/boot_serial/include/boot_serial/boot_serial.h
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/boot_serial.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/boot_serial_priv.h
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/cbor_decode.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/cbor_decode.h
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/regenerate_serial_recovery_cbor.sh
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/serial_recovery.cddl
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/serial_recovery_cbor.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/src/serial_recovery_cbor.h
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/pkg.yml
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/syscfg.yml
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/boot_test.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/boot_test.h
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_empty_img_msg.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_empty_msg.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_img_msg.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_setup.c
-    - source: middleware/mcuboot_opensource/boot/boot_serial/test/src/testcases/boot_serial_upload_bigger_image.c
-    package_base_path: middleware/mcuboot_opensource
-  belong_to: set.middleware.mcuboot
-  section_info:
-    description: mcuboot serial boot support
-    version: 1.9.0
-    type: other
-    user_visible: never
-    full_name: Middleware mcuboot serial boot support
-    display_name: mcuboot_boot_serial
-  dependency:
-    allOf:
-    - middleware.mcuboot.bootutil
