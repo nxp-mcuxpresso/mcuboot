@@ -2176,6 +2176,18 @@ context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp)
         }
 
 #ifdef MCUBOOT_VALIDATE_PRIMARY_SLOT
+
+	/* Workaround for issue with multiple images updating at the same time
+        where size of the new image differes from the previous version. For some
+        reason the logic in boot_read_image_headers() causes the image header
+        fields in the state (boot_data) structure to be updated in the swapped
+        order which then causes failure of image signature validation because
+        TLV offsets are not correct (they're swapped).
+	*/
+
+        boot_status_reset(&bs);
+        boot_read_image_headers(state, false, &bs);
+
         FIH_CALL(boot_validate_slot, fih_rc, state, BOOT_PRIMARY_SLOT, NULL);
         /* Check for all possible values is redundant in normal operation it
          * is meant to prevent FI attack.
