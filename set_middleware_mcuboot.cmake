@@ -10,12 +10,77 @@ message("middleware_mcuboot component is included from ${CMAKE_CURRENT_LIST_FILE
 endif()
 
 
+if (CONFIG_USE_middleware_mcuboot_tinycrypt)
+# Add set(CONFIG_USE_middleware_mcuboot_tinycrypt true) in config.cmake to use this component
+
+message("middleware_mcuboot_tinycrypt component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/aes_decrypt.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/aes_encrypt.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/cbc_mode.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/ccm_mode.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/cmac_mode.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/ctr_mode.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/ctr_prng.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/ecc.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/ecc_dsa.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/hmac.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/hmac_prng.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/sha256.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/source/utils.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}/ext/tinycrypt/lib/include
+)
+
+
+endif()
+
+
+if (CONFIG_USE_middleware_mcuboot_encrypted_xip)
+# Add set(CONFIG_USE_middleware_mcuboot_encrypted_xip true) in config.cmake to use this component
+
+message("middleware_mcuboot_encrypted_xip component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/ext/nxp_encrypted_xip/src/mcuboot_enc_support.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/nxp_encrypted_xip/src/platform_enc_bee.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}/ext/nxp_encrypted_xip/include
+)
+
+
+endif()
+
+
+if (CONFIG_USE_middleware_mcuboot_mbedtls-asn1)
+# Add set(CONFIG_USE_middleware_mcuboot_mbedtls-asn1 true) in config.cmake to use this component
+
+message("middleware_mcuboot_mbedtls-asn1 component is included from ${CMAKE_CURRENT_LIST_FILE}.")
+
+target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/ext/mbedtls-asn1/src/asn1parse.c
+  ${CMAKE_CURRENT_LIST_DIR}/ext/mbedtls-asn1/src/platform_util.c
+)
+
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PUBLIC
+  ${CMAKE_CURRENT_LIST_DIR}/ext/mbedtls-asn1/include
+)
+
+
+endif()
+
+
 if (CONFIG_USE_middleware_mcuboot_bootutil)
 # Add set(CONFIG_USE_middleware_mcuboot_bootutil true) in config.cmake to use this component
 
 message("middleware_mcuboot_bootutil component is included from ${CMAKE_CURRENT_LIST_FILE}.")
 
-if(CONFIG_USE_middleware_mbedtls)
+if(CONFIG_USE_middleware_mbedtls OR CONFIG_USE_middleware_mcuboot_tinycrypt)
 
 target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/boot_record.c
@@ -25,8 +90,7 @@ target_sources(${MCUX_SDK_PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/encrypted.c
   ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/fault_injection_hardening.c
   ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/fault_injection_hardening_delay_rng_mbedtls.c
-  ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/image_ec.c
-  ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/image_ec256.c
+  ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/image_ecdsa.c
   ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/image_ed25519.c
   ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/image_rsa.c
   ${CMAKE_CURRENT_LIST_DIR}/boot/bootutil/src/image_validate.c

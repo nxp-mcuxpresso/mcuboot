@@ -1,5 +1,5 @@
 Release Name: MCUBoot
-Release Version: 1.9.0
+Release Version: 2.0.0
 Outgoing License: Apache License Version 2.0, January 2004
 License File: LICENSE
 Format: Source

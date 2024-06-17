@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ksdk:manifest xmlns:ksdk="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="SDK_2.x_middleware_mcuboot_opensource_MIMXRT1021_manifest_v3_14" name="MCUBoot" brief="MCUBoot opensource bootloader" format_version="3.14" api_version="2.0.0" xsi:schemaLocation="http://nxp.com/ksdk/2.0/ksdk_manifest_v3.0.xsd http://nxp.com/mcuxpresso/sdk/sdk_manifest_v3.14.xsd">
+
+  <externalDefinitions>
+    <definition extID="MIMXRT1021xxxxx"/>
+    <definition extID="armgcc"/>
+    <definition extID="middleware.mbedtls.MIMXRT1021"/>
+  </externalDefinitions>
+  <ksdk id="MCUXpressoSDK216000_middleware_mcuboot_opensource_MIMXRT1021_manifest_v3_14" name="MCUXpressoSDK216000_middleware_mcuboot_opensource_MIMXRT1021_manifest_v3_14" version="2.16.000" revision="2.16.000"/>
+  <components>
+    <component id="middleware.mcuboot.MIMXRT1021" name="mcuboot" brief="mcuboot" version="2.0.0" full_name="MCUboot bootloader" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././" project_base_path="mcuboot">
+      <dependencies>
+        <device_dependency value="MIMXRT1021xxxxx"/>
+      </dependencies>
+      <source exclude="true" relative_path="./" type="other">
+        <files mask="LICENSE" hidden="true"/>
+        <files mask="NOTICE" hidden="true"/>
+      </source>
+      <source exclude="true" relative_path="./" type="doc">
+        <files mask="README.md" hidden="true"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_mcuboot.cmake" hidden="true"/>
+      </source>
+    </component>
+    <!--<component id="middleware.mcuboot.docs.MIMXRT1021" name="mcuboot_docs" version="2.0.0" package_base_path=".././" project_base_path="mcuboot"/>-->
+    <!--<component id="middleware.mcuboot.scripts.MIMXRT1021" name="mcuboot_scripts" version="2.0.0" package_base_path=".././" project_base_path="mcuboot">
+  <source relative_path="./" type="script">
+    <files mask="assemble.py"/>
+    <files mask="flash.sh"/>
+    <files mask="gdb-boot.sh"/>
+    <files mask="imgtool.py"/>
+    <files mask="jgdb.sh"/>
+    <files mask="jl.sh"/>
+    <files mask="setup.py"/>
+    <files mask="__init__.py"/>
+    <files mask="boot_record.py"/>
+    <files mask="dumpinfo.py"/>
+    <files mask="image.py"/>
+    <files mask="main.py"/>
+    <files mask="version.py"/>
+    <files mask="__init__.py"/>
+    <files mask="ecdsa.py"/>
+    <files mask="ecdsa_test.py"/>
+    <files mask="ed25519.py"/>
+    <files mask="ed25519_test.py"/>
+    <files mask="general.py"/>
+    <files mask="privatebytes.py"/>
+    <files mask="rsa.py"/>
+    <files mask="rsa_test.py"/>
+    <files mask="x25519.py"/>
+  </source>
+  <source relative_path="./" type="other">
+    <files mask="imgtool.nix"/>
+    <files mask="mcubin.bt"/>
+  </source>
+  <source relative_path="./" type="doc">
+    <files mask="requirements.txt"/>
+  </source>
+</component>-->
+    <component id="middleware.mcuboot.tinycrypt.MIMXRT1021" name="mcuboot_tinycrypt" brief="TinyCrypt fork in MCUBoot repository" version="0.2.8" full_name="mcuboot_tinycrypt_fork" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././ext/tinycrypt/lib" project_base_path="tinycrypt">
+      <dependencies>
+        <device_dependency value="MIMXRT1021xxxxx"/>
+      </dependencies>
+      <source relative_path="../../../include/tinycrypt" project_relative_path="include/tinycrypt" type="c_include">
+        <files mask="aes.h"/>
+        <files mask="cbc_mode.h"/>
+        <files mask="ccm_mode.h"/>
+        <files mask="cmac_mode.h"/>
+        <files mask="constants.h"/>
+        <files mask="ctr_mode.h"/>
+        <files mask="ctr_prng.h"/>
+        <files mask="ecc.h"/>
+        <files mask="ecc_dsa.h"/>
+        <files mask="hmac.h"/>
+        <files mask="hmac_prng.h"/>
+        <files mask="sha256.h"/>
+        <files mask="utils.h"/>
+      </source>
+      <source relative_path="../../../source" project_relative_path="source" type="src">
+        <files mask="aes_decrypt.c"/>
+        <files mask="aes_encrypt.c"/>
+        <files mask="cbc_mode.c"/>
+        <files mask="ccm_mode.c"/>
+        <files mask="cmac_mode.c"/>
+        <files mask="ctr_mode.c"/>
+        <files mask="ctr_prng.c"/>
+        <files mask="ecc.c"/>
+        <files mask="ecc_dsa.c"/>
+        <files mask="hmac.c"/>
+        <files mask="hmac_prng.c"/>
+        <files mask="sha256.c"/>
+        <files mask="utils.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_mcuboot_tinycrypt.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="../../../include" project_relative_path="include" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.mcuboot.encrypted_xip.MIMXRT1021" name="mcuboot_encrypted_xip" brief="Encrypted XIP abstraction for MCUBoot" version="1.0.0" full_name="mcuboot_encrypted_xip" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././ext/nxp_encrypted_xip" project_base_path="encrypted_xip">
+      <dependencies>
+        <device_dependency value="MIMXRT1021xxxxx"/>
+      </dependencies>
+      <source relative_path="../../include" project_relative_path="include" type="c_include">
+        <files mask="mcuboot_enc_support.h"/>
+        <files mask="platform_enc_common.h"/>
+      </source>
+      <source relative_path="../../src" project_relative_path="src" type="src">
+        <files mask="mcuboot_enc_support.c"/>
+        <files mask="platform_enc_bee.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_mcuboot_encrypted_xip.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="../../include" project_relative_path="include" type="c_include"/>
+      </include_paths>
+    </component>
+    <component id="middleware.mcuboot.mbedtls-asn1.MIMXRT1021" name="mcuboot_mbedtls_asn1" brief="MCUBoot's subset of MbedTLS for ASN.1 parsing" version="2.0.0" full_name="mcuboot_mbedtls-asn1" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././ext/mbedtls-asn1" project_base_path="mbedtls-asn1">
+      <dependencies>
+        <device_dependency value="MIMXRT1021xxxxx"/>
+      </dependencies>
+      <source relative_path="../../include/mbedtls" project_relative_path="include/mbedtls" type="c_include">
+        <files mask="asn1.h"/>
+        <files mask="bignum.h"/>
+        <files mask="build_info.h"/>
+        <files mask="check_config.h"/>
+        <files mask="ecdsa.h"/>
+        <files mask="ecp.h"/>
+        <files mask="error.h"/>
+        <files mask="mbedtls_config.h"/>
+        <files mask="md.h"/>
+        <files mask="oid.h"/>
+        <files mask="pk.h"/>
+        <files mask="platform.h"/>
+        <files mask="platform_util.h"/>
+        <files mask="private_access.h"/>
+        <files mask="rsa.h"/>
+        <files mask="threading.h"/>
+        <files mask="version.h"/>
+      </source>
+      <source relative_path="../../include" project_relative_path="include" type="c_include">
+        <files mask="common.h"/>
+      </source>
+      <source relative_path="../../src" project_relative_path="src" type="src">
+        <files mask="asn1parse.c"/>
+        <files mask="platform_util.c"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_mcuboot_mbedtls-asn1.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="../../include" project_relative_path="include" type="c_include"/>
+      </include_paths>
+    </component>
+    <!--<component id="middleware.mcuboot.unused_files.MIMXRT1021" name="mcuboot_unused_files" version="2.0.0" package_base_path=".././" project_base_path="mcuboot">
+  <source relative_path="./" type="other">
+    <files mask=".gitignore"/>
+    <files mask=".gitmodules"/>
+    <files mask=".mbedignore"/>
+    <files mask=".travis.yml-disabled"/>
+    <files mask="CODE_OF_CONDUCT.md"/>
+    <files mask="Cargo.lock"/>
+    <files mask="Cargo.toml"/>
+    <files mask="NOTICE"/>
+    <files mask="README.md"/>
+    <files mask="enc-aes128kw.b64"/>
+    <files mask="enc-aes256kw.b64"/>
+    <files mask="enc-ec256-priv.pem"/>
+    <files mask="enc-ec256-pub.pem"/>
+    <files mask="enc-rsa2048-priv.pem"/>
+    <files mask="enc-rsa2048-pub.pem"/>
+    <files mask="enc-x25519-priv.pem"/>
+    <files mask="enc-x25519-pub.pem"/>
+    <files mask="go.mod"/>
+    <files mask="project.yml"/>
+    <files mask="repository.yml"/>
+    <files mask="root-ec-p256-pkcs8.pem"/>
+    <files mask="root-ec-p256.pem"/>
+    <files mask="root-ec-p384-pkcs8.pem"/>
+    <files mask="root-ec-p384.pem"/>
+    <files mask="root-ed25519.pem"/>
+    <files mask="root-rsa-2048.pem"/>
+    <files mask="root-rsa-3072.pem"/>
+  </source>
+  <source relative_path="./" type="doc">
+    <files mask="ChangeLogKSDK.txt"/>
+    <files mask="SW-Content-Register.txt"/>
+  </source>
+</component>-->
+    <component id="middleware.mcuboot.bootutil.MIMXRT1021" name="mcuboot_bootutil" brief="mcuboot" version="2.0.0" full_name="MCUboot bootloader" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././boot/bootutil" project_base_path="bootutil">
+      <dependencies>
+        <all>
+          <any_of>
+            <component_dependency value="middleware.mbedtls.MIMXRT1021"/>
+            <component_dependency value="middleware.mcuboot.tinycrypt.MIMXRT1021"/>
+          </any_of>
+          <device_dependency value="MIMXRT1021xxxxx"/>
+        </all>
+      </dependencies>
+      <source relative_path="../../include/bootutil" project_relative_path="include/bootutil" type="c_include">
+        <files mask="bench.h"/>
+        <files mask="boot_hooks.h"/>
+        <files mask="boot_public_hooks.h"/>
+        <files mask="boot_record.h"/>
+        <files mask="boot_status.h"/>
+        <files mask="bootutil.h"/>
+        <files mask="bootutil_log.h"/>
+        <files mask="bootutil_public.h"/>
+        <files mask="bootutil_test.h"/>
+        <files mask="caps.h"/>
+        <files mask="enc_key.h"/>
+        <files mask="enc_key_public.h"/>
+        <files mask="fault_injection_hardening.h"/>
+        <files mask="fault_injection_hardening_delay_rng.h"/>
+        <files mask="ignore.h"/>
+        <files mask="image.h"/>
+        <files mask="mcuboot_status.h"/>
+        <files mask="ramload.h"/>
+        <files mask="security_cnt.h"/>
+        <files mask="sign_key.h"/>
+      </source>
+      <source relative_path="../../include/bootutil/crypto" project_relative_path="include/bootutil/crypto" type="c_include">
+        <files mask="aes_ctr.h"/>
+        <files mask="aes_kw.h"/>
+        <files mask="common.h"/>
+        <files mask="ecdh_p256.h"/>
+        <files mask="ecdh_x25519.h"/>
+        <files mask="ecdsa.h"/>
+        <files mask="hmac_sha256.h"/>
+        <files mask="rsa.h"/>
+        <files mask="sha.h"/>
+      </source>
+      <source relative_path="../../src" project_relative_path="src" type="src">
+        <files mask="boot_record.c"/>
+        <files mask="bootutil_misc.c"/>
+        <files mask="bootutil_public.c"/>
+        <files mask="caps.c"/>
+        <files mask="encrypted.c"/>
+        <files mask="fault_injection_hardening.c"/>
+        <files mask="fault_injection_hardening_delay_rng_mbedtls.c"/>
+        <files mask="image_ecdsa.c"/>
+        <files mask="image_ed25519.c"/>
+        <files mask="image_rsa.c"/>
+        <files mask="image_validate.c"/>
+        <files mask="loader.c"/>
+        <files mask="swap_misc.c"/>
+        <files mask="swap_move.c"/>
+        <files mask="swap_scratch.c"/>
+        <files mask="tlv.c"/>
+      </source>
+      <source relative_path="../../src" project_relative_path="src" type="c_include">
+        <files mask="bootutil_misc.h"/>
+        <files mask="bootutil_priv.h"/>
+        <files mask="swap_priv.h"/>
+      </source>
+      <source toolchain="armgcc" relative_path="./" type="workspace">
+        <files mask="middleware_mcuboot_bootutil.cmake" hidden="true"/>
+      </source>
+      <include_paths>
+        <include_path relative_path="../../src" project_relative_path="src" type="c_include"/>
+        <include_path relative_path="../../include" project_relative_path="include" type="c_include"/>
+      </include_paths>
+    </component>
+  </components>
+</ksdk:manifest>
