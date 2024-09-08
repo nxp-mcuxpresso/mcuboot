@@ -12,22 +12,20 @@
 #include "fsl_common.h"
 #include "flash_map.h"
 
-/* Checks whether active slot has valid encryption metadata.  */
-status_t platform_enc_check_slot(struct flash_area *fa, uint32_t *active_slot);
+/* Checks whether encryption metadata are valid  */
+status_t platform_enc_cfg_read(struct flash_area *fa_meta, uint32_t *active_slot);
 
-/* Initializes new encryption metadata with random nonce in active slot */
-status_t platform_enc_prepare_slot(struct flash_area *fa, uint32_t active_slot);
+/* Initializes new encryption metadata with random nonce */
+status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t active_slot);
 
 /* Initializes platform on-the-fly encryption based on configuration in encryption metadata */
-status_t platform_enc_init_slot(struct flash_area *fa, uint8_t *nonce);
+status_t platform_enc_cfg_init(struct flash_area *fa_meta, uint8_t *nonce);
 
-/* Deinitializes platform on-the-fly encryption */
-status_t platform_enc_deinit_slot(struct flash_area *fa);
-
-/* Finish initialization of on-the-fly encryption (if needed) */
-status_t platform_enc_finish(struct flash_area *fa);
+status_t platform_enc_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce);
 
 /* Encrypts data */
 status_t platform_enc_encrypt_data(uint32_t flash_addr, uint8_t *nonce, uint8_t *input, uint8_t *output, uint32_t len);
+
+void hexdump(const void *src, size_t size);
 
 #endif

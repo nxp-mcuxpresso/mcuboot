@@ -6,7 +6,7 @@
     <definition extID="armgcc"/>
     <definition extID="middleware.mbedtls.MCXN547"/>
   </externalDefinitions>
-  <ksdk id="MCUXpressoSDK216000_middleware_mcuboot_opensource_MCXN547_manifest_v3_14" name="MCUXpressoSDK216000_middleware_mcuboot_opensource_MCXN547_manifest_v3_14" version="2.16.000" revision="2.16.000"/>
+  <ksdk id="MCUXpressoSDK216100_middleware_mcuboot_opensource_MCXN547_manifest_v3_14" name="MCUXpressoSDK216100_middleware_mcuboot_opensource_MCXN547_manifest_v3_14" version="2.16.100" revision="2.16.100"/>
   <components>
     <component id="middleware.mcuboot.MCXN547" name="mcuboot" brief="mcuboot" version="2.0.0" full_name="MCUboot bootloader" category="File System/MCUboot bootloader" user_visible="false" type="middleware" package_base_path=".././" project_base_path="mcuboot">
       <dependencies>
@@ -110,6 +110,20 @@
       <source relative_path="../../src" project_relative_path="src" type="src">
         <files mask="mcuboot_enc_support.c"/>
         <files mask="platform_enc_bee.c"/>
+      </source>
+      <source relative_path="./" type="doc">
+        <files mask="mcuboot_encrypted_xip.md"/>
+      </source>
+      <source relative_path="../../enc_xip_images" project_relative_path="enc_xip_images" type="image">
+        <files mask="bee_metadata.jpg"/>
+        <files mask="bee_rom_layout.jpg"/>
+        <files mask="device_fleet_graph.jpg"/>
+        <files mask="general_metadata.jpg"/>
+        <files mask="keys_scheme.jpg"/>
+        <files mask="overwrite_only.jpg"/>
+        <files mask="overwrite_only_flow.jpg"/>
+        <files mask="three_slot.jpg"/>
+        <files mask="three_slot_flow.jpg"/>
       </source>
       <source toolchain="armgcc" relative_path="./" type="workspace">
         <files mask="middleware_mcuboot_encrypted_xip.cmake" hidden="true"/>

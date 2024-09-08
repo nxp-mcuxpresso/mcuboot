@@ -511,7 +511,7 @@ boot_image_check(struct boot_loader_state *state, struct image_header *hdr,
         if (rc < 0) {
             FIH_RET(fih_rc);
         }
-#ifdef CONFIG_MCUBOOT_ENCRYPTED_XIP_SUPPORT
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
         /* Both slots are used for staging encrypted image */
         uint32_t active_slot = state->slot_usage[BOOT_CURR_IMG(state)].active_slot;
         if (rc == 0 && boot_enc_set_key(BOOT_CURR_ENC(state), active_slot, bs)) {
@@ -1188,6 +1188,12 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
         }
     }
 #endif
+    
+    rc = BOOT_HOOK_CALL(boot_copy_region_pre_hook, 0, BOOT_CURR_IMG(state),
+                        BOOT_IMG_AREA(state, BOOT_PRIMARY_SLOT), size);
+    if (rc != 0) {
+        return rc;
+    }
 
     BOOT_LOG_INF("Image %d copying the secondary slot to the primary slot: 0x%x bytes",
                  image_index, size);

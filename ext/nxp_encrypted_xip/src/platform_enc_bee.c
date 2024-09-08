@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 #include "sblconfig.h"
-#ifdef CONFIG_MCUBOOT_ENCRYPTED_XIP_SUPPORT
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
 
 #include <ctype.h>
 
@@ -38,9 +38,9 @@
  * Definitions
  ******************************************************************************/
 
-#define FLASH_ADDR      BOOT_FLASH_ENC_APP
-/* Encryption metadata are not encrypted, reserve flash sector */
-#define BEE_REGION_SIZE (BOOT_FLASH_ACT_APP - BOOT_FLASH_ENC_APP - MFLASH_SECTOR_SIZE)
+#define FLASH_ADDR      BOOT_FLASH_EXEC_APP
+/* Encryption metadata or mcuboot trailer are not encrypted, reserve flash sector */
+#define BEE_REGION_SIZE (BOOT_FLASH_CAND_APP - BOOT_FLASH_ACT_APP - MFLASH_SECTOR_SIZE)
 
 #define FLASH_PAGE_SIZE         256
 
@@ -653,20 +653,20 @@ static status_t fac_regions_setup(prdb_t *prdb)
 /**
 Function checks whether encryption metadata are present and not corrupted.
 
-\param fa pointer to flash area of encrypted slot
-\param active_slot stores found value of reference slot. 0 - primary 1 - secondary                
+\param  fa pointer to flash metadata area
+\param  active_slot stores number of reference slot. 0 - primary 1 - secondary                
 
 \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
 */
-status_t platform_enc_check_slot(struct flash_area *fa, uint32_t *active_slot)
+status_t platform_enc_cfg_read(struct flash_area *fa_meta, uint32_t *active_slot)
 {
   enc_metadata_t metadata;
   uint32_t off;
 
   memset(&metadata, 0, sizeof(enc_metadata_t));
-  off = fa->fa_size - sizeof(enc_metadata_t);
+  off = fa_meta->fa_size - sizeof(enc_metadata_t);
   
-  if(flash_area_read(fa, off, &metadata, sizeof(enc_metadata_t)) != 0 )
+  if(flash_area_read(fa_meta, off, &metadata, sizeof(enc_metadata_t)) != 0 )
      return kStatus_Fail;
   if(magic_check(metadata.magic))
   {
@@ -687,7 +687,8 @@ status_t platform_enc_check_slot(struct flash_area *fa, uint32_t *active_slot)
     {
       if(metadata.active_slot == 0 || metadata.active_slot == 1)
       {
-        *active_slot = metadata.active_slot;
+        if(active_slot != NULL)
+          *active_slot = metadata.active_slot;
         return kStatus_Success;
       }
     }
@@ -697,14 +698,14 @@ status_t platform_enc_check_slot(struct flash_area *fa, uint32_t *active_slot)
 }
 
 /**
-Function for programming new configuration block onto end of flash area. 
+Function for programming new encryption metadata
 
-\param fa pointer to flash area of encrypted slot
+\param fa pointer to flash metadata area
 \param active_slot slot number to be referenced. 0 - primary 1 - secondary 
 
 \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
 */
-status_t platform_enc_prepare_slot(struct flash_area *fa, uint32_t active_slot)
+status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t active_slot)
 {
   status_t status = kStatus_Fail;
   uint32_t off_end;
@@ -714,10 +715,10 @@ status_t platform_enc_prepare_slot(struct flash_area *fa, uint32_t active_slot)
 
   prdb = &metadata.prdb;
   kib = &metadata.kib;
-  off_end = fa->fa_size;
+  off_end = fa_meta->fa_size;
   
   /* Erase metadata storage memory */
-  if(flash_area_erase(fa, off_end - MFLASH_SECTOR_SIZE, MFLASH_SECTOR_SIZE) != 0)
+  if(flash_area_erase(fa_meta, off_end - MFLASH_SECTOR_SIZE, MFLASH_SECTOR_SIZE) != 0)
   {
     PRINTF("Erase of metadata storage memory failed\n");
     goto error;
@@ -752,7 +753,7 @@ status_t platform_enc_prepare_slot(struct flash_area *fa, uint32_t active_slot)
   memcpy(metadata.hash, md, 16);
   
   /* Write hashed encryption metadata into storage memory */
-  if(flash_area_write(fa, off_end - sizeof(enc_metadata_t), &metadata, sizeof(enc_metadata_t)) != 0)
+  if(flash_area_write(fa_meta, off_end - sizeof(enc_metadata_t), &metadata, sizeof(enc_metadata_t)) != 0)
   {
     PRINTF("Failed to write encryption metadata\n");
     goto error;
@@ -775,7 +776,7 @@ for data encryption and logic access into encrypted region returns decrypted dat
 
 \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
 */
-status_t platform_enc_init_slot(struct flash_area *fa, uint8_t *nonce)
+status_t platform_enc_cfg_init(struct flash_area *fa_meta, uint8_t *nonce)
 {
   status_t status;
   bee_region_config_t beeConfig;
@@ -785,8 +786,8 @@ status_t platform_enc_init_slot(struct flash_area *fa, uint8_t *nonce)
   uint32_t bee_key_sel;
   
   /* Load PRDB */
-  off = fa->fa_size - sizeof(enc_metadata_t);
-  status = flash_area_read(fa, off, &metadata, sizeof(enc_metadata_t));
+  off = fa_meta->fa_size - sizeof(enc_metadata_t);
+  status = flash_area_read(fa_meta, off, &metadata, sizeof(enc_metadata_t));
   if(status != kStatus_Success)
   {
     PRINTF("Flash read failed\n");
@@ -833,7 +834,8 @@ status_t platform_enc_init_slot(struct flash_area *fa, uint8_t *nonce)
   nonce128b[0]= 0;
   BEE_SetRegionNonce(BEE, kBEE_Region1, (uint8_t*)nonce128b, 16);
   
-  memcpy(nonce, prdb.encrypt_region_info.aes_ctr_nonce, 16);
+  if(nonce != NULL)
+    memcpy(nonce, prdb.encrypt_region_info.aes_ctr_nonce, 16);
     
   uint32_t beeKey[16 / sizeof(uint32_t)] = SW_AES_KEY;
   aes_block_swap((uint8_t *)beeKey);
@@ -845,29 +847,52 @@ status_t platform_enc_init_slot(struct flash_area *fa, uint8_t *nonce)
   }
     
   BEE_Enable(BEE); 
+  
+  /* Data cache needed for unaligned access */
+  SCB_InvalidateDCache();
+  SCB_EnableDCache();
 
-  PRINTF("On-the-fly initialization completed\n");
+  PRINTF("On-the-fly decryption initialization completed\n");
   return kStatus_Success;
 error:
   return kStatus_Fail;
 }
 
-status_t platform_enc_deinit_slot(struct flash_area *fa)
+status_t platform_enc_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce)
 {
-  /* For BEE nothing to do here */
+  status_t status;
+  enc_metadata_t metadata;
+  prdb_t prdb;
+  uint32_t off;
+  
+  /* Load PRDB */
+  off = fa_meta->fa_size - sizeof(enc_metadata_t);
+  status = flash_area_read(fa_meta, off, &metadata, sizeof(enc_metadata_t));
+  if(status != kStatus_Success)
+  {
+    PRINTF("Flash read failed\n");
+    goto error;
+  }
+  
+  status = decrypt_prdb_kib(&prdb, (uint32_t *)&metadata.kib, (uint32_t *)&metadata.prdb);
+  if(status != kStatus_Success)
+  {
+    PRINTF("Fatal error: decrypted PRDB is invalid\n");
+    goto error;
+  }
+     
+  memcpy(nonce, prdb.encrypt_region_info.aes_ctr_nonce, 16);
+    
   return kStatus_Success;
-}
-
-status_t platform_enc_finish(struct flash_area *fa){
-  /* For BEE nothing to do here */
-  return kStatus_Success;
+error:
+  return kStatus_Fail;
 }
 
 /**
 Function encrypts data by AES-CTR encryption. Internally selects key based on
 value of BEE_KEY_SELECTION fuse.
 
-\param flash_addr       pointer to DCP handler object
+\param flash_addr       adress offset
 \param nonce            pointer to nonce array
 \param input            pointer to input data to be encrypted
 \param output           pointer to output buffer
@@ -898,6 +923,7 @@ status_t platform_enc_encrypt_data(uint32_t flash_addr, uint8_t *nonce, uint8_t 
   return status;
 }
 
+
 /*******************************************************************************
  * Test
  ******************************************************************************/
@@ -927,6 +953,8 @@ void hexdump(const void *src, size_t size)
     }
     PUTCHAR('\n');
 }
+
+
 
 void dump_image(void)
 {
@@ -960,4 +988,4 @@ error:
 }
 #endif
 
-#endif /* CONFIG_MCUBOOT_ENCRYPTED_XIP_SUPPORT */
+#endif /* CONFIG_ENCRYPT_XIP_EXT_ENABLE */

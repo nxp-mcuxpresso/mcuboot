@@ -11,7 +11,7 @@
  ******************************************************************************/
 
 #include "sblconfig.h"
-#ifdef CONFIG_MCUBOOT_ENCRYPTED_XIP_SUPPORT
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
 
 #include <stdint.h>
 
@@ -36,13 +36,13 @@
 
 #if (BOOT_FLASH_ACT_APP % MFLASH_SECTOR_SIZE != 0) || \
     (BOOT_FLASH_CAND_APP % MFLASH_SECTOR_SIZE != 0)|| \
-    (BOOT_FLASH_ENC_APP % MFLASH_SECTOR_SIZE != 0)
+    (BOOT_FLASH_EXEC_APP % MFLASH_SECTOR_SIZE != 0)
 #error "Incorrect aligment of image slots"
 #endif
 
 #define PRIMARY_SLOT_OFFSET     (BOOT_FLASH_ACT_APP - BOOT_FLASH_BASE)
 #define SECONDARY_SLOT_OFFSET   (BOOT_FLASH_CAND_APP - BOOT_FLASH_BASE)
-#define ENCRYPTED_SLOT_OFFSET   (BOOT_FLASH_ENC_APP - BOOT_FLASH_BASE)
+#define ENCRYPTED_SLOT_OFFSET   (BOOT_FLASH_EXEC_APP - BOOT_FLASH_BASE)
 
 #define TLV_KEY_LEN             256
 #define TLV_SHA256_LEN          32
@@ -283,7 +283,7 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
   /* Processing image header */
   bytes_copied = 0;
   cur_off = 0;
-  flash_addr = BOOT_FLASH_ENC_APP;
+  flash_addr = BOOT_FLASH_EXEC_APP;
   while(bytes_copied < hdr_size)
   {
     
@@ -469,7 +469,7 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
                      (enc_data.slot == 0) ? "primary" : "secondary");
   
   enc_data.fap_src = &boot_flash_map[enc_data.slot];
-  enc_data.fap_dst = &boot_enc_flash_map[0];
+  enc_data.fap_dst = &boot_flash_exec_map[0];
   
   if(flash_area_read(enc_data.fap_src, 0, (void *)&enc_data.hdr, 
                      sizeof(struct image_header)) != 0)
@@ -505,14 +505,14 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
   
   /* Check content in execution slot and eventually validate it against reference */
   BOOT_LOG_INF("Checking execution slot...");
-  status = platform_enc_check_slot(boot_enc_flash_map, &active_slot);
+  status = platform_enc_cfg_read(boot_flash_meta_map, &active_slot);
   if(status == kStatus_Success)
   {
     BOOT_LOG_INF("An image in execution slot was found");
     BOOT_LOG_INF("Comparing the image against reference chosen by MCUBoot...");
     if(active_slot == enc_data.slot)
     {  
-      if(platform_enc_init_slot(boot_enc_flash_map, (uint8_t *)nonce) == kStatus_Success){
+      if(platform_enc_cfg_init(boot_flash_meta_map, (uint8_t *)nonce) == kStatus_Success){
         if(verify_image(&enc_data) == kStatus_Success){
           /* The image in execution slot is valid */
           BOOT_LOG_INF("The image is valid");
@@ -521,20 +521,19 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
       }
       BOOT_LOG_INF("Image in execution slot is invalid");
     }
-    platform_enc_deinit_slot(boot_enc_flash_map);
   }
   BOOT_LOG_INF("No valid image found in staging area...");
 
-  /* Install new image */
+  /* Install new image with new encryption metadata */
   BOOT_LOG_INF("Preparing execution slot for new image");
   
-  if(platform_enc_prepare_slot(boot_enc_flash_map, enc_data.slot) != kStatus_Success)
+  if(platform_enc_cfg_write(boot_flash_meta_map, enc_data.slot) != kStatus_Success)
     goto error;
   
-  BOOT_LOG_INF("Installing new image into execution slot from staged area");
+  BOOT_LOG_INF("Installing new image into execution slot from staged area...");
 
   /* Prepare on-the-fly decryption based on configuration */
-  if(platform_enc_init_slot(boot_enc_flash_map, (uint8_t *)nonce) != kStatus_Success)
+  if(platform_enc_cfg_init(boot_flash_meta_map, (uint8_t *)nonce) != kStatus_Success)
     goto error;
   /* Re-encrypt image from staging slot to execution slot */
   if(load_image(&enc_data, (uint8_t *)nonce) != kStatus_Success)
@@ -559,4 +558,4 @@ error:
   return kStatus_Fail;
 }
 
-#endif /* CONFIG_MCUBOOT_ENCRYPTED_XIP_SUPPORT */
+#endif /* CONFIG_ENCRYPT_XIP_EXT_ENABLE */
