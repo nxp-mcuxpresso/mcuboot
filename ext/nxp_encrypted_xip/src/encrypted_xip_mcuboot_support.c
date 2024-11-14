@@ -18,8 +18,8 @@
 
 #include "fsl_cache.h"
 #include "fsl_debug_console.h"
-#include "mcuboot_enc_support.h"
-#include "platform_enc_common.h"
+#include "encrypted_xip_mcuboot_support.h"
+#include "encrypted_xip.h"
 #include "mflash_drv.h"
 
 #include "sysflash/sysflash.h"
@@ -38,7 +38,7 @@
 /*
  * @brief Helper to assert function return status.
  *
- * @details Print finshed message and trap forever upon failure.
+ * @details Print finished message and trap forever upon failure.
  */
 #define ASSERT_ENC(expected, actual, ...) \
     do                                    \
@@ -323,21 +323,30 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
     int rc;
 
 #if defined(ENCRYPTED_XIP_IPED)
-    /* In case of encrypted XIP we have to erase whole slot */
-    /* ToDo can be optimalized with calculation of number of sectors used for IPED tags */
-    BOOT_LOG_INF("Erasing the execution slot...");
+    /* Speed up the erase process without erasing whole slot */
+    const uint32_t slotsize = fap_dst->fa_size;
+    const uint32_t page_align = 4*MFLASH_PAGE_SIZE;
+    const uint32_t max_slotcnt = (slotsize - 1 + MFLASH_SECTOR_SIZE) / MFLASH_SECTOR_SIZE;
     uint32_t slotaddr = fap_dst->fa_off;
-    uint32_t slotsize = fap_dst->fa_size;
-    uint32_t slotcnt = (slotsize - 1 + MFLASH_SECTOR_SIZE) / MFLASH_SECTOR_SIZE;
-    //BOOT_LOG_INF("slotaddr 0x%X", slotaddr);
-    //BOOT_LOG_INF("slotsize 0x%X", slotsize);
-    //BOOT_LOG_INF("slotcnt  %d", slotcnt);  
+    
+    //calculate number of slots to erase
+    //align up to 4*page size
+    uint32_t tmp = sz + (sz % page_align == 0 ? 0 : (page_align - sz % page_align));
+    //1.25x
+    tmp = tmp * 5 / 4;
+    uint32_t slotcnt = (tmp + (tmp % MFLASH_SECTOR_SIZE == 0 ? 0 : (MFLASH_SECTOR_SIZE - tmp % MFLASH_SECTOR_SIZE))) / MFLASH_SECTOR_SIZE;
+    if(slotcnt >= max_slotcnt){
+        BOOT_LOG_ERR("Final size of encrypted image exceeds slot size!");
+        goto error;
+    }
+    BOOT_LOG_INF("Erasing the execution slot...");
+    
     for (int i = 0; i < slotcnt; i++) {
 	if (mflash_drv_sector_erase(slotaddr) != kStatus_Success) {
 	    BOOT_LOG_ERR("Failed to erase sector at 0x%X\r\n", slotaddr);
 	    goto error;;
         }
-        if (i % 10 == 0)
+        if (i % 4 == 0)
             PUTCHAR('.');
         slotaddr += MFLASH_SECTOR_SIZE;
     }
@@ -404,7 +413,7 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
             }
         }
 #endif
-        rc = platform_enc_encrypt_data(flash_dst_addr + abs_off, nonce, 
+        rc = encrypted_xip_encrypt_data(flash_dst_addr + abs_off, nonce, 
                                        (uint8_t*) buf, (uint8_t*) buf, chunk_sz);
 	if (rc != 0) {
             BOOT_LOG_INF("Encryption failed");
@@ -423,8 +432,8 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
 #else
         chunk_sz_tmp = chunk_sz;
 #endif
-        rc = platform_enc_flash_write(fap_dst, bytes_copied, buf, chunk_sz_tmp);
-        if (bytes_copied % (MFLASH_SECTOR_SIZE*10) == 0)
+        rc = encrypted_xip_flash_write(fap_dst, bytes_copied, buf, chunk_sz_tmp);
+        if (bytes_copied % (MFLASH_SECTOR_SIZE*4) == 0)
             PUTCHAR('.');
         if (rc != 0) {
             BOOT_LOG_INF("Flash write failed");
@@ -474,17 +483,17 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
  */
 
 /**
- Function analyzes encrypted image referenced by MCUBoot response object and
- compares it with an image in execution slot. If the content of execution slot is
+ Function analyzes an encrypted image referenced by MCUBoot response object and
+ compares it with the image in execution slot. If the content of execution slot is
  invalid then the image from staged slot is re-encrypted into execution slot with
- new encryption configuration (such as IV).
- If success the response object is adjusted with execution slot address.
+ new encryption configuration to ensure different ciphertext per update.
+ If success the response object is adjusted with the address of execution slot .
 
  \param rsp pointer to boot_rsp response object
 
  \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
  */
-status_t mcuboot_process_encryption(struct boot_rsp *rsp) 
+status_t encrypted_xip_process(struct boot_rsp *rsp) 
 {
 	enc_data_t enc_data;
 	uint32_t tlv_off;
@@ -494,9 +503,9 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
 
 	bootutil_aes_ctr_init(&enc_data.ctx);
         
-        status = platform_enc_init();
+        status = encrypted_xip_init();
         if(status != kStatus_Success){
-            BOOT_LOG_INF("platform_enc_init failed");
+            BOOT_LOG_INF("encrypted_xip_init failed");
             goto clean;
         }
 
@@ -532,9 +541,6 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
 	if (enc_data.tlv_info.it_magic != IMAGE_TLV_INFO_MAGIC)
 		goto clean;
 
-	//BOOT_LOG_INF("Analyzed mcuboot image...");
-	//printf_enc_data(&enc_data);
-
 	/* Decrypt and load AES-CTR key located in TLV of referenced image */
 	BOOT_LOG_INF("Decrypting and loading the MCUBOOT AES-CTR key for staged image...");
         status = find_and_load_aes_key(&enc_data);
@@ -545,13 +551,18 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
 
 	/* Check content in execution slot and eventually validate it against reference */
 	BOOT_LOG_INF("Checking the execution slot...");
-	status = platform_enc_cfg_check(boot_flash_meta_map, &active_slot);
-	if (status == kStatus_Success) {
+        bool cfg_valid;
+	status = encrypted_xip_cfg_check(boot_flash_meta_map, &cfg_valid, &active_slot);
+        if (status != kStatus_Success) {
+            BOOT_LOG_INF("encrypted_xip_cfg_check failed");
+            goto clean;
+        }
+	if (cfg_valid == true) {
             BOOT_LOG_INF("An image in execution slot was found");
             BOOT_LOG_INF("Comparing the image against reference...");
             if (active_slot == enc_data.slot) {
                 /* Expected slot number matches, initialize encryption unit */
-                status = platform_enc_cfg_initEncryption(boot_flash_meta_map);
+                status = encrypted_xip_cfg_initEncryption(boot_flash_meta_map);
                 if (status == kStatus_Success) {
                     status = verify_image(&enc_data);
                     if (status == kStatus_Success) {
@@ -568,20 +579,20 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
 	/* Install new image with new encryption metadata */
 	BOOT_LOG_INF("Preparing execution slot for new image");
 
-        status = platform_enc_cfg_write(boot_flash_meta_map);
+        status = encrypted_xip_cfg_write(boot_flash_meta_map);
 	if (status != kStatus_Success){
-            BOOT_LOG_INF("platform_enc_cfg_write failed");
+            BOOT_LOG_INF("encrypted_xip_cfg_write failed");
             goto clean;
         }
 	/* Prepare on-the-fly decryption based on configuration */
-        status = platform_enc_cfg_initEncryption(boot_flash_meta_map);
+        status = encrypted_xip_cfg_initEncryption(boot_flash_meta_map);
         if (status != kStatus_Success) {
-            BOOT_LOG_INF("platform_enc_cfg_initEncryption failed");
+            BOOT_LOG_INF("encrypted_xip_cfg_initEncryption failed");
             goto clean;
         }
-        status = platform_enc_cfg_getNonce(boot_flash_meta_map, (uint8_t*) nonce);
+        status = encrypted_xip_cfg_getNonce(boot_flash_meta_map, (uint8_t*) nonce);
 	if (status != kStatus_Success){
-            BOOT_LOG_INF("platform_enc_cfg_initEncryption failed");  
+            BOOT_LOG_INF("encrypted_xip_cfg_initEncryption failed");  
             goto clean;
         }
         BOOT_LOG_INF("Installing new image into execution slot from staged area...");
@@ -598,24 +609,18 @@ status_t mcuboot_process_encryption(struct boot_rsp *rsp)
             goto clean;
         }
         
-        status = platform_enc_cfg_confirm(boot_flash_meta_map, enc_data.slot);
+        status = encrypted_xip_cfg_confirm(boot_flash_meta_map, enc_data.slot);
         if (status != kStatus_Success){
-            BOOT_LOG_INF("platform_enc_cfg_confirm failed");  
+            BOOT_LOG_INF("encrypted_xip_cfg_confirm failed");  
             goto clean;
         }
 
-        /* Invalidate caches */
-	//SCB_DisableDCache();
-	//SCB_DisableICache();
-        
-        //BOOT_LOG_INF("Dumping...");
-	//dump_image();
         success:
         rsp->br_flash_dev_id = enc_data.fap_dst->fa_device_id;
 	rsp->br_image_off = ENCRYPTED_SLOT_OFFSET;
 	clean: 
         bootutil_aes_ctr_drop(&enc_data.ctx);
-        platform_enc_finish();
+        encrypted_xip_finish();
 	return status;
 }
 

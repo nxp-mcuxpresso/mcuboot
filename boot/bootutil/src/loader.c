@@ -997,7 +997,11 @@ boot_copy_region(struct boot_loader_state *state,
     uint8_t image_index;
 #endif
 
+#ifndef CONFIG_ENCRYPT_XIP_OVERWRITE_ONLY_BUF_SIZE
     TARGET_STATIC uint8_t buf[BUF_SZ] __attribute__((aligned(4)));
+#else
+    TARGET_STATIC uint8_t buf[CONFIG_ENCRYPT_XIP_OVERWRITE_ONLY_BUF_SIZE] __attribute__((aligned(4)));
+#endif
 
 #if !defined(MCUBOOT_ENC_IMAGES)
     (void)state;
@@ -1149,7 +1153,8 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
         rc = boot_erase_region(fap_primary_slot, size, this_size);
         assert(rc == 0);
 
-#if defined(MCUBOOT_OVERWRITE_ONLY_FAST)
+#if defined(MCUBOOT_OVERWRITE_ONLY_FAST) && !defined(ENCRYPTED_XIP_IPED)
+        /* In case of IPED region we have to erase whole primary slot */
         if ((size + this_size) >= src_size) {
             size += src_size - size;
             size += BOOT_WRITE_SZ(state) - (size % BOOT_WRITE_SZ(state));
@@ -1187,6 +1192,10 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
             return BOOT_EBADIMAGE;
         }
     }
+#endif
+
+#if defined(ENCRYPTED_XIP_IPED)
+    size = src_size;
 #endif
     
     rc = BOOT_HOOK_CALL(boot_copy_region_pre_hook, 0, BOOT_CURR_IMG(state),
