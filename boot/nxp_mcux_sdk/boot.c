@@ -22,8 +22,8 @@
 #include "mflash_drv.h"
 
 #ifdef CONFIG_ENCRYPT_XIP_EXT_ENABLE
-#include "mcuboot_enc_support.h"
-#include "platform_enc_common.h"
+#include "encrypted_xip_mcuboot_support.h"
+#include "encrypted_xip.h"
 #endif
 
 /*******************************************************************************
@@ -140,10 +140,22 @@ int sbl_boot_main(void)
     BOOT_LOG_INF("Bootloader Version %s", BOOTLOADER_VERSION);
     
 #if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
-    /* Initialize encryption XIP over execution region */
-    if(platform_enc_cfg_read(boot_flash_meta_map, NULL) == kStatus_Success){
-      if(platform_enc_cfg_init(boot_flash_meta_map, NULL) != kStatus_Success)
-        BOOT_LOG_ERR("Encrypted XIP initialization failed");
+    /* Initialize encryption XIP extension for overwrite-only mode */
+    rc = encrypted_xip_init();
+    if (rc != 0)
+    {
+        BOOT_LOG_ERR("FAILED to init encrypted XIP extension!");
+    }
+    bool cfg_found = false;
+    rc = encrypted_xip_cfg_check(boot_flash_meta_map, &cfg_found, NULL);
+    if(rc != kStatus_Success){
+        BOOT_LOG_ERR("Fatal error of encrypted XIP extension!");
+    }
+    if(cfg_found == true){
+      rc = encrypted_xip_cfg_initEncryption(boot_flash_meta_map);
+      if(rc != kStatus_Success){
+        BOOT_LOG_ERR("FAILED to initialize encryption unit!");
+      }
     }
 #endif
     
@@ -155,11 +167,21 @@ int sbl_boot_main(void)
             ;
     }
 
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
+    /* Deinitialize encryption XIP extension for overwrite-only mode */
+    rc = encrypted_xip_finish();
+    if (rc != 0)
+    {
+        BOOT_LOG_ERR("FAILED to deinit encrypted XIP extension!");
+    }
+#endif
 #if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
+    /* Initialize encryption XIP extension for three slot mode */
     BOOT_LOG_INF("\nStarting post-bootloader process of encrypted image...");
-    if(mcuboot_process_encryption(&rsp) != kStatus_Success){
-        BOOT_LOG_ERR("Failed to process encrypted image. Rebooting...");
-        NVIC_SystemReset();
+    if(encrypted_xip_process(&rsp) != kStatus_Success){
+        BOOT_LOG_ERR("Failed to process encrypted image. Please reboot...");
+        while(1)
+          ;
     }
     BOOT_LOG_INF("Post-bootloader process of encrypted image successful\n");
 #endif
