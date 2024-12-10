@@ -86,8 +86,9 @@ menu "MCUboot"
 
     config MCUX_COMPONENT_middleware.mcuboot.bootutil.flashapi_mcx
         bool
+        default y
         depends on MCUX_COMPONENT_middleware.mcuboot.bootutil
-        depends on CONFIG_MCUX_HW_SOC_SERIES_MCX
+        depends on MCUX_HW_SOC_SERIES_MCX
         help
             Layer that connects mcuboot flash API with device specific flash API.
             Version for MCX devices.
