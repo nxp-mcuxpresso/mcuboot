@@ -1429,7 +1429,7 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
     }
 #endif
 
-#if defined(ENCRYPTED_XIP_IPED)
+#if defined(ENCRYPTED_XIP_IPED) && defined(MCUBOOT_OVERWRITE_ONLY)
     size = src_size;
 #endif
     

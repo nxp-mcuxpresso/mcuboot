@@ -343,11 +343,11 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
     
     for (int i = 0; i < slotcnt; i++) {
 	if (mflash_drv_sector_erase(slotaddr) != kStatus_Success) {
-	    BOOT_LOG_ERR("Failed to erase sector at 0x%X\r\n", slotaddr);
+	    BOOT_LOG_ERR("Failed to erase sector at 0x%X", slotaddr);
 	    goto error;;
         }
-        if (i % 4 == 0)
-            PUTCHAR('.');
+        if (i % 4 == 0 || i == slotcnt - 1)
+            PRINTF("\rerased %d/%d sectors", i + 1, slotcnt);
         slotaddr += MFLASH_SECTOR_SIZE;
     }
 #endif /* ENCRYPTED_XIP_IPED */
@@ -423,6 +423,7 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
 #if defined(ENCRYPTED_XIP_IPED)
         /* If execution is also done with XIP from an IPED regions, the size of 
          * the written data MUST be a multiple of 4 pages.
+         * Just assume this is the last chunk.
          */
         if(chunk_sz < CHUNK_SIZE){
             chunk_sz_tmp = CHUNK_SIZE;
@@ -433,8 +434,8 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
         chunk_sz_tmp = chunk_sz;
 #endif
         rc = encrypted_xip_flash_write(fap_dst, bytes_copied, buf, chunk_sz_tmp);
-        if (bytes_copied % (MFLASH_SECTOR_SIZE*4) == 0)
-            PUTCHAR('.');
+        if (bytes_copied % (MFLASH_SECTOR_SIZE*4) == 0 || chunk_sz < CHUNK_SIZE)
+            PRINTF("\rprocessed %d/%d bytes ", bytes_copied + chunk_sz_tmp, sz);
         if (rc != 0) {
             BOOT_LOG_INF("Flash write failed");
             goto error;
@@ -442,7 +443,7 @@ static status_t load_image(enc_data_t *data, uint8_t *nonce)
 
         bytes_copied += chunk_sz;
     }
-        
+    
     //BOOT_LOG_INF("\nbytes_copied %d", bytes_copied);
     //BOOT_LOG_INF("chunk_sz %d", chunk_sz);
     //BOOT_LOG_INF("blk_sz %d", blk_sz);
@@ -579,7 +580,12 @@ status_t encrypted_xip_process(struct boot_rsp *rsp)
 	/* Install new image with new encryption metadata */
 	BOOT_LOG_INF("Preparing execution slot for new image");
 
-        status = encrypted_xip_cfg_write(boot_flash_meta_map);
+        const uint32_t img_size = enc_data.hdr.ih_hdr_size + 
+                                  enc_data.hdr.ih_img_size + 
+                                  enc_data.hdr.ih_protect_tlv_size + 
+                                  enc_data.tlv_info.it_tlv_tot;
+        
+        status = encrypted_xip_cfg_write(boot_flash_meta_map, BOOT_FLASH_EXEC_APP, img_size);
 	if (status != kStatus_Success){
             BOOT_LOG_INF("encrypted_xip_cfg_write failed");
             goto clean;

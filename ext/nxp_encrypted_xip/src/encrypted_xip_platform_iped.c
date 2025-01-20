@@ -53,12 +53,12 @@
         }                                 \
     } while (0);
 
-#if !defined(CONFIG_ENCRYPT_XIP_IPED_REGION_SIZE)
-#error "Please define IPED region size what suits boundaries of target flash device"
+#if !defined(CONFIG_ENCRYPT_XIP_IPED_REGION_MAX_SIZE)
+#error "Please define maximum IPED region size what suits boundaries of target flash device"
 #endif
 
 /* Encryption metadata or mcuboot trailer are not encrypted, reserve flash sector */
-#define IPED_REGION_SIZE     CONFIG_ENCRYPT_XIP_IPED_REGION_SIZE
+#define IPED_REGION_MAX_SIZE     CONFIG_ENCRYPT_XIP_IPED_REGION_MAX_SIZE
 #define IPED_REGION_EXEC_NUM 1
 
 #define FLASH_FCB_OFFSET (BOOT_FLASH_BASE + 0x400) //FCB of main app
@@ -464,13 +464,22 @@ size_t platform_enc_cfg_getSize(void)
     return sizeof(flexspi_nor_mem_image_iped_config_t);
 }
 
-status_t platform_enc_cfg_write(struct flash_area *fa_meta)
+status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz)
 {
     uint32_t off_meta = 0;
     status_t status = kStatus_Fail;
-    const uint32_t iped_region0_start = BOOT_FLASH_EXEC_APP;
-    const uint32_t iped_region0_end = BOOT_FLASH_EXEC_APP + IPED_REGION_SIZE;
+    const uint32_t iped_region0_start = region_start;
+    const uint32_t page_align = 4*MFLASH_PAGE_SIZE;
+    /* End address must be aligned to 4 * page_size boundary */
+    const uint32_t region_sz = img_sz + (img_sz % page_align == 0 ? 0 : (page_align - img_sz % page_align));
+    const uint32_t iped_region0_end = region_start + region_sz;
     
+    if(region_sz > IPED_REGION_MAX_SIZE)
+    {
+        PRINTF("Error: Calculated size of IPED region needed by the image exceeds the maximum region size\n");
+        return -1;
+    }
+   
     flexspi_iped_config_arg_t iped_config = { 
         .option = { 
             .tag = FLEXSPI_IPED_CONFIG_TAG,
