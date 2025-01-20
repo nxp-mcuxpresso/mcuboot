@@ -16,7 +16,7 @@ status_t platform_enc_init(void);
 
 size_t platform_enc_cfg_getSize(void);
 
-status_t platform_enc_cfg_write(struct flash_area *fa_meta);
+status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz);
 
 status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta);
 

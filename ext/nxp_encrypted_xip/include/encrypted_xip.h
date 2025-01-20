@@ -30,12 +30,12 @@ status_t encrypted_xip_init(void);
 status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uint32_t *active_slot);
 
 /* Initializes new configuration block of encryption unit and write it into metadata sector */
-status_t encrypted_xip_cfg_write(struct flash_area *fa_meta);
+status_t encrypted_xip_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz);
 
 /* Initializes encryption unit from configuration block in metadata sector */
 status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta);
 
-/* Confirm configuration block of encryption unit by completion of metadata sector */
+/* Confirm integrity of configuration block */
 status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_slot);
 
 /* Get nonce from configuration block in metadata sector */

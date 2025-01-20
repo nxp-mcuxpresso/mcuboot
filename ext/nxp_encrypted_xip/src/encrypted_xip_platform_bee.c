@@ -48,8 +48,8 @@
     } while (0);
 
 #define FLASH_ADDR      BOOT_FLASH_EXEC_APP
-/* Encryption metadata or mcuboot trailer are not encrypted, reserve flash sector */
-#define BEE_REGION_SIZE (BOOT_FLASH_CAND_APP - BOOT_FLASH_ACT_APP - MFLASH_SECTOR_SIZE)
+/* Mcuboot trailer is not encrypted, reserve flash sector */
+#define BEE_REGION_MAX_SIZE (BOOT_FLASH_CAND_APP - BOOT_FLASH_ACT_APP - MFLASH_SECTOR_SIZE)
 
 #define PROT_REGION_ALIGN_SIZE (0x1000)
 
@@ -154,7 +154,7 @@ static prdb_t prdb_template __attribute__((aligned)) = {
        .version = PRDB_VERSION,
        .fac_region_count = 1,
        .encrypt_region_info = { .region_1_start = FLASH_ADDR, /* Only region 1 - rest is region 0 */
-                                .region_1_end = FLASH_ADDR + BEE_REGION_SIZE,
+                                .region_1_end = FLASH_ADDR + BEE_REGION_MAX_SIZE,
                                 .aes_mode = kBEE_AesCtrMode,
                                 .lock_option = 0,
                                 .aes_ctr_nonce = {0xDEADBEEF,
@@ -164,7 +164,7 @@ static prdb_t prdb_template __attribute__((aligned)) = {
                                                  },
                               },
        .fac_region_2 = { .start = FLASH_ADDR,
-                         .end = FLASH_ADDR + BEE_REGION_SIZE,
+                         .end = FLASH_ADDR + BEE_REGION_MAX_SIZE,
                          .mode = 0,
                        },
        };
@@ -592,23 +592,34 @@ size_t platform_enc_cfg_getSize(void)
 
  \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
  */
-status_t platform_enc_cfg_write(struct flash_area *fa_meta) 
+status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz) 
 {
 	status_t status = kStatus_Fail;
-	uint32_t off = fa_meta->fa_off;
+        const uint32_t align_sz = PROT_REGION_ALIGN_SIZE;
+	const uint32_t region_sz = img_sz + (img_sz % align_sz == 0 ? 0 : (align_sz - img_sz % align_sz));
         bee_cfg_t bee_cfg;
 	prdb_t *prdb = &bee_cfg.prdb;
 	kib_t *kib = &bee_cfg.kib;
 
-	/* Erase metadata storage memory */
+        if(region_sz > BEE_REGION_MAX_SIZE)
+        {
+            PRINTF("Error: Calculated size of BEE region needed by the image exceeds maximum region size\n");
+            goto error;;
+        }
+        
+	/* Erase metadata sector */
 	if (flash_area_erase(fa_meta, 0, MFLASH_SECTOR_SIZE) != 0) {
             PRINTF("Erase of metadata sector failed\n");
             goto error;
 	}
 
-	/* Prepare encryption metadata */
+	/* Prepare configuration blocks */
 	memset((void*) &bee_cfg, 0, sizeof(bee_cfg_t));
 	memcpy(prdb, &prdb_template, sizeof(prdb_t));
+        prdb->encrypt_region_info.region_1_start = region_start;
+        prdb->encrypt_region_info.region_1_end = region_start + region_sz;
+        prdb->fac_region_2.start = region_start;
+        prdb->fac_region_2.end = region_start + region_sz;
 
 	status = encrypt_prdb_kib(kib, prdb);
 	if (status != kStatus_Success) {

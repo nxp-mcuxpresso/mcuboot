@@ -176,9 +176,9 @@ status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uin
     return kStatus_Success;   
 }
 
-status_t encrypted_xip_cfg_write(struct flash_area *fa_meta)
+status_t encrypted_xip_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz)
 { 
-    return platform_enc_cfg_write(fa_meta);
+    return platform_enc_cfg_write(fa_meta, region_start, img_sz);
 }
 
 status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta)
