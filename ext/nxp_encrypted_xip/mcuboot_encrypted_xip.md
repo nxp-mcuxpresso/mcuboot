@@ -14,8 +14,8 @@
       + [4.3 IPED (Inline Prince Encryption/Decryption for off-chip flash)](#43-iped-inline-prince-encryptiondecryption-for-off-chip-flash)
       + [4.4 NPX (PRINCE encryption/decryption for on-chip flash)](#44-npx-prince-encryptiondecryption-for-on-chip-flash)
    * [5. OTA examples instructions](#5-ota-examples-instructions)
-      + [5.1 Enable encrypted XIP support and build projects](#51-enable-encrypted-xip-support-and-build-projects)
-      + [5.2 Generate RSA key pairs for encrypted image containers](#52-generate-rsa-key-pairs-for-encrypted-image-containers)
+      + [5.1 Generate RSA key pairs for encrypted image containers](#51-generate-rsa-key-pairs-for-encrypted-image-containers)
+      + [5.2 Enable encrypted XIP support and build projects](#52-enable-encrypted-xip-support-and-build-projects)
       + [5.3 Sign and encrypt image](#53-sign-and-encrypt-image)
       + [5.4 Evaluate encrypted XIP example](#54-evaluate-encrypted-xip-example)
          - [5.4.1 Load encrypted image container to flash memory](#541-load-encrypted-image-container-to-flash-memory)
@@ -64,14 +64,14 @@ Note: The issue is related to only second stage bootloader usage. OTA ROM only b
 
 The risk is resolved by moving configuration blocks of execution regions at particular flash area and let SBL configure encryption module manually.
 
-MCUBoot determines the boot state by inspecting the image trailers (mcuboot metadata) which have reserved area at the end of each slot. The ecrypted XIP extension uses reserved area called **encryption metadata** what is platform specific and used for particular target encryption handling. Following image shows general structure of encryption metadata.
+MCUBoot determines the boot state by inspecting the slot trailers (mcuboot metadata) which have reserved area at the end of each slot. The ecrypted XIP extension uses reserved area called **encryption metadata** what is platform specific and used for particular target encryption handling. Following image shows general structure of encryption metadata.
 
 ![Image](enc_xip_images/general_metadata.jpg)
 
 The metadata sector consists platform specific configuration blocks and common confirmation block.
 The slot number is pointer to slot containing selected image extracted from MCUBoot response object. Hash acts as confirmation of integrity of configuration blocks and content in execution slot.
 
-During update the extension generate new configuration block with IV, write it at particular flash offset and reconfigure encryption unit for execution area. If the update and verification of the execution area are successful the configuration block is then hashed and confirmed by writing confirmation block. 
+During an OTA update the extension generate new configuration block with IV, write it at particular flash offset and reconfigure encryption unit for execution area. __If the update and verification of the execution area are successful the configuration block is then hashed and confirmed by writing confirmation block__.
 
 ### 3.2 Modes of extension
 
@@ -117,7 +117,7 @@ Before jumping to booting process the on-the-fly decryption is initialiazed so M
 
 This peripheral is specific for RT10xx (except RT1010) and supports up two separate regions using two separate AES keys. In this solution, BEE region 1 is used for encrypting execution slot and BEE region 0 is reserved for a bootloader.
 
-The BEE controller is automatically configured by ROM when specific encryption configuration blocks are found at the start of flash memory. The encryption configuration blocks are organized as __EPRDB__ (Encrypted Protection Region Descriptor BLock), the __EPRDB__ is encrypted using AES-CBC mode with AES key and IV in __KIB__ (Key Info Block). The __KIB__ is encrypted as __EKIB__ (Encrypted KIB) using key provisioned by user. Each BEE region has its __PRDB/KIB pair__. 
+BEE configuration blocks are organized as __EPRDB__ (Encrypted Protection Region Descriptor Block), where the __EPRDB__ is encrypted using AES-CBC mode with AES key and IV located in __KIB__ (Key Info Block). The __KIB__ is encrypted as __EKIB__ (Encrypted KIB) using key provisioned by user. Each BEE region has its __PRDB/KIB pair__. 
 
 The EKIB is decrypted by a key based on selection in `BEE_KEYn_SEL` fuse:
 
@@ -151,7 +151,7 @@ To be implemented...
 
 IPED is encryption unit for external flash specific for NXP RW61x, RT700 and MCXN MCUs. 
 
-Note:__The extension currently support only IPED module in RW61x based on GCM algorithm.__
+Note: __The extension currently supports only IPED module in RW61x based on GCM algorithm.__
 
 Following image shows configuration of metadata structure used for devices with IPED.
 
@@ -161,13 +161,13 @@ There are several points when using IPED especially in GCM mode
 
 * Consumption of physical memory when GCM algorithm is used
 	* range of IPED region is defined in terms of logical address but the physical memory consumption is 1.25 times the logical memory consumption
-	* OTA process must ensure that installed OTA image doesn't overlap size of IPED region, for example by adjusting the text size in linker file or doing checks of re-encrypted image size
+	* OTA process must ensure that installed OTA image doesn't overlap size of IPED region, for example by adjusting the text size in linker file and doing checks of re-encrypted image size
 * Flash operations have to	satisfy boundaries of the flash page/sector size and encryption unit size
 	* see "Constraints on IPED regions" chapter in reference manual
 
 The whole IPED initialization and encryption metadata handling is resolved in module `encrypted_xip_platform_iped.c`.
 
-Additional information for IPED in RW61x can be found in Reference Manual.
+Additional information for IPED in RW61x can be found in its reference manual.
 
 ### 4.4 NPX (PRINCE encryption/decryption for on-chip flash)
 
@@ -176,23 +176,10 @@ To be implemented...
 ## 5. OTA examples instructions
 
 Start preferentially with an empty board, erasing original content if needed.
-For demonstration we assume the 
 
-### 5.1 Enable encrypted XIP support and build projects
+### 5.1 Generate RSA key pairs for encrypted image containers
 
-Encrypted XIP can be evaluated by enabling define `CONFIG_ENCRYPT_XIP_EXT_ENABLE` in `sblconfig.h`.
-
-Optional overwrite-only mode is enabled by `CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY`.
-
-Note: make sure that define `CONFIG_MCUBOOT_FLASH_REMAP_ENABLE` is disabled otherwise builds fails.
-
-Build mcuboot_opensource and OTA application.
-
-Load mcuboot_opensource.
-
-### 5.2 Generate RSA key pairs for encrypted image containers
-
-This part can be skipped as OTA examples in SDK uses pre-generated key pairs.
+Note: This part can be skipped as OTA examples in SDK uses pre-generated key pairs.
 
 Generate private key
 ~~~
@@ -213,11 +200,24 @@ imgtool getpub -k enc-rsa2048-pub.pem -e pem
 ~~~
 Adjust the content of the `middleware\mcuboot_opensource\boot\nxp_mcux_sdk\keys\enc-rsa2048-pub.pem` accordingly.
 
+### 5.2 Enable encrypted XIP support and build projects
+
+Encrypted XIP can be evaluated by enabling define `CONFIG_ENCRYPT_XIP_EXT_ENABLE` in `sblconfig.h`.
+
+Optional overwrite-only mode is enabled by `CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY`.
+
+Note: make sure that define `CONFIG_MCUBOOT_FLASH_REMAP_ENABLE` is disabled otherwise builds fails.
+
+Build mcuboot_opensource and OTA application.
+
+Load mcuboot_opensource.
+
 ### 5.3 Sign and encrypt image
 
-To sign and encrypt an application binary, imgtool must be provided with respective key pairs and a set of parameters as in the following example:
+To sign and encrypt an application binary, imgtool must be provided with respective key pairs and a set of parameters as in the following examples:
 
-For an OTA image use following set of commands:
+The initial image must be loaded using the --pad --confirm parameters regardless if using ISP or other method to write it
+For an initial image use following set of commands:
 ~~~
  imgtool sign --key sign-rsa2048-priv.pem
 	      --align 4
@@ -226,12 +226,30 @@ For an OTA image use following set of commands:
 	      --slot-size 0x200000
 	      --max-sectors 800
 	      --version "1.0"
+	      --pad
+	      --confirm
 	      -E enc-rsa2048-pub.pem
 	      app_binary.bin
-	      app_binary_SIGNED_ENCRYPTED.bin
+	      app_binary_SIGNED_ENCRYPTED_INITIAL.bin
 ~~~
 
-For an image to be loaded using ISP the parameters `--pad --confirm` needs to be added. This applies only for three slot mode (direct-xip).
+For an OTA image just remove the parameters `--pad --confirm` and increase the version number as in the following set of commands:
+~~~
+ imgtool sign --key sign-rsa2048-priv.pem
+	      --align 4
+	      --header-size 0x400
+	      --pad-header
+	      --slot-size 0x200000
+	      --max-sectors 800
+	      --version "1.1"
+	      -E enc-rsa2048-pub.pem
+	      app_binary.bin
+	      app_binary_SIGNED_ENCRYPTED_OTA.bin
+~~~
+
+The values of parameters can be obtained from a readme file of target board. Example: `boards\BOARD\ota_examples\mcuboot_opensource\example_board_readme.md`
+
+Note: The parameters `--pad --confirm` for an initial image applies only for __three slot mode__ as direct-xip setup is used and it requires presence of the slot trailer. Note that the size of generated binary equals size of the slot. For __overwrite only mode__ an OTA image can be used as an initial image as the slot trailer is not required. 
 
 ### 5.4 Evaluate encrypted XIP example
 
@@ -252,22 +270,24 @@ For three slot configuration you will find:
 #define BOOT_FLASH_ENC_META             0x60640000  -- encryption metadata address
 ~~~
 
-Image generated with additional `--pad --confirm` can be loaded to primary or secondary slot.
+Image generated with additional `--pad --confirm` can be loaded to __primary__ or __secondary__ slot.
 
 For overwrite-only configuration you will find:
 
 ~~~
 /* Encrypted XIP extension: modified overwrite-only mode */
 
-#define BOOT_FLASH_ACT_APP              0x60040000  -- active slot address
+#define BOOT_FLASH_ACT_APP              0x60040000  -- active (execution) slot address
 #define BOOT_FLASH_CAND_APP             0x60240000  -- candidate slot address
 #define BOOT_FLASH_ENC_META             0x60440000  -- encryption metada address
 #define BOOT_FLASH_EXEC_APP             BOOT_FLASH_ACT_APP
 ~~~
 
-Image has to be loaded always to candidate slot address. Additional `--pad --confirm` parameters are not needed here.
+Image has to be loaded always to __candidate__ slot address. Additional `--pad --confirm` parameters are not needed here.
 
 To load image the pyocd, blhost or MCUXpresso Secure Provisioning Tool can be used.
+
+Note: Is possible to attach to running encrypted application for debug purpose.
 
 #### 5.4.2 Run unsigned unencrypted OTA application (debug session)
 
@@ -278,8 +298,6 @@ WARNING: OTA image will be downloaded to secondary slot
 ~~~
 This is expected as there is no encryption metadata due debug purpose so application has no reference to linkage to referenced image in staging area.
 
-Note: Is possible to attach to running encrypted application for debug purpose.
-
 ### 5.5 Running encrypted image
 
 These are expected outputs when an OTA image is detected and then re-encrypted
@@ -287,7 +305,7 @@ These are expected outputs when an OTA image is detected and then re-encrypted
 Three slot configuration:
 ~~~
 hello sbl.
-Bootloader Version 2.0.0
+Bootloader Version 2.1.0
 Primary   slot: version=1.0.0+0
 Image 0 Secondary slot: Image not found
 writing copy_done; fa_id=0 off=0x1fffe0 (0x43ffe0)
@@ -295,15 +313,17 @@ Image 0 loaded from the primary slot
 
 Starting post-bootloader process of encrypted image...
 Referenced image is located in the primary slot
-Decrypting and loading MCUBOOT AES-CTR key for staged image...
+Decrypting and loading the MCUBOOT AES-CTR key for staged image...
 AES-CTR key loaded
-Checking execution slot...
+Checking the execution slot...
 No valid image found in staging area...
 Preparing execution slot for new image
-Installing new image into execution slot from staged area
-On-the-fly initialization completed
-Re-encrypting staged image in execution slot...
-........................................................................
+BEE configuration found and successfully configured...
+Installing new image into execution slot from staged area...
+Erasing the execution slot...
+erased 12/12 sectors
+Re-encrypting staged image to execution slot...
+processed 38724/38724 bytes
 Loading image successful
 Image verification successful
 Post-bootloader process of encrypted image successful
@@ -314,16 +334,19 @@ Jumping to the image
 
 
 
-OTA HTTPS client demo (Ethernet)
+*************************************
+* Basic MCUBoot application example *
+*************************************
 
-Initializing PHY...
-Obtaining IP address from DHCP...
+Built Feb 13 2025 16:06:06
+
+$
 ~~~
 
 Overwrite-only mode:
 ~~~
 hello sbl.
-Bootloader Version 2.0.0
+Bootloader Version 2.1.0
 On-the-fly decryption initialization completed
 Image index: 0, Swap type: test
 Image 0 upgrade secondary slot -> primary slot
@@ -342,7 +365,7 @@ Jumping to the image
 * Basic MCUBoot application example *
 *************************************
 
-Built Nov 30 2024 21:01:35
+Built Feb 13 2025 16:06:06
 
 $
 ~~~
