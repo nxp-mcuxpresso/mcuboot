@@ -103,30 +103,6 @@ static int magic_check(const uint8_t *magic) {
     return 0;
 }
 
-static void hexdump(const void *src, size_t size)
-{
-    const unsigned char *src8 = src;
-    const int CNT             = 16;
-
-    for (size_t i = 0; i < size; i++)
-    {
-        int n = i % CNT;
-        if (n == 0)
-            PRINTF("%08x  ", i);
-        PRINTF("%02X ", src8[i]);
-        if ((i && n == CNT - 1) || i + 1 == size)
-        {
-            int rem = CNT - 1 - n;
-            for (int j = 0; j < rem; j++)
-                PRINTF("   ");
-            PRINTF("|");
-            for (int j = n; j >= 0; j--)
-                PUTCHAR(isprint(src8[i - j]) ? src8[i - j] : '.');
-            PRINTF("|\n");
-        }
-    }
-    PUTCHAR('\n');
-}
 /*******************************************************************************
  * Externs
  ******************************************************************************/
@@ -195,7 +171,6 @@ status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta)
  */
 status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_slot)
 {
-    status_t status = kStatus_Fail;
     uint32_t meta_off = fa_meta->fa_size - sizeof(enc_metadata_t);
     const uint32_t cfg_addr = fa_meta->fa_off + BOOT_FLASH_BASE;
     enc_metadata_t metadata;
@@ -288,8 +263,6 @@ void hexdump(const void *src, size_t size)
     }
     PUTCHAR('\n');
 }
-
-
 
 void dump_image(void)
 {
