@@ -35,17 +35,19 @@
  *
  * @details Print finshed message and trap forever upon failure.
  */
+#ifndef ASSERT_APP
 #define ASSERT_APP(expected, actual, ...) \
     do                                    \
     {                                     \
-        if (expected != actual)           \
+        if ((expected) != (actual))       \
         {                                 \
-            PRINTF("Assertion failed: ");   \
+            PRINTF("Assertion failed: "); \
             PRINTF(__VA_ARGS__);          \
             while (1)                     \
                 ;                         \
         }                                 \
     } while (0);
+#endif
 
 #define FLASH_ADDR      BOOT_FLASH_EXEC_APP
 /* Mcuboot trailer is not encrypted, reserve flash sector */

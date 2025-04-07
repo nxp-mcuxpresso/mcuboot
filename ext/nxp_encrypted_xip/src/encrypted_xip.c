@@ -36,17 +36,19 @@
  *
  * @details Print finshed message and trap forever upon failure.
  */
+#ifndef ASSERT_APP
 #define ASSERT_APP(expected, actual, ...) \
     do                                    \
     {                                     \
-        if (expected != actual)           \
+        if ((expected) != (actual))       \
         {                                 \
-            PRINTF("Assertion failed: ");   \
+            PRINTF("Assertion failed: "); \
             PRINTF(__VA_ARGS__);          \
             while (1)                     \
                 ;                         \
         }                                 \
     } while (0);
+#endif
 
 #define ENC_MAGIC_SZ 16
 
