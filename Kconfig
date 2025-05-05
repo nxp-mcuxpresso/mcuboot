@@ -248,4 +248,26 @@ menu "MCUboot"
 
     endif
 
+# Board/device specific configurations - MCXN9
+    config MCUX_COMPONENT_middleware.mcuboot.mcxn_custom_cfg.main_flash_only
+        bool "(MCXN only) MCUboot is located in main flash"
+        default n
+        depends on MCUX_HW_DEVICE_MCXN947 || MCUX_HW_DEVICE_MCXN547
+        depends on !BOOT_FLASH_REMAP
+        help
+            By default the MCUboot is located in IFR region to utilize
+            flash remapping feature, however, this flash partition layout
+            limits usage of some features (mbedTLS, encrypted XIP etc).
+            Enable this to move the bootloader from IFR region to main flash.
+            This configuration uses custom linker file and  doesn't support 
+            image swapping offloaded to HW.
+
+    config MCXN_CUSTOM_CFG_MAIN_FLASH_ONLY
+        bool
+        default y
+        depends on MCUX_COMPONENT_middleware.mcuboot.mcxn_custom_cfg.main_flash_only
+        help
+            Define to indicate custom build configuration and change configuration
+
 endmenu
+
