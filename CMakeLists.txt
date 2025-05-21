@@ -148,14 +148,14 @@ endif ()
 if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip)
 
     mcux_add_include(
-        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/ext/nxp_encrypted_xip
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/encrypted_xip
         PROJECT_BASE_PATH encrypted_xip
         INCLUDES include
     )
 
     mcux_add_source(
-        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/ext/nxp_encrypted_xip
-        PROJECT_BASE_PATH nxp_encrypted_xip
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/encrypted_xip
+        PROJECT_BASE_PATH encrypted_xip
         SOURCES
             include/encrypted_xip_mcuboot_support.h
             include/encrypted_xip.h

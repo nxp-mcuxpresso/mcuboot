@@ -94,6 +94,7 @@ const union enc_magic_t enc_magic = { .val = { 0xAA, 0xBB, 0xCC, 0xDD, 0x60,
 /*******************************************************************************
  * Static
  ******************************************************************************/
+#ifndef ENCRYPTED_XIP_NPX
 static int magic_check(const uint8_t *magic) {
     if (memcmp(magic, ENC_MAGIC, ENC_MAGIC_SZ) == 0) {
         return 1;
@@ -125,6 +126,7 @@ static void hexdump(const void *src, size_t size)
     }
     PUTCHAR('\n');
 }
+#endif
 /*******************************************************************************
  * Externs
  ******************************************************************************/
@@ -135,6 +137,7 @@ status_t encrypted_xip_init(void)
 
 status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uint32_t *active_slot)
 {
+#ifndef ENCRYPTED_XIP_NPX
     enc_metadata_t metadata;
     uint32_t cfg_block[1024 / sizeof(uint32_t)];
     /* metadata are located at the end of sector */
@@ -172,8 +175,8 @@ status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uin
             }
         }
     }
-
-    return kStatus_Success;   
+#endif
+    return kStatus_Success;
 }
 
 status_t encrypted_xip_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz)
@@ -193,6 +196,7 @@ status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta)
  */
 status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_slot)
 {
+#ifndef ENCRYPTED_XIP_NPX
     status_t status = kStatus_Fail;
     uint32_t meta_off = fa_meta->fa_size - sizeof(enc_metadata_t);
     const uint32_t cfg_addr = fa_meta->fa_off + BOOT_FLASH_BASE;
@@ -202,9 +206,9 @@ status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_s
     bool cfg_isPresent = platform_enc_cfg_isPresent(cfg_addr);
     if (cfg_isPresent == false) {
         PRINTF("No configuration block found!\n");
-        goto error;
+        return kStatus_Fail;
     }
-    
+
     /* Calculate hash */
     mbedtls_md5_context md_ctx;
     uint8_t md[16];
@@ -226,12 +230,10 @@ status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_s
     /*Write metadata at the end of sector - confirm integrity of configuration*/
     if (flash_area_write(fa_meta, meta_off, &metadata, sizeof(enc_metadata_t)) != 0) {
         PRINTF("Failed to write encryption metadata\n");
-        goto error;
+        return kStatus_Fail;
     }
-
+#endif
     return kStatus_Success;
-    error: 
-    return kStatus_Fail;
 }
 
 status_t encrypted_xip_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce)

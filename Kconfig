@@ -32,7 +32,8 @@ menu "MCUboot"
         depends on MCUX_COMPONENT_middleware.mcuboot.bootutil
         depends on MCUX_HW_DEVICE_MIMXRT1062 || MCUX_HW_DEVICE_MIMXRT1064 || \
                    MCUX_HW_DEVICE_MIMXRT1042 || MCUX_HW_DEVICE_MIMXRT1021 || \
-                   MCUX_HW_DEVICE_MIMXRT1052 || MCUX_HW_DEVICE_RW612
+                   MCUX_HW_DEVICE_MIMXRT1052 || MCUX_HW_DEVICE_RW612      || \
+                   MCUX_HW_DEVICE_MCXN947    || MCUX_HW_DEVICE_MCXN547
         help
             Enables code that implements support for running from
             an encrypted mcuboot image. See documentation for details
