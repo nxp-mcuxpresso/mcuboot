@@ -204,6 +204,16 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.nxp_bootutil_port)
             include/sysflash/sysflash.h
     )
 
+    mcux_add_source(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/keys
+        EXCLUDE TRUE
+        SOURCES
+            enc-rsa2048-priv-minimal.c
+            enc-ecdsa-p256-priv-minimal.c
+            sign-rsa2048-pub.c
+            sign-ecdsa-p256-pub.c
+    )
+
 endif ()
 
 
