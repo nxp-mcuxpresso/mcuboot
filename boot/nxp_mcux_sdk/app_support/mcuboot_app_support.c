@@ -90,65 +90,6 @@ const union boot_img_magic_t boot_img_magic = {
 #define BOOT_IMG_ALIGN  (boot_img_magic.align)
 #endif
 
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
-
-#define ENC_MAGIC_SZ    16
-
-union enc_magic_t
-{
-    uint8_t val[ENC_MAGIC_SZ];
-};
-
-const union enc_magic_t enc_magic = {
-    .val = {
-        0xAA, 0xBB, 0xCC, 0xDD,
-        0x60, 0x4D, 0xBA, 0x70,
-        0x34, 0x79, 0x2c, 0x0f,
-        0x2c, 0xb6, 0x0f, 0x35
-    }
-};
-
-#define ENC_MAGIC  (enc_magic.val)
-
-/** Structure holds partial metadata used for active slot
- */
-typedef struct
-{
-    /* ...platform specific...*/
-    uint32_t active_slot;                       // 0 - primary, 1 - secondary
-    uint8_t pad_0[12];                          // Padding zeroes
-    uint8_t hash[16];                           // Hash of encrypted key blocks including padding zeroes
-    uint8_t pad_1[16];                          // Padding zeroes
-    uint8_t magic[ENC_MAGIC_SZ];                // Magic number
-} enc_metadata_t;
-
-/* Returns slot number linked to execution slot */
-static uint32_t read_enc_metadata(void)
-{
-  enc_metadata_t metadata;
-  uint32_t off = boot_flash_meta_map[0].fa_off + boot_flash_meta_map[0].fa_size 
-                  - sizeof(enc_metadata_t);
-  
-  memset(&metadata, 0, sizeof(enc_metadata_t));
-  if(bl_flash_read(off, (uint32_t *)&metadata, sizeof(enc_metadata_t)) != 0)
-     goto error;
-  if(memcmp(&metadata.magic, ENC_MAGIC, ENC_MAGIC_SZ) == 0)
-  {
-    if(metadata.active_slot == 0)
-      return PRIMARY_SLOT_ACTIVE;
-    else
-      return SECONDARY_SLOT_ACTIVE;
-  }
-error:
-  /* Valid metadata should be always present in production phase */
-  /* Always return a slot number */
-  PRINTF("WARNING: invalid metadata of active slot - debug session?\n");
-  PRINTF("WARNING: OTA image will be downloaded to secondary slot\n");
-  return PRIMARY_SLOT_ACTIVE;
-}
-#endif /* CONFIG_ENCRYPT_XIP_EXT_ENABLE */
-
-
 /** Find out what slot is currently booted.
  *
  * @retval PRIMARY_SLOT_ACTIVE: image is running from primary slot
@@ -181,8 +122,6 @@ static uint32_t get_active_image(uint32_t image)
     else
         return PRIMARY_SLOT_ACTIVE;
     
-#elif defined (CONFIG_ENCRYPT_XIP_EXT_ENABLE)
-    return read_enc_metadata();
 #else
 
     /* In other configurations active slot is the PRIMARY one*/
@@ -816,9 +755,6 @@ void bl_print_image_info(bl_hashfunc_t hashfunc)
                 if (boot_flash_map[get_active_image(image)].fa_off == slot_offset_phys[slot])
                 {
                     PRINTF("    *ACTIVE*\n");
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
-                    PRINTF("    Encrypted XIP: This slot is linked to execution slot\n");
-#endif
                 }
             }
             else

@@ -22,7 +22,6 @@
 #include "mflash_drv.h"
 
 #ifdef CONFIG_ENCRYPT_XIP_EXT_ENABLE
-#include "encrypted_xip_mcuboot_support.h"
 #include "encrypted_xip.h"
 #endif
 
@@ -139,7 +138,7 @@ int sbl_boot_main(void)
 
     BOOT_LOG_INF("Bootloader Version %s", BOOTLOADER_VERSION);
     
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
     /* Initialize encryption XIP extension for overwrite-only mode */
     rc = encrypted_xip_init();
     if (rc != 0)
@@ -167,23 +166,13 @@ int sbl_boot_main(void)
             ;
     }
 
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
-    /* Deinitialize encryption XIP extension for overwrite-only mode */
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
+    /* Finish operations related to encryption XIP */
     rc = encrypted_xip_finish();
     if (rc != 0)
     {
-        BOOT_LOG_ERR("FAILED to deinit encrypted XIP extension!");
+        BOOT_LOG_ERR("encrypted_xip_finish failed!");
     }
-#endif
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
-    /* Initialize encryption XIP extension for three slot mode */
-    BOOT_LOG_INF("\nStarting post-bootloader process of encrypted image...");
-    if(encrypted_xip_process(&rsp) != kStatus_Success){
-        BOOT_LOG_ERR("Failed to process encrypted image. Please reboot...");
-        while(1)
-          ;
-    }
-    BOOT_LOG_INF("Post-bootloader process of encrypted image successful\n");
 #endif
     BOOT_LOG_INF("Bootloader chainload address offset: 0x%x", rsp.br_image_off);
     BOOT_LOG_INF("Reset_Handler address offset: 0x%x", rsp.br_image_off + rsp.br_hdr->ih_hdr_size);

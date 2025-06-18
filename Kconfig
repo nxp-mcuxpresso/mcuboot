@@ -140,15 +140,7 @@ menu "MCUboot"
             default n
             depends on MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
             help
-                Uses default three slot mode for encrypted XIP extension
-
-        config ENCRYPT_XIP_EXT_OVERWRITE_ONLY
-            bool "Encrypted XIP Overwrite-only mode"
-            default n
-            depends on ENCRYPT_XIP_EXT_ENABLE
-            help
-                Simpler update-only strategy for encrypted XIP extension
-
+                Uses modified overwrite-only mode to utilize encrypted XIP
 
         choice
             prompt "Image handling strategy"

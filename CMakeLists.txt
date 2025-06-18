@@ -157,10 +157,8 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip)
         BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/encrypted_xip
         PROJECT_BASE_PATH encrypted_xip
         SOURCES
-            include/encrypted_xip_mcuboot_support.h
             include/encrypted_xip.h
             include/encrypted_xip_platform.h
-            src/encrypted_xip_mcuboot_support.c
             src/encrypted_xip.c
             src/encrypted_xip_platform_bee.c
             src/encrypted_xip_platform_iped.c

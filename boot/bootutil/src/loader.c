@@ -792,14 +792,7 @@ boot_image_check(struct boot_loader_state *state, struct image_header *hdr,
         if (rc < 0) {
             FIH_RET(fih_rc);
         }
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && !defined(CONFIG_ENCRYPT_XIP_EXT_OVERWRITE_ONLY)
-        /* Both slots are used for staging encrypted image */
-        uint32_t active_slot = state->slot_usage[BOOT_CURR_IMG(state)].active_slot;
-        if (rc == 0 && boot_enc_set_key(BOOT_CURR_ENC(state), active_slot, bs)) {
-#else
-        /* Only secondary slot is used for staging encrypted image */
         if (rc == 0 && boot_enc_set_key(BOOT_CURR_ENC(state), 1, bs)) {
-#endif
             FIH_RET(fih_rc);
         }
     }
