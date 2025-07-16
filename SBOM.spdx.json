@@ -2,13 +2,13 @@
   "SPDXID": "SPDXRef-DOCUMENT",
   "spdxVersion": "SPDX-2.3",
   "creationInfo": {
-    "created": "2025-05-27T06:03:09Z",
+    "created": "2025-07-12T03:10:55Z",
     "creators": [
       "Organization: NXP"
     ],
     "licenseListVersion": "3.20"
   },
-  "name": "mcuboot-v25.06.00",
+  "name": "mcuboot-v25.09.00-pvw1",
   "dataLicense": "CC0-1.0",
   "hasExtractedLicensingInfos": [
     {
@@ -17,12 +17,12 @@
       "name": "Basic Proprietary Commercial License"
     }
   ],
-  "documentNamespace": "https://nxp.com/spdx/962782bc-bcef-44f4-8858-4b64083f8709",
+  "documentNamespace": "https://nxp.com/spdx/03308323-e398-44b2-b5b0-1f2b4c209b26",
   "packages": [
     {
-      "SPDXID": "SPDXRef-package-962782bc-bcef-44f4-8858-4b64083f8709",
+      "SPDXID": "SPDXRef-package-03308323-e398-44b2-b5b0-1f2b4c209b26",
       "name": "mcuboot",
-      "versionInfo": "v25.06.00",
+      "versionInfo": "v25.09.00-pvw1",
       "licenseConcluded": "(Apache-2.0)",
       "licenseDeclared": "(Apache-2.0)",
       "downloadLocation": "https://github.com/nxp-mcuxpresso/mcuboot",
@@ -38,9 +38,10 @@
       "licenseConcluded": "BSD-3-Clause",
       "licenseDeclared": "LicenseRef-3eca8fb9-fca4-4b49-b4bd-189ba8efd691",
       "downloadLocation": "https://github.com/mcu-tools/mcuboot/tree/main/ext/tinycrypt",
+      "originator": "Organization: intel/tinycrypt",
+      "supplier": "NOASSERTION",
       "externalRefs": [],
-      "filesAnalyzed": false,
-      "supplier": "NOASSERTION"
+      "filesAnalyzed": false
     },
     {
       "SPDXID": "SPDXRef-package-b19b3874-1f61-468a-acb5-27604acb24ac",
@@ -50,10 +51,12 @@
       "licenseDeclared": "Apache-2.0",
       "homepage": "https://www.trustedfirmware.org/",
       "downloadLocation": "https://github.com/mcu-tools/mcuboot/tree/main/ext/mbedtls-asn1",
+      "originator": "Organization: mbed TLS",
+      "supplier": "NOASSERTION",
       "externalRefs": [
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:arm:mbed_tls:3.0.0:p1:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:polarssl:polarssl:3.0.0:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
@@ -63,7 +66,7 @@
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:arm:mbed_tls:3.0.0:preview1:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:arm_ltd:mbedtls_formerly_polarssl:3.0.0:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         },
         {
@@ -73,49 +76,59 @@
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:arm_ltd:mbedtls_formerly_polarssl:3.0.0:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:mbed:mbedtls:3.0.0:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         }
       ],
-      "filesAnalyzed": false,
-      "supplier": "NOASSERTION"
+      "filesAnalyzed": false
     },
     {
-      "SPDXID": "SPDXRef-package-851c32bf-9ade-43c2-b2f4-672aaa242428",
+      "SPDXID": "SPDXRef-package-f26a9549-dbf0-4c48-86b6-a02e7e4e704a",
       "name": "mcu-tools/mcuboot",
-      "versionInfo": "v2.1.0",
+      "versionInfo": "v2.2.0",
       "licenseConcluded": "Apache-2.0",
       "licenseDeclared": "Apache-2.0",
       "downloadLocation": "NOASSERTION",
+      "originator": "Organization: mcu-tools",
+      "supplier": "NOASSERTION",
       "externalRefs": [
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:mcu-tools:mcuboot:2.1.0:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:mcu-tools:mcuboot:2.2.0:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:github/mcu-tools/mcuboot@v2.2.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "OTHER",
+          "referenceLocator": "ed668dae-6543-449c-81f0-3e23f32433bd",
+          "referenceType": "BlackDuck-ComponentOrigin"
         }
       ],
-      "filesAnalyzed": false,
-      "supplier": "NOASSERTION"
+      "filesAnalyzed": false
     }
   ],
   "relationships": [
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",
-      "relatedSpdxElement": "SPDXRef-package-962782bc-bcef-44f4-8858-4b64083f8709"
+      "relatedSpdxElement": "SPDXRef-package-03308323-e398-44b2-b5b0-1f2b4c209b26"
     },
     {
-      "spdxElementId": "SPDXRef-package-962782bc-bcef-44f4-8858-4b64083f8709",
+      "spdxElementId": "SPDXRef-package-03308323-e398-44b2-b5b0-1f2b4c209b26",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-b19b3874-1f61-468a-acb5-27604acb24ac"
     },
     {
-      "spdxElementId": "SPDXRef-package-962782bc-bcef-44f4-8858-4b64083f8709",
+      "spdxElementId": "SPDXRef-package-03308323-e398-44b2-b5b0-1f2b4c209b26",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-package-851c32bf-9ade-43c2-b2f4-672aaa242428"
+      "relatedSpdxElement": "SPDXRef-package-f26a9549-dbf0-4c48-86b6-a02e7e4e704a"
     },
     {
-      "spdxElementId": "SPDXRef-package-962782bc-bcef-44f4-8858-4b64083f8709",
+      "spdxElementId": "SPDXRef-package-03308323-e398-44b2-b5b0-1f2b4c209b26",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-package-0cd07fc6-f927-460b-9d4d-b64d8ab5224f"
     }
