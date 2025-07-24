@@ -238,62 +238,6 @@ static status_t generate_rand(uint32_t *buf, uint32_t size) {
     return status;
 }
 
-static void printf_prdb_kib(uint32_t *p_prdb, uint32_t *p_kib)
-{
-    if (p_kib != NULL) {
-        kib_t kib;
-
-        memcpy((void*) &kib, p_kib, sizeof(kib_t));
-
-        PRINTF("\nKIB\n");
-        PRINTF("AES key %X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X\n",
-                kib.aes_key[0], kib.aes_key[1], kib.aes_key[2], kib.aes_key[3],
-                kib.aes_key[4], kib.aes_key[5], kib.aes_key[6], kib.aes_key[7],
-                kib.aes_key[8], kib.aes_key[9], kib.aes_key[10],
-                kib.aes_key[11], kib.aes_key[12], kib.aes_key[13],
-                kib.aes_key[14], kib.aes_key[15]);
-        PRINTF("IV      %X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X\n",
-                kib.iv[0], kib.iv[1], kib.iv[2], kib.iv[3], kib.iv[4],
-                kib.iv[5], kib.iv[6], kib.iv[7], kib.iv[8], kib.iv[9],
-                kib.iv[10], kib.iv[11], kib.iv[12], kib.iv[13], kib.iv[14],
-                kib.iv[15]);
-    }
-
-    if (p_prdb != NULL) {
-        prdb_t prdb;
-
-        memcpy((void*) &prdb, p_prdb, sizeof(prdb_t));
-
-        PRINTF("\nPRDB\n");
-        PRINTF("tagl: 0x%X \n", prdb.tagl);
-        PRINTF("tagh: 0x%X \n", prdb.tagh);
-        PRINTF("version: 0x%X \n", prdb.version);
-        PRINTF("FAC region count: 0x%X \n", prdb.fac_region_count);
-
-        PRINTF("Information for encrypted region\n");
-        PRINTF("Region1 start: 0x%X \n",
-                prdb.encrypt_region_info.region_1_start);
-        PRINTF("Region1 end: 0x%X \n", prdb.encrypt_region_info.region_1_end);
-        PRINTF("AES mode 0x%X\n", prdb.encrypt_region_info.aes_mode);
-        PRINTF("Lock options: %d \n", prdb.encrypt_region_info.lock_option);
-        PRINTF("Counter W0-W1-W2-W3:\n0x%X-0x%X-0x%X-0x%X \n",
-                prdb.encrypt_region_info.aes_ctr_nonce[0],
-                prdb.encrypt_region_info.aes_ctr_nonce[1],
-                prdb.encrypt_region_info.aes_ctr_nonce[2],
-                prdb.encrypt_region_info.aes_ctr_nonce[3]);
-
-        PRINTF("FAC Regions\n");
-        PRINTF("Header prdb1 fac0 start: 0x%X \n", prdb.fac_region_0.start);
-        PRINTF("Header prdb1 fac0 end: 0x%X \n", prdb.fac_region_0.end);
-        PRINTF("Header prdb1 fac1 start: 0x%X \n", prdb.fac_region_1.start);
-        PRINTF("Header prdb1 fac1 end: 0x%X \n", prdb.fac_region_1.end);
-        PRINTF("Header prdb1 fac2 start: 0x%X \n", prdb.fac_region_2.start);
-        PRINTF("Header prdb1 fac2 end: 0x%X \n", prdb.fac_region_2.end);
-        PRINTF("Header prdb1 fac3 start: 0x%X \n", prdb.fac_region_3.start);
-        PRINTF("Header prdb1 fac3 end: 0x%X \n\n", prdb.fac_region_3.end);
-    }
-}
-
 /**
  Function provides key to DCP based on BEE_KEY1_SEL fuses:
  00 SW key - SW_AES_KEY is loaded
@@ -576,7 +520,12 @@ static status_t fac_regions_setup(prdb_t *prdb)
  ******************************************************************************/
 status_t platform_enc_init(void)
 {
-    /* Nothing needed here for BEE */
+    /* Initialize DCP */
+    /* ToDo Could be initialized in PSA driver */
+    dcp_config_t dcpConfig;
+
+    DCP_GetDefaultConfig(&dcpConfig);
+    DCP_Init(DCP, &dcpConfig);
     return kStatus_Success;
 }
 
@@ -654,8 +603,8 @@ status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
 	bee_region_config_t beeConfig;
 	bee_cfg_t bee_cfg;
 	prdb_t prdb;
-	uint32_t off;
-	uint32_t bee_key_sel;
+        uint32_t nonce128b[16 / sizeof(uint32_t)];
+        uint32_t beeKey[16 / sizeof(uint32_t)] = SW_AES_KEY;
         
 	/* Load PRDB */
 	status = flash_area_read(fa_meta, 0, &bee_cfg, sizeof(bee_cfg_t));
@@ -698,12 +647,10 @@ status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
 	BEE_SetConfig(BEE, &beeConfig);
 
 	/* Set AES user key and nonce for BEE region 1 */
-	uint32_t nonce128b[16 / sizeof(uint32_t)];
 	memcpy(nonce128b, prdb.encrypt_region_info.aes_ctr_nonce, 16);
 	nonce128b[0] = 0;
 	BEE_SetRegionNonce(BEE, kBEE_Region1, (uint8_t*) nonce128b, 16);
 
-	uint32_t beeKey[16 / sizeof(uint32_t)] = SW_AES_KEY;
 	aes_block_swap((uint8_t*) beeKey);
 
 	status = BEE_SetRegionKey(BEE, kBEE_Region1, (uint8_t*) beeKey, 16);
@@ -749,7 +696,6 @@ status_t platform_enc_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce)
     status_t status;
     bee_cfg_t bee_cfg;
     prdb_t prdb;
-    uint32_t off;
 
     /* Load PRDB */
     status = flash_area_read(fa_meta, 0, &bee_cfg, sizeof(bee_cfg_t));
@@ -825,6 +771,62 @@ status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off,
 
 #if 0
 #define FLASH_PAGE_SIZE         256
+
+static void printf_prdb_kib(uint32_t *p_prdb, uint32_t *p_kib)
+{
+    if (p_kib != NULL) {
+        kib_t kib;
+
+        memcpy((void*) &kib, p_kib, sizeof(kib_t));
+
+        PRINTF("\nKIB\n");
+        PRINTF("AES key %X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X\n",
+                kib.aes_key[0], kib.aes_key[1], kib.aes_key[2], kib.aes_key[3],
+                kib.aes_key[4], kib.aes_key[5], kib.aes_key[6], kib.aes_key[7],
+                kib.aes_key[8], kib.aes_key[9], kib.aes_key[10],
+                kib.aes_key[11], kib.aes_key[12], kib.aes_key[13],
+                kib.aes_key[14], kib.aes_key[15]);
+        PRINTF("IV      %X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X-%X\n",
+                kib.iv[0], kib.iv[1], kib.iv[2], kib.iv[3], kib.iv[4],
+                kib.iv[5], kib.iv[6], kib.iv[7], kib.iv[8], kib.iv[9],
+                kib.iv[10], kib.iv[11], kib.iv[12], kib.iv[13], kib.iv[14],
+                kib.iv[15]);
+    }
+
+    if (p_prdb != NULL) {
+        prdb_t prdb;
+
+        memcpy((void*) &prdb, p_prdb, sizeof(prdb_t));
+
+        PRINTF("\nPRDB\n");
+        PRINTF("tagl: 0x%X \n", prdb.tagl);
+        PRINTF("tagh: 0x%X \n", prdb.tagh);
+        PRINTF("version: 0x%X \n", prdb.version);
+        PRINTF("FAC region count: 0x%X \n", prdb.fac_region_count);
+
+        PRINTF("Information for encrypted region\n");
+        PRINTF("Region1 start: 0x%X \n",
+                prdb.encrypt_region_info.region_1_start);
+        PRINTF("Region1 end: 0x%X \n", prdb.encrypt_region_info.region_1_end);
+        PRINTF("AES mode 0x%X\n", prdb.encrypt_region_info.aes_mode);
+        PRINTF("Lock options: %d \n", prdb.encrypt_region_info.lock_option);
+        PRINTF("Counter W0-W1-W2-W3:\n0x%X-0x%X-0x%X-0x%X \n",
+                prdb.encrypt_region_info.aes_ctr_nonce[0],
+                prdb.encrypt_region_info.aes_ctr_nonce[1],
+                prdb.encrypt_region_info.aes_ctr_nonce[2],
+                prdb.encrypt_region_info.aes_ctr_nonce[3]);
+
+        PRINTF("FAC Regions\n");
+        PRINTF("Header prdb1 fac0 start: 0x%X \n", prdb.fac_region_0.start);
+        PRINTF("Header prdb1 fac0 end: 0x%X \n", prdb.fac_region_0.end);
+        PRINTF("Header prdb1 fac1 start: 0x%X \n", prdb.fac_region_1.start);
+        PRINTF("Header prdb1 fac1 end: 0x%X \n", prdb.fac_region_1.end);
+        PRINTF("Header prdb1 fac2 start: 0x%X \n", prdb.fac_region_2.start);
+        PRINTF("Header prdb1 fac2 end: 0x%X \n", prdb.fac_region_2.end);
+        PRINTF("Header prdb1 fac3 start: 0x%X \n", prdb.fac_region_3.start);
+        PRINTF("Header prdb1 fac3 end: 0x%X \n\n", prdb.fac_region_3.end);
+    }
+}
 
 void hexdump(const void *src, size_t size)
 {

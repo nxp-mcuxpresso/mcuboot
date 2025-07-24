@@ -150,17 +150,6 @@ static uint8_t iap_api_arena[0x6000];
 /*******************************************************************************
  * Static
  ******************************************************************************/
-static void print_iped_cfgs(void)
-{
-    uint8_t iv[8] = {0};
-    for (int i = 0; i < 4; i++) {
-        uint32_t start_address = 0;
-        uint32_t end_address = 0;
-        IPED_GetRegionAddressRange(FLEXSPI, (iped_region_t) i, &start_address, &end_address);
-        IPED_GetRegionIV(FLEXSPI, (iped_region_t) i, iv);
-        PRINTF("region %d: start: 0x%x, address: 0x%x, iv %02x%02x%02x%02x%02x%02x%02x%02x\r\n", i, start_address, end_address, iv[0], iv[1] , iv[2] , iv[3] , iv[4] , iv[5] , iv[6] , iv[7]);
-    }
-}
 /********************************ROM code begin********************************/
 static nboot_status_t nboot_mem_crypt_decrypt_iv(const nboot_iped_encrypted_iv_t* encrypted_iv, uint8_t* plain_iv)
 {
@@ -466,7 +455,6 @@ size_t platform_enc_cfg_getSize(void)
 
 status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz)
 {
-    uint32_t off_meta = 0;
     status_t status = kStatus_Fail;
     const uint32_t iped_region0_start = region_start;
     const uint32_t page_align = 4*MFLASH_PAGE_SIZE;
@@ -536,10 +524,11 @@ status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_star
 status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
 {
     nboot_status_t status = kStatus_NBOOT_Fail;
-    bool is_iped_region_enabled = false;
-    
+    bool is_iped_region_enabled = false;   
     uint32_t address = fa_meta->fa_off + BOOT_FLASH_BASE;
     flexspi_nor_mem_image_iped_config_t* config = (flexspi_nor_mem_image_iped_config_t*) address;
+    nboot_mem_crypt_configure_parms_t mem_crypt_cfg = config->params;
+    
     if (config->tag != FLEXSPI_IPED_CFG_BLK_TAG) {
         PRINTF("No IPED configuration found!\n");
         goto error;
@@ -558,8 +547,6 @@ status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
      *  are reconfiguring FLEXSPI settings in the following, it may be safer, not
      *  to access Flash at the same time).
      */
-    nboot_mem_crypt_configure_parms_t mem_crypt_cfg = config->params;
-
     status = nboot_mem_crypt_configure(&mem_crypt_cfg);
     if (status != kStatus_NBOOT_Success)
     {
@@ -631,6 +618,18 @@ status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off, c
  ******************************************************************************/
 
 #if 0
+static void print_iped_cfgs(void)
+{
+    uint8_t iv[8] = {0};
+    for (int i = 0; i < 4; i++) {
+        uint32_t start_address = 0;
+        uint32_t end_address = 0;
+        IPED_GetRegionAddressRange(FLEXSPI, (iped_region_t) i, &start_address, &end_address);
+        IPED_GetRegionIV(FLEXSPI, (iped_region_t) i, iv);
+        PRINTF("region %d: start: 0x%x, address: 0x%x, iv %02x%02x%02x%02x%02x%02x%02x%02x\r\n", i, start_address, end_address, iv[0], iv[1] , iv[2] , iv[3] , iv[4] , iv[5] , iv[6] , iv[7]);
+    }
+}
+
 #define FLASH_PAGE_SIZE         xxx
 
 void hexdump(const void *src, size_t size)

@@ -23,33 +23,7 @@
  */
 
 /*
- * Signature types
- *
- * You must choose exactly one signature type.
- */
-
-/* Uncomment to enable RSA signature */
-#ifdef CONFIG_BOOT_SIGNATURE_TYPE_RSA
-#define MCUBOOT_SIGN_RSA
-#if (CONFIG_BOOT_SIGNATURE_TYPE_RSA_LEN != 2048 && CONFIG_BOOT_SIGNATURE_TYPE_RSA_LEN != 3072)
-#error "Invalid RSA key size (must be 2048 or 3072)"
-#else
-#define MCUBOOT_SIGN_RSA_LEN CONFIG_BOOT_SIGNATURE_TYPE_RSA_LEN
-#endif
-#elif defined(CONFIG_BOOT_SIGNATURE_TYPE_ECDSA_P256)
-#define MCUBOOT_SIGN_EC256
-#elif defined(CONFIG_BOOT_SIGNATURE_TYPE_ED25519)
-#define MCUBOOT_SIGN_ED25519
-#endif
-
-
-/* Uncomment to enable Hardware Key */
-#ifdef CONFIG_BOOT_HW_KEY
-#define MCUBOOT_HW_KEY
-#endif
-
-/*
- * Upgrade mode
+ * UPGRADE MODES
  *
  * The default is to support A/B image swapping with rollback.  A
  * simpler code path, which only supports overwriting the
@@ -78,7 +52,6 @@
 #elif defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
 
 /* Upgrade mode: OVERWRITE_ONLY + ENCRYPTED XIP */
-#define CONFIG_BOOT_ENCRYPT_RSA
 #define MCUBOOT_OVERWRITE_ONLY
 #define MCUBOOT_OVERWRITE_ONLY_FAST
 #define MCUBOOT_IMAGE_ACCESS_HOOKS
@@ -104,20 +77,78 @@
 #endif
 
 /*
- * Cryptographic settings
- *
- * You must choose between mbedTLS and Tinycrypt as source of
- * cryptographic primitives. Other cryptographic settings are also
- * available.
+ * CRYPTOGRAPHIC SETTINGS
  */
 
-/* Uncomment to use ARM's mbedTLS cryptographic primitives */
-#if defined(CONFIG_BOOT_USE_MBEDTLS) || defined(COMPONENT_MBEDTLS)
+/* 
+ * Cryptographic backend
+ *
+ * You must choose between PSA, mbedTLS or Tinycrypt as source of
+ * cryptographic primitives.
+ */
+/* Use mbedTLS legacy API (no hw acceleration) */
+#if defined(CONFIG_BOOT_USE_MBEDTLS)
 #define MCUBOOT_USE_MBED_TLS
 #endif
 
+/* Use PSA Crypto API (hw acceleration support) - experimental */
+#if defined(CONFIG_BOOT_USE_PSA_CRYPTO)   
+#define MCUBOOT_USE_PSA_CRYPTO
+#endif
+
+/* Uncomment to use lightweight TinyCrypt */
 #ifdef CONFIG_BOOT_USE_TINYCRYPT
 #define MCUBOOT_USE_TINYCRYPT
+#endif
+
+#if (defined(CONFIG_BOOT_USE_MBEDTLS) + defined(CONFIG_BOOT_USE_PSA_CRYPTO) + \
+    defined(CONFIG_BOOT_USE_TINYCRYPT)) > 1
+#error "Only one crypto backend can be enabled"
+#endif
+
+/*
+ * Signature types
+ *
+ * You must choose exactly one signature type.
+ */
+
+/* Uncomment to enable RSA signature */
+#ifdef CONFIG_BOOT_SIGNATURE_TYPE_RSA
+#define MCUBOOT_SIGN_RSA
+#if (CONFIG_BOOT_SIGNATURE_TYPE_RSA_LEN != 2048 && CONFIG_BOOT_SIGNATURE_TYPE_RSA_LEN != 3072)
+#error "Invalid RSA key size (must be 2048 or 3072)"
+#else
+#define MCUBOOT_SIGN_RSA_LEN CONFIG_BOOT_SIGNATURE_TYPE_RSA_LEN
+#endif
+#elif defined(CONFIG_BOOT_SIGNATURE_TYPE_ECDSA_P256)
+#define MCUBOOT_SIGN_EC256
+#elif defined(CONFIG_BOOT_SIGNATURE_TYPE_ED25519)
+#define MCUBOOT_SIGN_ED25519
+#endif
+
+/*
+ * Encrypted image
+ *
+ * You must choose exactly one encryption type.
+ */
+
+#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && defined(CONFIG_BOOT_USE_PSA_CRYPTO)
+#error "Currently Encrypted XIP is not supported with PSA Crypto API"
+#endif
+
+#ifdef CONFIG_BOOT_ENCRYPT_RSA
+#define MCUBOOT_ENC_IMAGES
+#define MCUBOOT_ENCRYPT_RSA
+#endif
+
+#ifdef CONFIG_BOOT_ENCRYPT_EC256
+#define MCUBOOT_ENC_IMAGES
+#define MCUBOOT_ENCRYPT_EC256
+#endif
+
+/* Uncomment to enable Hardware Key */
+#ifdef CONFIG_BOOT_HW_KEY
+#define MCUBOOT_HW_KEY
 #endif
 
 /*
@@ -136,7 +167,7 @@
 #endif
 
 /*
- * Flash abstraction
+ * FLASH ABSTRACTION
  */
 
 /* Uncomment if your flash map API supports flash_area_get_sectors().
@@ -152,7 +183,7 @@
 #endif
 
 /*
- * Logging
+ * LOGGING
  */
 
 /*
@@ -187,16 +218,7 @@
  * "assert" is used. */
 /* #define MCUBOOT_HAVE_ASSERT_H */
 
-#ifdef CONFIG_BOOT_ENCRYPT_RSA
-#define MCUBOOT_ENC_IMAGES
-#define MCUBOOT_ENCRYPT_RSA
-#endif
-
-#ifdef CONFIG_BOOT_ENCRYPT_ECDSA_P256
-#define MCUBOOT_ENC_IMAGES
-#define MCUBOOT_ENCRYPT_EC256
-#endif
-
+/* BOOTSTRAP support */
 #ifdef CONFIG_BOOT_BOOTSTRAP
 #define MCUBOOT_BOOTSTRAP 1
 #endif

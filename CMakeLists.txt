@@ -65,7 +65,6 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.bootutil)
 
 endif ()
 
-
 if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.tinycrypt)
 
     mcux_add_include(
@@ -207,7 +206,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.nxp_bootutil_port)
         EXCLUDE TRUE
         SOURCES
             enc-rsa2048-priv-minimal.c
-            enc-ecdsa-p256-priv-minimal.c
+            enc-ec256-priv-minimal.c
             sign-rsa2048-pub.c
             sign-ecdsa-p256-pub.c
     )
@@ -261,36 +260,59 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.bootutil.flashapi_rt)
     )
 endif()
 
+if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.mbedtls_config)
+    mcux_add_include(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/mbedtls_config
+        PROJECT_BASE_PATH mbedtls_config
+        INCLUDES
+            .
+    )
 
+    mcux_add_source(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/mbedtls_config
+        PROJECT_BASE_PATH mbedtls_config
+        SOURCES
+            mcuboot_mbedtls_config.h
+            mcuboot_psa_crypto_config.h
+    )
+
+    mcux_remove_macro(
+        CC "-DMBEDTLS_CONFIG_FILE=\\\"mcux_mbedtls_config.h\\\""
+    )
+
+    mcux_add_macro(
+        CC "-DMBEDTLS_CONFIG_FILE=\\\"mcuboot_mbedtls_config.h\\\"\
+            -DMBEDTLS_PSA_CRYPTO_CONFIG_FILE=\\\"mcuboot_psa_crypto_config.h\\\""
+    )
+endif()
 
 # Stack and heap setup
 
 if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.stack_heap_default_mbedtls)
-mcux_add_iar_configuration(
-    LD "--config_def=__stack_size__=0x2000 --config_def=__heap_size__=0x8000"
-)
-
-mcux_add_mdk_configuration(
-    LD "--predefine=\"-D__stack_size__=0x2000\" --predefine=\"-D__heap_size__=0x8000\""
-)
-
-mcux_add_armgcc_configuration(
-    LD "-Xlinker --defsym=__stack_size__=0x2000 -Xlinker --defsym=__heap_size__=0x8000"
-)
-
+    mcux_add_iar_configuration(
+        LD "--config_def=__stack_size__=0x2000 --config_def=__heap_size__=0x8000"
+    )
+    
+    mcux_add_mdk_configuration(
+        LD "--predefine=\"-D__stack_size__=0x2000\" --predefine=\"-D__heap_size__=0x8000\""
+    )
+    
+    mcux_add_armgcc_configuration(
+        LD "-Xlinker --defsym=__stack_size__=0x2000 -Xlinker --defsym=__heap_size__=0x8000"
+    )
 endif()
 
 if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.stack_heap_default_tinycrypt)
-mcux_add_iar_configuration(
-    LD "--config_def=__stack_size__=0x1000 --config_def=__heap_size__=0x400"
-)
-
-mcux_add_mdk_configuration(
-    LD "--predefine=\"-D__stack_size__=0x1000\" --predefine=\"-D__heap_size__=0x400\""
-)
-
-mcux_add_armgcc_configuration(
-    LD "-Xlinker --defsym=__stack_size__=0x1000 -Xlinker --defsym=__heap_size__=0x400"
-)
+    mcux_add_iar_configuration(
+        LD "--config_def=__stack_size__=0x1000 --config_def=__heap_size__=0x400"
+    )
+    
+    mcux_add_mdk_configuration(
+        LD "--predefine=\"-D__stack_size__=0x1000\" --predefine=\"-D__heap_size__=0x400\""
+    )
+    
+    mcux_add_armgcc_configuration(
+        LD "-Xlinker --defsym=__stack_size__=0x1000 -Xlinker --defsym=__heap_size__=0x400"
+    )
 
 endif ()

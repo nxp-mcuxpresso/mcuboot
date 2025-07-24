@@ -21,6 +21,10 @@
 #include "fsl_debug_console.h"
 #include "mflash_drv.h"
 
+#ifdef CONFIG_BOOT_USE_PSA_CRYPTO
+#include "psa/crypto.h"
+#endif
+
 #ifdef CONFIG_ENCRYPT_XIP_EXT_ENABLE
 #include "encrypted_xip.h"
 #endif
@@ -37,11 +41,6 @@
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-
-#ifdef CONFIG_BOOT_SIGNATURE
-status_t CRYPTO_InitHardware(void);
-#endif
-
 #ifdef CONFIG_MCUBOOT_FLASH_REMAP_ENABLE
 extern void SBL_EnableRemap(uint32_t start_addr, uint32_t end_addr, uint32_t off);
 extern void SBL_DisableRemap(void);
@@ -126,8 +125,13 @@ int sbl_boot_main(void)
     int rc = -1;
     struct boot_rsp rsp;
 
-#ifdef CONFIG_BOOT_SIGNATURE
-    CRYPTO_InitHardware();
+#ifdef CONFIG_BOOT_USE_PSA_CRYPTO
+    psa_status_t psa_status;
+    psa_status = psa_crypto_init();
+    if (psa_status != PSA_SUCCESS)
+    {
+        BOOT_LOG_ERR("FAILED to init PSA crypto backend! PSA error %d", psa_status);
+    }
 #endif
 
     rc = mflash_drv_init();
@@ -135,7 +139,7 @@ int sbl_boot_main(void)
     {
         BOOT_LOG_ERR("FAILED to init mflash!");
     }
-
+   
     BOOT_LOG_INF("Bootloader Version %s", BOOTLOADER_VERSION);
     
 #if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)

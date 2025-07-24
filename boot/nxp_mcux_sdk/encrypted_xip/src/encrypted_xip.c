@@ -21,7 +21,7 @@
    
 #include "flash_partitioning.h"
 
-#include "mbedtls/md5.h"
+#include "mbedtls/sha256.h"
 
 #include "mflash_drv.h"
 #include "sysflash/sysflash.h"
@@ -101,31 +101,6 @@ static int magic_check(const uint8_t *magic) {
     }
     return 0;
 }
-
-static void hexdump(const void *src, size_t size)
-{
-    const unsigned char *src8 = src;
-    const int CNT             = 16;
-
-    for (size_t i = 0; i < size; i++)
-    {
-        int n = i % CNT;
-        if (n == 0)
-            PRINTF("%08x  ", i);
-        PRINTF("%02X ", src8[i]);
-        if ((i && n == CNT - 1) || i + 1 == size)
-        {
-            int rem = CNT - 1 - n;
-            for (int j = 0; j < rem; j++)
-                PRINTF("   ");
-            PRINTF("|");
-            for (int j = n; j >= 0; j--)
-                PUTCHAR(isprint(src8[i - j]) ? src8[i - j] : '.');
-            PRINTF("|\n");
-        }
-    }
-    PUTCHAR('\n');
-}
 #endif
 /*******************************************************************************
  * Externs
@@ -158,15 +133,14 @@ status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uin
     }
     if (magic_check(metadata.magic)) {
         /* Check hash */
-        mbedtls_md5_context md_ctx;
-        uint8_t md[16];
+        uint8_t sha[32];
 
-        mbedtls_md5_init(&md_ctx);
-        mbedtls_md5_starts_ret(&md_ctx);
-        mbedtls_md5_update(&md_ctx, (unsigned char*) cfg_block, cfg_sz);
-        mbedtls_md5_finish(&md_ctx, md);
+        if(mbedtls_sha256((unsigned char *)cfg_block, cfg_sz, sha, 0) != 0) {
+            PRINTF("mbedtls_sha256 failed\n");
+            return kStatus_Fail;
+        }
 
-        if (memcmp(metadata.hash, md, 16) == 0) {
+        if (memcmp(metadata.hash, sha, 16) == 0) {
             if (metadata.active_slot == 0 || metadata.active_slot == 1) {
               *is_valid = true;
               if (active_slot != NULL){
@@ -197,7 +171,6 @@ status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta)
 status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_slot)
 {
 #ifndef ENCRYPTED_XIP_NPX
-    status_t status = kStatus_Fail;
     uint32_t meta_off = fa_meta->fa_size - sizeof(enc_metadata_t);
     const uint32_t cfg_addr = fa_meta->fa_off + BOOT_FLASH_BASE;
     enc_metadata_t metadata;
@@ -210,20 +183,20 @@ status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_s
     }
 
     /* Calculate hash */
-    mbedtls_md5_context md_ctx;
-    uint8_t md[16];
+    uint8_t sha[32];
     uint32_t len;
 
     len = platform_enc_cfg_getSize();
     ASSERT_APP(0 , len % 16, "Unaligned size of IPED struct len=%d\n", len);
 
-    mbedtls_md5_init(&md_ctx);
-    mbedtls_md5_starts_ret(&md_ctx);
-    mbedtls_md5_update(&md_ctx, (unsigned char*) cfg_addr, len);
-    mbedtls_md5_finish(&md_ctx, md);
+    if(mbedtls_sha256((unsigned char *)cfg_addr, len, sha, 0) != 0) {
+        PRINTF("mbedtls_sha256 failed\n");
+        return kStatus_Fail;
+    }
 
     memset(&metadata, 0, sizeof(enc_metadata_t));
-    memcpy(metadata.hash, md, 16);
+    //truncate hash to 16 bytes
+    memcpy(metadata.hash, sha, 16);
     metadata.active_slot = active_slot;
     memcpy(metadata.magic, ENC_MAGIC, ENC_MAGIC_SZ);
 
