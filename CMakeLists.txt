@@ -276,10 +276,6 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.mbedtls_config)
             mcuboot_psa_crypto_config.h
     )
 
-    mcux_remove_macro(
-        CC "-DMBEDTLS_CONFIG_FILE=\\\"mcux_mbedtls_config.h\\\""
-    )
-
     mcux_add_macro(
         CC "-DMBEDTLS_CONFIG_FILE=\\\"mcuboot_mbedtls_config.h\\\"\
             -DMBEDTLS_PSA_CRYPTO_CONFIG_FILE=\\\"mcuboot_psa_crypto_config.h\\\""
