@@ -47,9 +47,9 @@
         }                                 \
     } while (0);
 
-#define FLASH_ADDR      BOOT_FLASH_EXEC_APP
+#define FLASH_ADDR             BOOT_FLASH_ACT_APP
 /* Mcuboot trailer is not encrypted, reserve flash sector */
-#define BEE_REGION_MAX_SIZE (BOOT_FLASH_CAND_APP - BOOT_FLASH_ACT_APP - MFLASH_SECTOR_SIZE)
+#define BEE_REGION_MAX_SIZE    (BOOT_FLASH_CAND_APP - BOOT_FLASH_ACT_APP - MFLASH_SECTOR_SIZE)
 
 #define PROT_REGION_ALIGN_SIZE (0x1000)
 
@@ -664,7 +664,7 @@ status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
 	SCB_InvalidateDCache();
 	SCB_EnableDCache();
 
-	PRINTF("On-the-fly decryption initialization completed\n");
+	PRINTF("Encrypted XIP initialization successful\n");
 	return kStatus_Success;
 	error: return kStatus_Fail;
 }

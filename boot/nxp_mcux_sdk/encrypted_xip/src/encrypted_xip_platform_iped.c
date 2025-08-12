@@ -553,12 +553,13 @@ status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
         PRINTF("nboot_mem_crypt_configure failed: 0x%08x\n", status);
         goto error;
     }
-    PRINTF("IPED configuration found and successfully configured...\n");
     
     IPED_EncryptEnable(FLEXSPI);
     
     FLEXSPI->AHBCR |= FLEXSPI_AHBCR_CLRAHBRXBUF_MASK;
     CACHE64_InvalidateCache(CACHE64_CTRL0);
+    
+    PRINTF("Encrypted XIP initialization successful\n");
     
     return kStatus_Success;
 error:

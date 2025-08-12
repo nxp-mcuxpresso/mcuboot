@@ -282,6 +282,26 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.mbedtls_config)
     )
 endif()
 
+if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.tinycrypt_config)
+    mcux_add_include(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/tinycrypt_config
+        PROJECT_BASE_PATH tinycrypt_config
+        INCLUDES
+            .
+    )
+
+    mcux_add_source(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/tinycrypt_config
+        PROJECT_BASE_PATH tinycrypt_config
+        SOURCES
+            mbedtls_user_config.h
+    )
+
+    mcux_add_macro(
+        CC "-DMBEDTLS_USER_CONFIG_FILE=\\\"mbedtls_user_config.h\\\""
+    )
+endif()
+
 # Stack and heap setup
 
 if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.stack_heap_default_mbedtls)

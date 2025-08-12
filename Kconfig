@@ -79,6 +79,14 @@ menu "MCUboot"
         help
             Default MCUboot stack/heap setup for configuration with TinyCrypt
 
+    config MCUX_COMPONENT_middleware.mcuboot.tinycrypt_config
+        bool
+        default y
+        depends on MCUX_COMPONENT_middleware.mcuboot.bootutil
+        depends on MCUX_COMPONENT_middleware.mcuboot.tinycrypt
+        help
+            Configuration headers needed for TinyCrypt backend
+
 
 
 # Device Flash API automatically selected by device family
@@ -123,11 +131,6 @@ menu "MCUboot"
                 Flash address of the candidate application - slot 1.
 
         if ENCRYPT_XIP_EXT_ENABLE
-
-            config BOOT_FLASH_EXEC_APP_ADDRESS
-                hex "Encrypted application address"
-                help
-                    Flash address of encrypted executable application.
 
             config BOOT_FLASH_ENC_META_ADDRESS
                 hex "Encryption meta data address"
@@ -277,7 +280,7 @@ menu "MCUboot"
         depends on MCUX_HW_DEVICE_MCXN947 || MCUX_HW_DEVICE_MCXN547
         depends on !BOOT_FLASH_REMAP
         help
-            By default the MCUboot is located in IFR region to utilize
+            (MCXN9 only) By default the MCUboot is located in IFR region to utilize
             flash remapping feature, however, this flash partition layout
             limits usage of some features (mbedTLS, encrypted XIP etc).
             Enable this to move the bootloader from IFR region to main flash.
@@ -288,8 +291,6 @@ menu "MCUboot"
         bool
         default y
         depends on MCUX_COMPONENT_middleware.mcuboot.mcxn_custom_cfg.main_flash_only
-        help
-            Define to indicate custom build configuration and change configuration
 
 endmenu
 
