@@ -104,7 +104,7 @@ menu "MCUboot"
         bool
         default y
         depends on MCUX_COMPONENT_middleware.mcuboot.bootutil
-        depends on MCUX_HW_SOC_SERIES_MCX
+        depends on MCUX_HW_SOC_SERIES_MCX || MCUX_COMPONENT_driver.flash_k4
         help
             Layer that connects mcuboot flash API with device specific flash API.
             Version for MCX devices.
