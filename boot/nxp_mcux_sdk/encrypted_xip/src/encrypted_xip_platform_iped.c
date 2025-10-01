@@ -500,13 +500,14 @@ status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_star
         return -1;
     }
        
-    /* persist iped configuration at particular flash offset */
-    status = iap_mem_erase(&apiCoreCtx, BOOT_FLASH_ENC_META, 0x1000, kMemoryID_FlexspiNor);
+    /* invalidate any previous iped configuration */
+    status = iap_mem_erase(&apiCoreCtx, BOOT_FLASH_ENC_META, MFLASH_SECTOR_SIZE, kMemoryID_FlexspiNor);
     if(status != kStatus_Success)
     {
         PRINTF("iap_mem_erase returned with code 0x%X\n", status);
         return -1;
     }
+    /* persist iped configuration at particular flash offset */
     status = iap_mem_config(&apiCoreCtx, (uint32_t *)&iped_write_arg, kMemoryID_FlexspiNor);
     if(status != kStatus_Success)
     {

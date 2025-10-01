@@ -51,7 +51,7 @@
 /* Mcuboot trailer is not encrypted, reserve flash sector */
 #define BEE_REGION_MAX_SIZE    (BOOT_FLASH_CAND_APP - BOOT_FLASH_ACT_APP - MFLASH_SECTOR_SIZE)
 
-#define PROT_REGION_ALIGN_SIZE (0x1000)
+#define PROT_REGION_ALIGN_SIZE MFLASH_SECTOR_SIZE
 
 /* FAC region configuration registers */
 #define GPR_FAC_0_START_ADDR    GPR18
