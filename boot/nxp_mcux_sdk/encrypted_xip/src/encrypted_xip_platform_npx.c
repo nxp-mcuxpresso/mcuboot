@@ -26,9 +26,9 @@
 #define ASSERT_NPX(expected, actual, ...) \
     do                                    \
     {                                     \
-        if (expected != actual)           \
+        if ((expected) != (actual))       \
         {                                 \
-            PRINTF("Assertion failed: ");   \
+            PRINTF("Assertion failed: "); \
             PRINTF(__VA_ARGS__);          \
             while (1)                     \
                 ;                         \

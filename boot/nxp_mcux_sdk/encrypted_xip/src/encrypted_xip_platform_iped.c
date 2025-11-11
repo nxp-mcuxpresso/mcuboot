@@ -42,15 +42,15 @@
  * @details Print finshed message and trap forever upon failure.
  */
 #define ASSERT_IPED(expected, actual, ...) \
-    do                                    \
-    {                                     \
-        if (expected != actual)           \
-        {                                 \
-            PRINTF("Assertion failed: ");   \
-            PRINTF(__VA_ARGS__);          \
-            while (1)                     \
-                ;                         \
-        }                                 \
+    do                                     \
+    {                                      \
+        if ((expected) != (actual))        \
+        {                                  \
+            PRINTF("Assertion failed: ");  \
+            PRINTF(__VA_ARGS__);           \
+            while (1)                      \
+                ;                          \
+        }                                  \
     } while (0);
 
 #if !defined(CONFIG_ENCRYPT_XIP_IPED_REGION_MAX_SIZE)
