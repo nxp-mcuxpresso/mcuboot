@@ -1,8 +1,28 @@
-/*
- * Copyright 2025 NXP
- * All rights reserved.
+/**
+ * \file mcux_mbedtls_psa_crypto_config.h
  *
- * SPDX-License-Identifier: BSD-3-Clause
+ * \brief Configuration options (set of defines)
+ *
+ *  This set of compile-time options may be used to enable
+ *  or disable features selectively, and reduce the global
+ *  memory footprint.
+ */
+/*
+ *  Copyright The Mbed TLS Contributors
+ *  SPDX-License-Identifier: Apache-2.0
+ *  Copyright 2025 NXP. Not a Contribution
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 
 /**
@@ -20,8 +40,10 @@
 
 #include "sblconfig.h"
 #include "mcux_config.h"
-   
+
 #if defined(CONFIG_BOOT_USE_MBEDTLS)
+
+/* MCUboot - reduced configuration for legacy API needed by encrypted XIP */
 
 #define MBEDTLS_HAVE_ASM
 #define MBEDTLS_CIPHER_MODE_CTR
@@ -51,18 +73,7 @@
 
 #elif defined(CONFIG_BOOT_USE_PSA_CRYPTO)
 
-#define MBEDTLS_HAVE_ASM
-#define MBEDTLS_NO_PLATFORM_ENTROPY 
-#define MBEDTLS_USE_PSA_CRYPTO
-#define MBEDTLS_PSA_CRYPTO_CONFIG
-#define MBEDTLS_CTR_DRBG_C
-#define MBEDTLS_ENTROPY_C
-#define MBEDTLS_PLATFORM_C
-#define MBEDTLS_PSA_CRYPTO_C
-
-#else
-#error "You have to choose legacy API or PSA Crypto API for MCUboot"
-#endif
+/* MCUboot - PSA configuration  */
 
 /**
  * This is an optional version symbol that enables compatibility handling of
@@ -101,7 +112,8 @@
  *
  * Comment to disable the use of assembly code.
  */
-//#define MBEDTLS_HAVE_ASM
+#define MBEDTLS_HAVE_ASM
+
 /**
  * \def MBEDTLS_NO_UDBL_DIVISION
  *
@@ -701,7 +713,7 @@
  *
  * Enable Cipher Block Chaining mode (CBC) for symmetric ciphers.
  */
-//#define MBEDTLS_CIPHER_MODE_CBC
+#define MBEDTLS_CIPHER_MODE_CBC
 
 /**
  * \def MBEDTLS_CIPHER_MODE_CFB
@@ -715,7 +727,7 @@
  *
  * Enable Counter Block Cipher mode (CTR) for symmetric ciphers.
  */
-//#define MBEDTLS_CIPHER_MODE_CTR
+#define MBEDTLS_CIPHER_MODE_CTR
 
 /**
  * \def MBEDTLS_CIPHER_MODE_OFB
@@ -774,10 +786,10 @@
  *
  * Enable padding modes in the cipher layer.
  */
-//#define MBEDTLS_CIPHER_PADDING_PKCS7
-//#define MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS
-//#define MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN
-//#define MBEDTLS_CIPHER_PADDING_ZEROS
+#define MBEDTLS_CIPHER_PADDING_PKCS7
+#define MBEDTLS_CIPHER_PADDING_ONE_AND_ZEROS
+#define MBEDTLS_CIPHER_PADDING_ZEROS_AND_LEN
+#define MBEDTLS_CIPHER_PADDING_ZEROS
 
 /** \def MBEDTLS_CTR_DRBG_USE_128_BIT_KEY
  *
@@ -811,7 +823,7 @@
 /* All except MBEDTLS_ECP_DP_SECP256R1_ENABLED are disabled in mbed-crypto - NXP */
 //#define MBEDTLS_ECP_DP_SECP192R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP224R1_ENABLED
-//#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
+#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP384R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP521R1_ENABLED
 //#define MBEDTLS_ECP_DP_SECP192K1_ENABLED
@@ -833,7 +845,7 @@
  *
  * Comment this macro to disable NIST curves optimisation.
  */
-//#define MBEDTLS_ECP_NIST_OPTIM
+#define MBEDTLS_ECP_NIST_OPTIM
 
 /**
  * \def MBEDTLS_ECP_RESTARTABLE
@@ -910,7 +922,7 @@
  *
  * Comment this macro to disable deterministic ECDSA.
  */
-//#define MBEDTLS_ECDSA_DETERMINISTIC
+#define MBEDTLS_ECDSA_DETERMINISTIC
 
 /**
  * \def MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
@@ -1191,7 +1203,7 @@
  *
  * Disable if you only need to support RFC 5915 + 5480 key formats.
  */
-//#define MBEDTLS_PK_PARSE_EC_EXTENDED
+#define MBEDTLS_PK_PARSE_EC_EXTENDED
 
 /**
  * \def MBEDTLS_PK_PARSE_EC_COMPRESSED
@@ -1204,7 +1216,7 @@
  *       the only unsupported curves are MBEDTLS_ECP_DP_SECP224R1 and
  *       MBEDTLS_ECP_DP_SECP224K1.
  */
-//#define MBEDTLS_PK_PARSE_EC_COMPRESSED
+#define MBEDTLS_PK_PARSE_EC_COMPRESSED
 
 /**
  * \def MBEDTLS_ERROR_STRERROR_DUMMY
@@ -1219,7 +1231,7 @@
  * Disable if you run into name conflicts and want to really remove the
  * mbedtls_strerror()
  */
-//#define MBEDTLS_ERROR_STRERROR_DUMMY
+#define MBEDTLS_ERROR_STRERROR_DUMMY
 
 /**
  * \def MBEDTLS_GENPRIME
@@ -1228,7 +1240,7 @@
  *
  * Requires: MBEDTLS_BIGNUM_C
  */
-//#define MBEDTLS_GENPRIME
+#define MBEDTLS_GENPRIME
 
 /**
  * \def MBEDTLS_FS_IO
@@ -1258,7 +1270,7 @@
  *
  * Uncomment this macro to disable the built-in platform entropy functions.
  */
-//#define MBEDTLS_NO_PLATFORM_ENTROPY        // NXP
+#define MBEDTLS_NO_PLATFORM_ENTROPY        // NXP
 
 /**
  * \def MBEDTLS_ENTROPY_FORCE_SHA256
@@ -1573,7 +1585,7 @@
  *
  * Enable the checkup functions (*_self_test).
  */
-//#define MBEDTLS_SELF_TEST
+#define MBEDTLS_SELF_TEST
 
 /**
  * \def MBEDTLS_SHA256_SMALLER
@@ -1613,7 +1625,7 @@
  *
  * Enable sending of all alert messages
  */
-//#define MBEDTLS_SSL_ALL_ALERT_MESSAGES
+//#define MBEDTLS_SSL_ALL_ALERT_MESSAGES        // NXP
 
 /**
  * \def MBEDTLS_SSL_DTLS_CONNECTION_ID
@@ -1741,7 +1753,7 @@
  *
  * Comment to disable the context serialization APIs.
  */
-//#define MBEDTLS_SSL_CONTEXT_SERIALIZATION
+//#define MBEDTLS_SSL_CONTEXT_SERIALIZATION        // NXP
 
 /**
  * \def MBEDTLS_SSL_DEBUG_ALL
@@ -1773,7 +1785,7 @@
  *
  * Comment this macro to disable support for Encrypt-then-MAC
  */
-//#define MBEDTLS_SSL_ENCRYPT_THEN_MAC
+//#define MBEDTLS_SSL_ENCRYPT_THEN_MAC        // NXP
 
 /** \def MBEDTLS_SSL_EXTENDED_MASTER_SECRET
  *
@@ -1789,7 +1801,7 @@
  *
  * Comment this macro to disable support for Extended Master Secret.
  */
-//#define MBEDTLS_SSL_EXTENDED_MASTER_SECRET
+//#define MBEDTLS_SSL_EXTENDED_MASTER_SECRET        // NXP
 
 /**
  * \def MBEDTLS_SSL_KEEP_PEER_CERTIFICATE
@@ -1813,7 +1825,7 @@
  * Comment this macro to disable storing the peer's certificate
  * after the handshake.
  */
-//#define MBEDTLS_SSL_KEEP_PEER_CERTIFICATE
+//#define MBEDTLS_SSL_KEEP_PEER_CERTIFICATE        // NXP
 
 /**
  * \def MBEDTLS_SSL_RENEGOTIATION
@@ -1837,7 +1849,7 @@
  *          configuration of this extension).
  *
  */
-//#define MBEDTLS_SSL_RENEGOTIATION
+//#define MBEDTLS_SSL_RENEGOTIATION        // NXP
 
 /**
  * \def MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
@@ -1846,7 +1858,7 @@
  *
  * Comment this macro to disable support for the max_fragment_length extension
  */
-//#define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
+//#define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH        // NXP
 
 /**
  * \def MBEDTLS_SSL_RECORD_SIZE_LIMIT
@@ -1876,7 +1888,7 @@
  *
  * Comment this macro to disable support for TLS 1.2 / DTLS 1.2
  */
-//#define MBEDTLS_SSL_PROTO_TLS1_2
+//#define MBEDTLS_SSL_PROTO_TLS1_2        // NXP
 
 /**
  * \def MBEDTLS_SSL_PROTO_TLS1_3
@@ -1940,7 +1952,7 @@
  * effect on the build.
  *
  */
-//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
+//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED        // NXP
 
 /**
  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
@@ -1958,7 +1970,7 @@
  * effect on the build.
  *
  */
-//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED    // NXP
 
 /**
  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
@@ -1972,7 +1984,7 @@
  * have any effect on the build.
  *
  */
-//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
+//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED  // NXP
 
 /**
  * \def MBEDTLS_SSL_EARLY_DATA
@@ -2003,7 +2015,7 @@
  *
  * Comment this macro to disable support for DTLS
  */
-//#define MBEDTLS_SSL_PROTO_DTLS
+//#define MBEDTLS_SSL_PROTO_DTLS        // NXP
 
 /**
  * \def MBEDTLS_SSL_ALPN
@@ -2012,7 +2024,7 @@
  *
  * Comment this macro to disable support for ALPN.
  */
-//#define MBEDTLS_SSL_ALPN
+//#define MBEDTLS_SSL_ALPN        // NXP
 
 /**
  * \def MBEDTLS_SSL_DTLS_ANTI_REPLAY
@@ -2027,7 +2039,7 @@
  *
  * Comment this to disable anti-replay in DTLS.
  */
-//#define MBEDTLS_SSL_DTLS_ANTI_REPLAY
+//#define MBEDTLS_SSL_DTLS_ANTI_REPLAY        // NXP
 
 /**
  * \def MBEDTLS_SSL_DTLS_HELLO_VERIFY
@@ -2045,7 +2057,7 @@
  *
  * Comment this to disable support for HelloVerifyRequest.
  */
-//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY        // NXP
 
 /**
  * \def MBEDTLS_SSL_DTLS_SRTP
@@ -2092,7 +2104,7 @@
  *
  * Comment this to disable support for clients reusing the source port.
  */
-//#define MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
+//#define MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE        // NXP
 
 /**
  * \def MBEDTLS_SSL_SESSION_TICKETS
@@ -2106,7 +2118,7 @@
  *
  * Comment this macro to disable support for SSL session tickets
  */
-//#define MBEDTLS_SSL_SESSION_TICKETS
+//#define MBEDTLS_SSL_SESSION_TICKETS        // NXP
 
 /**
  * \def MBEDTLS_SSL_SERVER_NAME_INDICATION
@@ -2117,7 +2129,7 @@
  *
  * Comment this macro to disable support for server name indication in SSL
  */
-//#define MBEDTLS_SSL_SERVER_NAME_INDICATION
+//#define MBEDTLS_SSL_SERVER_NAME_INDICATION        // NXP
 
 /**
  * \def MBEDTLS_SSL_VARIABLE_BUFFER_LENGTH
@@ -2239,7 +2251,7 @@
  *
  * Uncomment this to enable internal use of PSA Crypto and new associated APIs.
  */
-//#define MBEDTLS_USE_PSA_CRYPTO        // NXP
+#define MBEDTLS_USE_PSA_CRYPTO        // NXP
 
 /**
  * \def MBEDTLS_PSA_CRYPTO_CONFIG
@@ -2469,7 +2481,7 @@
  *
  * PEM_PARSE uses AES for decrypting encrypted keys.
  */
-//#define MBEDTLS_AES_C
+#define MBEDTLS_AES_C
 
 /**
  * \def MBEDTLS_ASN1_PARSE_C
@@ -2483,7 +2495,7 @@
  *          library/pkcs5.c
  *          library/pkparse.c
  */
-//#define MBEDTLS_ASN1_PARSE_C
+#define MBEDTLS_ASN1_PARSE_C
 
 /**
  * \def MBEDTLS_ASN1_WRITE_C
@@ -2497,7 +2509,7 @@
  *          library/x509write_crt.c
  *          library/x509write_csr.c
  */
-//#define MBEDTLS_ASN1_WRITE_C
+#define MBEDTLS_ASN1_WRITE_C
 
 /**
  * \def MBEDTLS_BASE64_C
@@ -2509,7 +2521,7 @@
  *
  * This module is required for PEM support (required by X.509).
  */
-//#define MBEDTLS_BASE64_C
+#define MBEDTLS_BASE64_C
 
 /**
  * \def MBEDTLS_BLOCK_CIPHER_NO_DECRYPT
@@ -2551,7 +2563,7 @@
  *
  * This module is required for RSA, DHM and ECC (ECDH, ECDSA) support.
  */
-//#define MBEDTLS_BIGNUM_C
+#define MBEDTLS_BIGNUM_C
 
 /**
  * \def MBEDTLS_CAMELLIA_C
@@ -2766,7 +2778,7 @@
  *
  * This module provides the CTR_DRBG AES random number generator.
  */
-//#define MBEDTLS_CTR_DRBG_C
+#define MBEDTLS_CTR_DRBG_C
 
 /**
  * \def MBEDTLS_DEBUG_C
@@ -2837,7 +2849,7 @@
  *
  * Requires: MBEDTLS_ECP_C
  */
-//#define MBEDTLS_ECDH_C
+#define MBEDTLS_ECDH_C
 
 /**
  * \def MBEDTLS_ECDSA_C
@@ -2854,7 +2866,7 @@
  *           and at least one MBEDTLS_ECP_DP_XXX_ENABLED for a
  *           short Weierstrass curve.
  */
-//#define MBEDTLS_ECDSA_C
+#define MBEDTLS_ECDSA_C
 
 /**
  * \def MBEDTLS_ECJPAKE_C
@@ -2890,7 +2902,7 @@
  *
  * Requires: MBEDTLS_BIGNUM_C and at least one MBEDTLS_ECP_DP_XXX_ENABLED
  */
-//#define MBEDTLS_ECP_C
+#define MBEDTLS_ECP_C
 
 /**
  * \def MBEDTLS_ENTROPY_C
@@ -2904,7 +2916,7 @@
  *
  * This module provides a generic entropy pool
  */
-//#define MBEDTLS_ENTROPY_C
+#define MBEDTLS_ENTROPY_C
 
 /**
  * \def MBEDTLS_ERROR_C
@@ -2976,7 +2988,7 @@
  *
  * Uncomment to enable the HMAC_DRBG random number generator.
  */
-//#define MBEDTLS_HMAC_DRBG_C
+#define MBEDTLS_HMAC_DRBG_C
 
 /**
  * \def MBEDTLS_LMS_C
@@ -3048,7 +3060,7 @@
  *
  * Uncomment to enable generic message digest wrappers.
  */
-//#define MBEDTLS_MD_C
+#define MBEDTLS_MD_C
 
 /**
  * \def MBEDTLS_MD5_C
@@ -3127,7 +3139,7 @@
  *
  * This modules translates between OIDs and internal values.
  */
-//#define MBEDTLS_OID_C
+#define MBEDTLS_OID_C
 
 /**
  * \def MBEDTLS_PADLOCK_C
@@ -3163,7 +3175,7 @@
  *
  * This modules adds support for decoding / parsing PEM files.
  */
-//#define MBEDTLS_PEM_PARSE_C
+#define MBEDTLS_PEM_PARSE_C
 
 /**
  * \def MBEDTLS_PEM_WRITE_C
@@ -3179,7 +3191,7 @@
  *
  * This modules adds support for encoding / writing PEM files.
  */
-//#define MBEDTLS_PEM_WRITE_C
+#define MBEDTLS_PEM_WRITE_C
 
 /**
  * \def MBEDTLS_PK_C
@@ -3197,7 +3209,7 @@
  *
  * Uncomment to enable generic public key wrappers.
  */
-//#define MBEDTLS_PK_C
+#define MBEDTLS_PK_C
 
 /**
  * \def MBEDTLS_PK_PARSE_C
@@ -3212,7 +3224,7 @@
  *
  * Uncomment to enable generic public key parse functions.
  */
-//#define MBEDTLS_PK_PARSE_C
+#define MBEDTLS_PK_PARSE_C
 
 /**
  * \def MBEDTLS_PK_WRITE_C
@@ -3226,7 +3238,7 @@
  *
  * Uncomment to enable generic public key write functions.
  */
-//#define MBEDTLS_PK_WRITE_C
+#define MBEDTLS_PK_WRITE_C
 
 /**
  * \def MBEDTLS_PKCS5_C
@@ -3258,7 +3270,7 @@
  *
  * This module is required for the PKCS #7 parsing modules.
  */
-//#define MBEDTLS_PKCS7_C
+//#define MBEDTLS_PKCS7_C        // NXP
 
 /**
  * \def MBEDTLS_PKCS12_C
@@ -3297,7 +3309,7 @@
  *
  * This module enables abstraction of common (libc) functions.
  */
-//#define MBEDTLS_PLATFORM_C
+#define MBEDTLS_PLATFORM_C
 
 /**
  * \def MBEDTLS_POLY1305_C
@@ -3334,7 +3346,7 @@
  *               is enabled in PSA (unless it's fully accelerated, see
  *               docs/driver-only-builds.md about that).
  */
-//#define MBEDTLS_PSA_CRYPTO_C
+#define MBEDTLS_PSA_CRYPTO_C
 
 /**
  * \def MBEDTLS_PSA_CRYPTO_SE_C
@@ -3478,7 +3490,7 @@
  * This module adds support for SHA-256.
  * This module is required for the SSL/TLS 1.2 PRF function.
  */
-//#define MBEDTLS_SHA256_C
+#define MBEDTLS_SHA256_C
 
 /**
  * \def MBEDTLS_SHA256_USE_ARMV8_A_CRYPTO_IF_PRESENT
@@ -3591,7 +3603,7 @@
  *
  * This module adds support for SHA-512.
  */
-//#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA512_C
 
 /**
  * \def MBEDTLS_SHA3_C
@@ -3670,7 +3682,7 @@
  *
  * Requires: MBEDTLS_SSL_CACHE_C
  */
-//#define MBEDTLS_SSL_CACHE_C
+//#define MBEDTLS_SSL_CACHE_C        // NXP
 
 /**
  * \def MBEDTLS_SSL_COOKIE_C
@@ -3680,7 +3692,7 @@
  * Module:  library/ssl_cookie.c
  * Caller:
  */
-//#define MBEDTLS_SSL_COOKIE_C
+//#define MBEDTLS_SSL_COOKIE_C        // NXP
 
 /**
  * \def MBEDTLS_SSL_TICKET_C
@@ -3693,7 +3705,7 @@
  * Requires: (MBEDTLS_CIPHER_C || MBEDTLS_USE_PSA_CRYPTO) &&
  *           (MBEDTLS_GCM_C || MBEDTLS_CCM_C || MBEDTLS_CHACHAPOLY_C)
  */
-//#define MBEDTLS_SSL_TICKET_C
+//#define MBEDTLS_SSL_TICKET_C        // NXP
 
 /**
  * \def MBEDTLS_SSL_CLI_C
@@ -3707,7 +3719,7 @@
  *
  * This module is required for SSL/TLS client support.
  */
-//#define MBEDTLS_SSL_CLI_C
+//#define MBEDTLS_SSL_CLI_C        // NXP
 
 /**
  * \def MBEDTLS_SSL_SRV_C
@@ -3721,7 +3733,7 @@
  *
  * This module is required for SSL/TLS server support.
  */
-//#define MBEDTLS_SSL_SRV_C
+//#define MBEDTLS_SSL_SRV_C        // NXP
 
 /**
  * \def MBEDTLS_SSL_TLS_C
@@ -3737,7 +3749,7 @@
  *
  * This module is required for SSL/TLS.
  */
-//#define MBEDTLS_SSL_TLS_C
+//#define MBEDTLS_SSL_TLS_C        // NXP
 
 /**
  * \def MBEDTLS_THREADING_C
@@ -3822,7 +3834,7 @@
  *
  * This module provides run-time version information.
  */
-//#define MBEDTLS_VERSION_C
+#define MBEDTLS_VERSION_C
 
 /**
  * \def MBEDTLS_X509_USE_C
@@ -3842,7 +3854,7 @@
  *
  * This module is required for the X.509 parsing modules.
  */
-//#define MBEDTLS_X509_USE_C
+//#define MBEDTLS_X509_USE_C        // NXP
 
 /**
  * \def MBEDTLS_X509_CRT_PARSE_C
@@ -3858,7 +3870,7 @@
  *
  * This module is required for X.509 certificate parsing.
  */
-//#define MBEDTLS_X509_CRT_PARSE_C
+//#define MBEDTLS_X509_CRT_PARSE_C        // NXP
 
 /**
  * \def MBEDTLS_X509_CRL_PARSE_C
@@ -3872,7 +3884,7 @@
  *
  * This module is required for X.509 CRL parsing.
  */
-//#define MBEDTLS_X509_CRL_PARSE_C
+//#define MBEDTLS_X509_CRL_PARSE_C        // NXP
 
 /**
  * \def MBEDTLS_X509_CSR_PARSE_C
@@ -3886,7 +3898,7 @@
  *
  * This module is used for reading X.509 certificate request.
  */
-//#define MBEDTLS_X509_CSR_PARSE_C
+//#define MBEDTLS_X509_CSR_PARSE_C        // NXP
 
 /**
  * \def MBEDTLS_X509_CREATE_C
@@ -3903,7 +3915,7 @@
  *
  * This module is the basis for creating X.509 certificates and CSRs.
  */
-//#define MBEDTLS_X509_CREATE_C
+//#define MBEDTLS_X509_CREATE_C        // NXP
 
 /**
  * \def MBEDTLS_X509_CRT_WRITE_C
@@ -3916,7 +3928,7 @@
  *
  * This module is required for X.509 certificate creation.
  */
-//#define MBEDTLS_X509_CRT_WRITE_C
+//#define MBEDTLS_X509_CRT_WRITE_C        // NXP
 
 /**
  * \def MBEDTLS_X509_CSR_WRITE_C
@@ -3929,7 +3941,7 @@
  *
  * This module is required for X.509 certificate request writing.
  */
-//#define MBEDTLS_X509_CSR_WRITE_C
+//#define MBEDTLS_X509_CSR_WRITE_C        // NXP
 
 /** \} name SECTION: Mbed TLS modules */
 
@@ -4416,6 +4428,10 @@
 //#define MBEDTLS_X509_MAX_FILE_PATH_LEN     512 /**< Maximum length of a path/filename string in bytes including the null terminator character ('\0'). */
 
 /** \} name SECTION: Module configuration options */
+
+#else /* CONFIG_BOOT_USE_PSA_CRYPTO */
+#error "You have to choose legacy API or PSA Crypto API for MCUboot"
+#endif
 
 #include "mcux_mbedtls_accelerator_config.h"
 

@@ -33,6 +33,14 @@
  * Definitions
  ******************************************************************************/
 
+#if defined(__IAR_SYSTEMS_ICC__)
+#define __TOOLCHAIN__ __VERSION__
+#elif defined(__GNUC__)
+#define __TOOLCHAIN__ "GCC " __VERSION__
+#else
+#define __TOOLCHAIN__ "UNKNOWN"
+#endif
+
 #ifdef NDEBUG
 #undef assert
 #define assert(x) ((void)(x))
@@ -127,10 +135,23 @@ int sbl_boot_main(void)
 
 #ifdef CONFIG_BOOT_USE_PSA_CRYPTO
     psa_status_t psa_status;
-    psa_status = psa_crypto_init();
+    int i;
+    /* MCUX-84288,MCUX-84297 - this is workaround to fix random issues with 
+     * entropy source on devices with DCP module */
+    for(i = 0; i < 10; i++)
+    {
+        psa_status = psa_crypto_init();
+        if(psa_status == PSA_SUCCESS)
+        {
+            break;
+        }
+        BOOT_LOG_WRN("Warning: failed to init PSA crypto backend...trying again the initialization");
+    }
     if (psa_status != PSA_SUCCESS)
     {
         BOOT_LOG_ERR("FAILED to init PSA crypto backend! PSA error %d", psa_status);
+        while(1)
+          ;
     }
 #endif
 
@@ -138,9 +159,14 @@ int sbl_boot_main(void)
     if (rc != 0)
     {
         BOOT_LOG_ERR("FAILED to init mflash!");
+        while(1)
+          ;
     }
    
     BOOT_LOG_INF("Bootloader Version %s", BOOTLOADER_VERSION);
+    BOOT_LOG_INF("Built " __DATE__ " " __TIME__);
+    BOOT_LOG_INF("Toolchain " __TOOLCHAIN__);
+    BOOT_LOG_INF("Upgrade mode: " MCUBOOT_UPGRADE_MODE);
     
 #if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
     /* Initialize encryption XIP extension for overwrite-only mode */

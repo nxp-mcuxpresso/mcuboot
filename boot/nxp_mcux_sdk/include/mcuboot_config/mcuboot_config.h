@@ -34,6 +34,7 @@
  */
 
 #ifdef CONFIG_BOOT_OVERWRITE_ONLY
+/* Upgrade mode: OVERWRITE_ONLY */
 #define MCUBOOT_OVERWRITE_ONLY
 #endif
 
@@ -45,9 +46,10 @@
    
 #ifdef CONFIG_MCUBOOT_FLASH_REMAP_ENABLE
 
-/* Upgrade mode: DIRECT-XIP + FLASH REMAP */ 
+/* Upgrade mode: DIRECT-XIP + FLASH REMAP */
 #define MCUBOOT_DIRECT_XIP
 #define MCUBOOT_DIRECT_XIP_REVERT
+#define MCUBOOT_UPGRADE_MODE  "DIRECT-XIP + FLASH REMAP"
 
 #elif defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
 
@@ -55,6 +57,7 @@
 #define MCUBOOT_OVERWRITE_ONLY
 #define MCUBOOT_OVERWRITE_ONLY_FAST
 #define MCUBOOT_IMAGE_ACCESS_HOOKS
+#define MCUBOOT_UPGRADE_MODE  "OVERWRITE_ONLY + ENCRYPTED XIP"
 
 #else
 
@@ -63,16 +66,21 @@
 #define CONFIG_BOOT_SWAP_USING_MOVE
 #endif
 #define MCUBOOT_SWAP_USING_MOVE 1
+#define MCUBOOT_UPGRADE_MODE  "SWAP_USING_MOVE"
 
 #endif /* CONFIG_MCUBOOT_FLASH_REMAP_ENABLE */
 
 #endif /* MCUBOOT_OVERWRITE_ONLY */
 
 #ifdef MCUBOOT_OVERWRITE_ONLY
+
 /* Uncomment to only erase and overwrite those primary slot sectors needed
  * to install the new image, rather than the entire image slot. */
+//#define MCUBOOT_OVERWRITE_ONLY_FAST
 
-/* #define MCUBOOT_OVERWRITE_ONLY_FAST */
+#ifndef MCUBOOT_UPGRADE_MODE
+#define MCUBOOT_UPGRADE_MODE  "OVERWRITE_ONLY"
+#endif
 
 #endif
 
