@@ -21,6 +21,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.bootutil)
             include/bootutil/bootutil_log.h
             include/bootutil/bootutil_public.h
             include/bootutil/bootutil_test.h
+            include/bootutil/bootutil_macros.h
             include/bootutil/caps.h
             include/bootutil/enc_key.h
             include/bootutil/enc_key_public.h
@@ -32,7 +33,11 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.bootutil)
             include/bootutil/ramload.h
             include/bootutil/security_cnt.h
             include/bootutil/sign_key.h
+            include/bootutil/mcuboot_uuid.h
             include/bootutil/crypto/aes_ctr.h
+            include/bootutil/crypto/aes_ctr_mbedtls.h
+            include/bootutil/crypto/aes_ctr_psa.h
+            include/bootutil/crypto/aes_ctr_tinycrypt.h
             include/bootutil/crypto/aes_kw.h
             include/bootutil/crypto/common.h
             include/bootutil/crypto/ecdh_p256.h
@@ -42,10 +47,17 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.bootutil)
             include/bootutil/crypto/rsa.h
             include/bootutil/crypto/sha.h
             src/boot_record.c
+            src/bootutil_area.c
+            src/bootutil_area.h
             src/bootutil_misc.c
             src/bootutil_misc.h
             src/bootutil_priv.h
             src/bootutil_public.c
+            src/bootutil_find_key.c
+            src/bootutil_img_hash.c
+            src/bootutil_img_security_cnt.c
+            src/bootutil_loader.c
+            src/bootutil_loader.h
             src/caps.c
             src/encrypted.c
             src/fault_injection_hardening.c
