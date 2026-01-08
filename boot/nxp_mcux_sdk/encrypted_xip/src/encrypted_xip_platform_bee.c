@@ -10,7 +10,7 @@
  * Includes
  ******************************************************************************/
 #include "sblconfig.h"
-#if defined(ENCRYPTED_XIP_BEE) && defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
+#if defined(ENCRYPTED_XIP_BEE) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
 #include <ctype.h>
 
 #include "encrypted_xip_platform.h"

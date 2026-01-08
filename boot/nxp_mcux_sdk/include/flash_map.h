@@ -168,7 +168,7 @@ int flash_area_id_to_multi_image_slot(int image_index, int area_id);
 
 extern const char *boot_image_names[];
 extern struct flash_area boot_flash_map[];
-#ifdef CONFIG_ENCRYPT_XIP_EXT_ENABLE
+#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP
 extern struct flash_area boot_flash_meta_map[];
 #endif
 

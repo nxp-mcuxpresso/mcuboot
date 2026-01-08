@@ -28,6 +28,8 @@
 
 #include "mcuboot_config/mcuboot_config.h"
 
+#if !defined(MCUBOOT_SINGLE_APPLICATION_SLOT)
+
 BOOT_LOG_MODULE_DECLARE(mcuboot);
 
 #if !defined(MCUBOOT_SWAP_USING_MOVE) && !defined(MCUBOOT_SWAP_USING_OFFSET)
@@ -1142,3 +1144,4 @@ done:
 }
 
 #endif /* !MCUBOOT_SWAP_USING_MOVE && !MCUBOOT_SWAP_USING_OFFSET */
+#endif /* !MCUBOOT_SINGLE_APPLICATION_SLOT */

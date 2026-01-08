@@ -10,8 +10,8 @@
  * Includes
  ******************************************************************************/
 #include "sblconfig.h"
-#if defined(ENCRYPTED_XIP_OTFAD) && defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
+#if defined(ENCRYPTED_XIP_OTFAD) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
 
 #error "OTFAD support is not implemented yet"
 
-#endif /* ENCRYPTED_XIP_NPX && CONFIG_ENCRYPT_XIP_EXT_ENABLE */
+#endif /* ENCRYPTED_XIP_NPX && CONFIG_BOOT_MODE_ENCRYPTED_XIP */

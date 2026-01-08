@@ -67,6 +67,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.bootutil)
             src/image_rsa.c
             src/image_validate.c
             src/loader.c
+            ../zephyr/single_loader.c
             src/swap_misc.c
             src/swap_move.c
             src/swap_priv.h

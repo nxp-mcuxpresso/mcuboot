@@ -60,6 +60,8 @@
 #endif
 
 #include "mcuboot_config/mcuboot_config.h"
+   
+#if !defined(MCUBOOT_SINGLE_APPLICATION_SLOT)
 
 BOOT_LOG_MODULE_DECLARE(mcuboot);
 
@@ -2554,3 +2556,4 @@ uint32_t boot_get_state_secondary_offset(struct boot_loader_state *state,
     return 0;
 }
 #endif
+#endif /* !MCUBOOT_SINGLE_APPLICATION_SLOT */

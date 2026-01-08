@@ -23,66 +23,61 @@
  */
 
 /*
- * UPGRADE MODES
+ * UPGRADE MODE
  *
- * The default is to support A/B image swapping with rollback.  A
- * simpler code path, which only supports overwriting the
- * existing image with the update image, is also available.
- *
- * In case of supported flash remap funcionality in the used processor the
- * direct-xip mode is configured.
+ * NXP supports several upgrade modes defined below.
+ * Refer to ota_examples\_doc documentation for more information.
  */
 
-#ifdef CONFIG_BOOT_OVERWRITE_ONLY
+#if (defined(CONFIG_BOOT_MODE_OVERWRITE_ONLY) + \
+     defined(CONFIG_BOOT_MODE_FLASH_REMAP) + \
+     defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP) + \
+     defined(CONFIG_BOOT_MODE_SINGLE_APPLICATION_SLOT) + \
+     defined(CONFIG_BOOT_MODE_SWAP)) != 1
+#error "An upgrade mode must be defined"
+#endif
+
+#if defined(CONFIG_BOOT_MODE_OVERWRITE_ONLY)
+
 /* Upgrade mode: OVERWRITE_ONLY */
 #define MCUBOOT_OVERWRITE_ONLY
-#endif
-
-#ifndef MCUBOOT_OVERWRITE_ONLY
-   
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && defined(CONFIG_MCUBOOT_FLASH_REMAP_ENABLE)
-#error "Flash remap support cannot be combined with encrypted xip support"
-#endif
-   
-#ifdef CONFIG_MCUBOOT_FLASH_REMAP_ENABLE
-
-/* Upgrade mode: DIRECT-XIP + FLASH REMAP */
-#define MCUBOOT_DIRECT_XIP
-#define MCUBOOT_DIRECT_XIP_REVERT
-#define MCUBOOT_UPGRADE_MODE  "DIRECT-XIP + FLASH REMAP"
-
-#elif defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
-
-/* Upgrade mode: OVERWRITE_ONLY + ENCRYPTED XIP */
-#define MCUBOOT_OVERWRITE_ONLY
-#define MCUBOOT_OVERWRITE_ONLY_FAST
-#define MCUBOOT_IMAGE_ACCESS_HOOKS
-#define MCUBOOT_UPGRADE_MODE  "OVERWRITE_ONLY + ENCRYPTED XIP"
-
-#else
-
-/* Upgrade mode: SWAP MODE (default) */ 
-#ifndef CONFIG_BOOT_SWAP_USING_MOVE
-#define CONFIG_BOOT_SWAP_USING_MOVE
-#endif
-#define MCUBOOT_SWAP_USING_MOVE 1
-#define MCUBOOT_UPGRADE_MODE  "SWAP_USING_MOVE"
-
-#endif /* CONFIG_MCUBOOT_FLASH_REMAP_ENABLE */
-
-#endif /* MCUBOOT_OVERWRITE_ONLY */
-
-#ifdef MCUBOOT_OVERWRITE_ONLY
-
+#define UPGRADE_MODE  "OVERWRITE ONLY"
 /* Uncomment to only erase and overwrite those primary slot sectors needed
  * to install the new image, rather than the entire image slot. */
 //#define MCUBOOT_OVERWRITE_ONLY_FAST
 
-#ifndef MCUBOOT_UPGRADE_MODE
-#define MCUBOOT_UPGRADE_MODE  "OVERWRITE_ONLY"
-#endif
+#elif defined(CONFIG_BOOT_MODE_FLASH_REMAP)
 
-#endif
+/* Upgrade mode: DIRECT-XIP + FLASH REMAP */
+#define MCUBOOT_DIRECT_XIP
+#define MCUBOOT_DIRECT_XIP_REVERT
+#define UPGRADE_MODE  "FLASH REMAP"
+
+#elif defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+
+/* Upgrade mode: OVERWRITE_ONLY + ENCRYPTED XIP extension */
+#define MCUBOOT_OVERWRITE_ONLY
+#define MCUBOOT_OVERWRITE_ONLY_FAST
+#define MCUBOOT_IMAGE_ACCESS_HOOKS
+#define UPGRADE_MODE  "ENCRYPTED XIP"
+
+#elif defined(CONFIG_BOOT_MODE_SINGLE_APPLICATION_SLOT)
+
+/* Upgrade mode: SINGLE_APPLICATION_SLOT */
+#define MCUBOOT_SINGLE_APPLICATION_SLOT
+#define UPGRADE_MODE  "SINGLE APPLICATION SLOT"
+
+#elif defined(CONFIG_BOOT_MODE_SWAP)
+
+/* Upgrade mode: SWAP MODE */ 
+#define MCUBOOT_SWAP_USING_MOVE 1
+#define UPGRADE_MODE  "SWAP"
+
+#else
+
+#error "An upgrade mode is not defined"
+
+#endif /* Upgrade mode */
 
 /*
  * CRYPTOGRAPHIC SETTINGS
@@ -140,7 +135,7 @@
  * You must choose exactly one encryption type.
  */
 
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE) && defined(CONFIG_BOOT_USE_PSA_CRYPTO)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP) && defined(CONFIG_BOOT_USE_PSA_CRYPTO)
 #error "Currently Encrypted XIP is not supported with PSA Crypto API"
 #endif
 

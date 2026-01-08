@@ -10,7 +10,7 @@
  * Includes
  ******************************************************************************/
 #include "sblconfig.h"
-#if defined(ENCRYPTED_XIP_NPX) && defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
+#if defined(ENCRYPTED_XIP_NPX) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
 #include <ctype.h>
 #include "fsl_debug_console.h"
 #include "flash_map.h"
@@ -101,4 +101,4 @@ status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off, c
     return kStatus_Success;
 }
 
-#endif /* ENCRYPTED_XIP_NPX && CONFIG_ENCRYPT_XIP_EXT_ENABLE */
+#endif /* ENCRYPTED_XIP_NPX && CONFIG_BOOT_MODE_ENCRYPTED_XIP */

@@ -10,7 +10,7 @@
  * Includes
  ******************************************************************************/
 #include "sblconfig.h"
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
 #include <ctype.h>
 
 #include "encrypted_xip.h"
@@ -296,4 +296,4 @@ error:
 }
 #endif
 
-#endif /* CONFIG_ENCRYPT_XIP_EXT_ENABLE */
+#endif /* CONFIG_BOOT_MODE_ENCRYPTED_XIP */

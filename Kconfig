@@ -130,7 +130,7 @@ menu "MCUboot"
             help
                 Flash address of the candidate application - slot 1.
 
-        if ENCRYPT_XIP_EXT_ENABLE
+        if BOOT_MODE_ENCRYPTED_XIP
 
             config BOOT_FLASH_ENC_META_ADDRESS
                 hex "Encryption meta data address"
@@ -146,36 +146,26 @@ menu "MCUboot"
                 structure that holds image status information. This option is not
                 used on all platforms. See the code specifics in flash_partitioning.h/c
 
-        config ENCRYPT_XIP_EXT_ENABLE
-            bool "Enable Encrypted XIP mode"
-            default n
-            depends on MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
-            help
-                Uses modified overwrite-only mode to utilize encrypted XIP
-
         choice
-            prompt "Image handling strategy"
-            default BOOT_FLASH_REMAP
-            depends on !ENCRYPT_XIP_EXT_ENABLE
+            prompt "Upgrade mode: Image handling strategy"
+            default BOOT_MODE_FLASH_REMAP
 
-            config BOOT_OVERWRITE_ONLY
-                bool "Update only strategy"
+            config BOOT_MODE_OVERWRITE_ONLY
+                bool "Overwrite only"
                 help
                     This simple update only strategy overwrites image in the primary slot
                     with the new one in the secondary slot. It is not possible to revert back
                     to the previous version.
-                    This mode can be extended with Encrypted XIP support
 
-            config BOOT_SWAP_USING_MOVE
-                bool "Image swapping by SW algorithm"
+            config BOOT_MODE_SWAP
+                bool "Swap"
                 help
                     This is a complex technique that swaps images and allows to revert back
                     to the previous version. It also produces more flash wear and requires
-                    that the flash is able to work with incremental writes within erased flash page
-                    It cannot be combined with Encrypted XIP support.
+                    that the flash is able to work with incremental writes within erased flash page.
 
-            config BOOT_FLASH_REMAP
-                bool "Image swapping offloaded to HW"
+            config BOOT_MODE_FLASH_REMAP
+                bool "Flash remap"
                 depends on MCUX_HW_DEVICE_MIMXRT1062 || MCUX_HW_DEVICE_MIMXRT1064 || \
                            MCUX_HW_DEVICE_MIMXRT1042 || \
                            MCUX_HW_DEVICE_MIMXRT1166 || MCUX_HW_DEVICE_MIMXRT1176 || \
@@ -186,7 +176,20 @@ menu "MCUboot"
                     If hardware supports flash remapping it is possible
                     to use it together with MCUboot's DIRECT_XIP configuration
                     to enable zero-overhead image swapping.
-                    Currently it cannot be combined with Encrypted XIP support.
+
+            config BOOT_MODE_SINGLE_APPLICATION_SLOT
+                bool "Single application slot"
+                help
+                    This mode is suitable for a device with limited flash memory resource as there is
+                    no second slot for image staging. The update can be only done manually by blhost/programmer
+                    or from bootloader context using MCUboot's serial recovery feature.
+
+            config BOOT_MODE_ENCRYPTED_XIP
+                bool "Encrypted XIP"
+                depends on MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
+                help
+                    Uses modified overwrite-only mode to utilize encrypted XIP. The encrypted image in the 
+                    secondary slot is re-encrypted to the primary slot with platform on-the-fly encryption.
         endchoice
 
         config BOOT_SIGNATURE
@@ -210,7 +213,7 @@ menu "MCUboot"
         choice
             prompt "Encrypted image algorithm of MCUboot to secure AES key"
             default BOOT_ENCRYPT_EC256
-            depends on ENCRYPT_XIP_EXT_ENABLE
+            depends on BOOT_MODE_ENCRYPTED_XIP
             
             config BOOT_ENCRYPT_RSA
                 bool "Use RSA-OAEP to encrypt AES key"
@@ -264,13 +267,6 @@ menu "MCUboot"
             bool
             default y
             depends on MCUX_COMPONENT_middleware.mcuboot.tinycrypt
-
-        config MCUBOOT_FLASH_REMAP_ENABLE
-            bool
-            default y
-            depends on BOOT_FLASH_REMAP
-
-
     endif
 
 # Board/device specific configurations - MCXN9

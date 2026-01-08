@@ -25,7 +25,7 @@
 #include "psa/crypto.h"
 #endif
 
-#ifdef CONFIG_ENCRYPT_XIP_EXT_ENABLE
+#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP
 #include "encrypted_xip.h"
 #endif
 
@@ -49,7 +49,7 @@
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-#ifdef CONFIG_MCUBOOT_FLASH_REMAP_ENABLE
+#ifdef CONFIG_BOOT_MODE_FLASH_REMAP
 extern void SBL_EnableRemap(uint32_t start_addr, uint32_t end_addr, uint32_t off);
 extern void SBL_DisableRemap(void);
 #endif
@@ -90,7 +90,7 @@ void do_boot(struct boot_rsp *rsp)
     rc = flash_device_base(rsp->br_flash_dev_id, &flash_base);
     assert(rc == 0);
 
-#if defined(MCUBOOT_DIRECT_XIP) && defined(CONFIG_MCUBOOT_FLASH_REMAP_ENABLE)
+#if defined(MCUBOOT_DIRECT_XIP) && defined(CONFIG_BOOT_MODE_FLASH_REMAP)
 
     /* In case direct-xip mode and enabled flash remapping function check if
      * the secondary slot is chosen to boot. If so we have to modify boot_rsp
@@ -166,9 +166,9 @@ int sbl_boot_main(void)
     BOOT_LOG_INF("Bootloader Version %s", BOOTLOADER_VERSION);
     BOOT_LOG_INF("Built " __DATE__ " " __TIME__);
     BOOT_LOG_INF("Toolchain " __TOOLCHAIN__);
-    BOOT_LOG_INF("Upgrade mode: " MCUBOOT_UPGRADE_MODE);
+    BOOT_LOG_INF("Upgrade mode: " UPGRADE_MODE);
     
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
     /* Initialize encryption XIP extension for overwrite-only mode */
     rc = encrypted_xip_init();
     if (rc != 0)
@@ -196,7 +196,7 @@ int sbl_boot_main(void)
             ;
     }
 
-#if defined(CONFIG_ENCRYPT_XIP_EXT_ENABLE)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
     /* Finish operations related to encryption XIP */
     rc = encrypted_xip_finish();
     if (rc != 0)
@@ -219,7 +219,7 @@ void cleanup(void)
     SBL_DisablePeripherals();
 }
 
-#if !defined(MCUBOOT_DIRECT_XIP) && !defined(MCUBOOT_SWAP_USING_MOVE) && !defined(MCUBOOT_OVERWRITE_ONLY)
+#if !defined(MCUBOOT_DIRECT_XIP) && !defined(MCUBOOT_SWAP_USING_MOVE) && !defined(MCUBOOT_OVERWRITE_ONLY) && !defined(MCUBOOT_SINGLE_APPLICATION_SLOT)
 #warning "Make sure scratch area is defined in 'boot_flash_map' array if required by defined swap mechanism"
 #endif
 
