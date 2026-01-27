@@ -15,6 +15,9 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Portions Copyright (C) 2026 NXP Semiconductor
+ * Modified by NXP Semiconductor
  */
 #include <assert.h>
 #include <stddef.h>
@@ -43,6 +46,8 @@
 #include <esp_crc.h>
 #include <endian.h>
 #include <mbedtls/base64.h>
+#elif MCUXPRESSO_SDK
+#include "serial_recovery_support.h"
 #else
 #include <bsp/bsp.h>
 #include <hal/hal_system.h>
@@ -58,15 +63,15 @@
 #include "zcbor_bulk.h"
 
 #include <flash_map_backend/flash_map_backend.h>
-#include <os/os.h>
-#include <os/os_malloc.h>
+//#include <os/os.h>          //NXP
+//#include <os/os_malloc.h>   //NXP
 
 #include <bootutil/image.h>
 #include <bootutil/bootutil.h>
 
 #include "boot_serial/boot_serial.h"
 #include "boot_serial_priv.h"
-#include "mcuboot_config/mcuboot_config.h"
+#include "mcuboot_config.h"
 #include "../src/bootutil_priv.h"
 
 #ifdef MCUBOOT_ENC_IMAGES
@@ -152,6 +157,18 @@ BOOT_LOG_MODULE_DECLARE(mcuboot);
 
 #define base64_decode mbedtls_base64_decode
 #define base64_encode mbedtls_base64_encode
+#elif MCUXPRESSO_SDK
+#define BASE64_ENCODE_SIZE(x) ((((((x) - 1) / 3) * 4) + 4) + 1)
+#define CRC16_INITIAL_CRC       0       /* what to seed crc16 with */
+
+#define SWAP2B(x) ((uint16_t) ((((x) >> 8) & 0xff) | (((x) & 0xff) << 8)))
+#define ntohs(x) SWAP2B(x)
+#define htons(x) SWAP2B(x)
+
+#ifndef off_t
+typedef long int off_t;
+#endif
+
 #endif
 
 #if (BOOT_IMAGE_NUMBER > 1)
@@ -879,7 +896,7 @@ static off_t erase_range(const struct flash_area *fap, off_t start, off_t end)
 
     size = flash_sector_get_off(&sect) + flash_sector_get_size(&sect) - start;
     BOOT_LOG_DBG("Erasing range 0x%jx:0x%jx", (intmax_t)start,
-		 (intmax_t)(start + size - 1));
+    		 (intmax_t)(start + size - 1));
 
     rc = boot_erase_region(fap, start, size, false);
     if (rc != 0) {
@@ -1294,6 +1311,9 @@ bs_reset(char *buf, int len)
 #elif __ESPRESSIF__
         esp_rom_delay_us(250000);
         bootloader_reset();
+#elif MCUXPRESSO_SDK
+        nxp_delay_usecs(250000);
+        nxp_system_reset();
 #else
         os_cputime_delay_usecs(250000);
         hal_system_reset();
@@ -1400,6 +1420,9 @@ boot_serial_output(void)
     /* For ESP32 it was used the CRC API in rom/crc.h */
     crc =  ~esp_crc16_be(~CRC16_INITIAL_CRC, (uint8_t *)bs_hdr, sizeof(*bs_hdr));
     crc =  ~esp_crc16_be(~crc, (uint8_t *)data, len);
+#elif MCUXPRESSO_SDK
+    crc =  crc16_itu_t(CRC16_INITIAL_CRC, (uint8_t *)bs_hdr, sizeof(*bs_hdr));
+    crc =  crc16_itu_t(crc, (uint8_t *)data, len);
 #else
     crc = crc16_ccitt(CRC16_INITIAL_CRC, bs_hdr, sizeof(*bs_hdr));
     crc = crc16_ccitt(crc, data, len);
@@ -1424,6 +1447,10 @@ boot_serial_output(void)
 #elif __ESPRESSIF__
     size_t enc_len;
     base64_encode((unsigned char *)encoded_buf, sizeof(encoded_buf), &enc_len, (unsigned char *)buf, totlen);
+    totlen = enc_len;
+#elif MCUXPRESSO_SDK
+    size_t enc_len;
+    base64_encode((uint8_t *)encoded_buf, sizeof(encoded_buf), &enc_len, (uint8_t *)buf, totlen);
     totlen = enc_len;
 #else
     totlen = base64_encode(buf, totlen, encoded_buf, 1);
@@ -1470,6 +1497,12 @@ boot_serial_in_dec(char *in, int inlen, char *out, int *out_off, int maxout)
     if (err) {
         return -1;
     }
+#elif MCUXPRESSO_SDK
+    int err;
+    err = base64_decode((uint8_t *)&out[*out_off], maxout - *out_off, &rc, (uint8_t *)in, inlen - 2);
+    if (err) {
+        return -1;
+    }
 #else
     if (*out_off + base64_decode_len(in) >= maxout) {
         return -1;
@@ -1495,6 +1528,8 @@ boot_serial_in_dec(char *in, int inlen, char *out, int *out_off, int maxout)
     crc = crc16_itu_t(CRC16_INITIAL_CRC, out, len);
 #elif __ESPRESSIF__
     crc = ~esp_crc16_be(~CRC16_INITIAL_CRC, (uint8_t *)out, len);
+#elif MCUXPRESSO_SDK
+    crc = crc16_itu_t(CRC16_INITIAL_CRC, (uint8_t *)out, len);
 #else
     crc = crc16_ccitt(CRC16_INITIAL_CRC, out, len);
 #endif

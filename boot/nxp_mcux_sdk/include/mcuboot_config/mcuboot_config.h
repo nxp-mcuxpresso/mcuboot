@@ -149,6 +149,16 @@
 #define MCUBOOT_ENCRYPT_EC256
 #endif
 
+/*
+ * Serial recovery
+ */
+#define MCUBOOT_ERASE_PROGRESSIVELY
+#define MCUBOOT_BOOT_MGMT_ECHO
+
+#if defined(CONFIG_BOOT_SERIAL_RECOVERY) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#warning "Serial recovery currently doesn't support encrypted XIP mode"
+#endif
+
 /* Uncomment to enable Hardware Key */
 #ifdef CONFIG_BOOT_HW_KEY
 #define MCUBOOT_HW_KEY
@@ -232,4 +242,7 @@
     {                           \
     } while (0)
 
+#define MCUBOOT_CPU_IDLE() \
+    do {                   \
+    } while (0)
 #endif /* __MCUBOOT_CONFIG_H__ */

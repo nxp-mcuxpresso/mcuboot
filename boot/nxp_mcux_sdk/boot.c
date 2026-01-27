@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2015, Freescale Semiconductor, Inc.
- * Copyright 2016-2021 NXP
+ * Copyright 2016-2026 NXP
  * All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
@@ -23,6 +23,11 @@
 
 #ifdef CONFIG_BOOT_USE_PSA_CRYPTO
 #include "psa/crypto.h"
+#endif
+
+#ifdef CONFIG_BOOT_SERIAL_RECOVERY
+#include "boot_serial/boot_serial.h"
+#include "serial_recovery_support.h"
 #endif
 
 #ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP
@@ -58,6 +63,7 @@ extern void SBL_DisableRemap(void);
 void cleanup(void);
 
 extern void SBL_DisablePeripherals(void);
+extern int SBL_SerialRecovery_gpio_check(void);
 
 /*******************************************************************************
  * Types
@@ -70,6 +76,15 @@ struct arm_vector_table
 };
 
 static struct arm_vector_table *vt;
+
+#ifdef CONFIG_BOOT_SERIAL_RECOVERY
+const struct boot_uart_funcs boot_funcs = {
+    .read = serial_recovery_read,
+    .write = serial_recovery_write
+};
+#endif
+
+int SerialRecoveryActive = 0;
 
 /*******************************************************************************
  * Code
@@ -167,6 +182,16 @@ int sbl_boot_main(void)
     BOOT_LOG_INF("Built " __DATE__ " " __TIME__);
     BOOT_LOG_INF("Toolchain " __TOOLCHAIN__);
     BOOT_LOG_INF("Upgrade mode: " UPGRADE_MODE);
+
+#if defined(CONFIG_BOOT_SERIAL_RECOVERY)
+    if(SBL_SerialRecovery_gpio_check())
+    {
+        BOOT_LOG_INF("Serial recovery button pressed");
+        BOOT_LOG_INF("Entering the serial recovery mode...");
+        SerialRecoveryActive = 1;
+        boot_serial_start(&boot_funcs);
+    }
+#endif
     
 #if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
     /* Initialize encryption XIP extension for overwrite-only mode */
@@ -192,6 +217,11 @@ int sbl_boot_main(void)
     if (rc != 0)
     {
         BOOT_LOG_ERR("Unable to find bootable image");
+#if defined(CONFIG_BOOT_SERIAL_RECOVERY)
+        BOOT_LOG_INF("Entering the serial recovery mode...");
+        SerialRecoveryActive = 1;
+        boot_serial_start(&boot_funcs);
+#endif
         for (;;)
             ;
     }

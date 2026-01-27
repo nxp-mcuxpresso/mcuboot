@@ -72,7 +72,18 @@ int boot_copy_region_post_hook(int img_index, const struct flash_area *area, siz
     return 0;
 }
 
+int boot_serial_uploaded_hook(int img_index, const struct flash_area *area,
+                              size_t size)
+{
+    return BOOT_HOOK_REGULAR;
+}
+
 int boot_read_swap_state_primary_slot_hook(int image_index, struct boot_swap_state *state)
 {
     return BOOT_HOOK_REGULAR;
+}
+
+int boot_reset_request_hook(bool force)
+{
+    return 0;
 }

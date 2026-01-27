@@ -26,6 +26,13 @@ menu "MCUboot"
             MCUboot bootutil library as TC does not support ASN1
             parsing.
 
+    config MCUX_COMPONENT_middleware.mcuboot.serial_recovery
+        bool "Serial recovery support"
+        help
+            This enables support of serial recovery feature.
+            The primary slot can be updated using mcumgr tool
+            from bootloader context.
+
     config MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
         bool "Add support for encrypted XIP"
         default n
@@ -267,6 +274,11 @@ menu "MCUboot"
             bool
             default y
             depends on MCUX_COMPONENT_middleware.mcuboot.tinycrypt
+
+        config BOOT_SERIAL_RECOVERY
+            bool
+            default y
+            depends on MCUX_COMPONENT_middleware.mcuboot.serial_recovery
     endif
 
 # Board/device specific configurations - MCXN9
