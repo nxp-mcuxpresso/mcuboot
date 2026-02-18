@@ -25,9 +25,24 @@ menu "MCUboot"
             This is needed when TinyCrypt it used together with
             MCUboot bootutil library as TC does not support ASN1
             parsing.
+    
+    config MCUX_COMPONENT_middleware.mcuboot.boot_serial
+        bool "MCUboot serial recovery (core)"
+        help
+            The MCUboot serial recovery module implementing
+            a SMP server using a serial interface.
+
+    config MCUX_COMPONENT_middleware.mcuboot.zcbor
+        bool "Zcbor library"
+        help
+            Zcbor is a low footprint CBOR library used in 
+            SMP procotol for the serial recovery.
 
     config MCUX_COMPONENT_middleware.mcuboot.serial_recovery
         bool "Serial recovery support"
+        default n
+        select MCUX_COMPONENT_middleware.mcuboot.boot_serial
+        select MCUX_COMPONENT_middleware.mcuboot.zcbor
         help
             This enables support of serial recovery feature.
             The primary slot can be updated using mcumgr tool

@@ -157,34 +157,19 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.mbedtls-asn1)
 
 endif ()
 
-if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.serial_recovery)
+if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.boot_serial)
 
     mcux_add_include(
         BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/boot_serial
-        PROJECT_BASE_PATH bootutil
+        PROJECT_BASE_PATH boot_serial
         INCLUDES
             src
             include
-    )
-
-    mcux_add_include(
-        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/serial_recovery
-        PROJECT_BASE_PATH bootutil
-        INCLUDES
-            .
-    )
-
-    mcux_add_include(
-        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/zcbor
-        PROJECT_BASE_PATH bootutil
-        INCLUDES
-            include
-            src
     )
 
     mcux_add_source(
         BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/boot_serial
-        PROJECT_BASE_PATH bootutil
+        PROJECT_BASE_PATH boot_serial
         SOURCES
             include/boot_serial/boot_serial.h
             include/boot_serial/boot_serial_encryption.h
@@ -195,17 +180,21 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.serial_recovery)
             src/zcbor_bulk.h
     )
 
-    mcux_add_source(
-        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/serial_recovery
-        PROJECT_BASE_PATH bootutil
-        SOURCES
-            serial_recovery_support.h
-            serial_recovery_support.c
+endif ()
+
+if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.zcbor)
+
+    mcux_add_include(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/zcbor
+        PROJECT_BASE_PATH zcbor
+        INCLUDES
+            include
+            src
     )
 
     mcux_add_source(
         BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/zcbor
-        PROJECT_BASE_PATH bootutil
+        PROJECT_BASE_PATH zcbor
         SOURCES
             include/zcbor_common.h
             include/zcbor_decode.h
@@ -217,6 +206,25 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.serial_recovery)
             src/zcbor_encode.c
     )
 
+
+endif ()
+
+if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.serial_recovery)
+
+    mcux_add_include(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/serial_recovery
+        PROJECT_BASE_PATH serial_recovery
+        INCLUDES
+            .
+    )
+
+    mcux_add_source(
+        BASE_PATH ${SdkRootDirPath}/middleware/mcuboot_opensource/boot/nxp_mcux_sdk/serial_recovery
+        PROJECT_BASE_PATH serial_recovery
+        SOURCES
+            serial_recovery_support.h
+            serial_recovery_support.c
+    )
 
 endif ()
 
