@@ -14,6 +14,7 @@
 #include "bootutil/fault_injection_hardening.h"
 
 #include "mcuboot_config/mcuboot_config.h"
+#include "mflash_drv.h"
 
 #if defined(MCUBOOT_ENC_IMAGES) && defined(CONFIG_BOOT_SERIAL_RECOVERY)
 
@@ -124,7 +125,14 @@ decrypt_region_inplace(struct enc_key_data  *enc_data,
     size_t blk_off;
     uint16_t idx;
     uint32_t blk_sz;
-    uint8_t buf[sz] __attribute__((aligned));
+    //uint8_t buf[sz] __attribute__((aligned));
+    /*
+     * NXP
+     * Original code uses VLA which are forbidden by safety standarts.
+     * Also IAR toolchain tends to fail here.
+     * The VLA is replaced with static buffer with known size thanks to mflash layer
+     */
+    static uint8_t buf[MFLASH_SECTOR_SIZE] __attribute__((aligned));
     assert(sz <= sizeof buf);
 
     bytes_copied = 0;
@@ -216,6 +224,7 @@ decrypt_image_inplace(const struct flash_area *fa_p,
     size_t sect;
     struct flash_sector sector;
     struct enc_key_data enc_data;
+    uint32_t src_size = 0;
 
     boot_state_init(state);
     memset(&_bs, 0, sizeof(struct boot_status));
@@ -250,7 +259,6 @@ decrypt_image_inplace(const struct flash_area *fa_p,
         goto total_out;
     }
 
-    uint32_t src_size = 0;
     rc = read_image_size(fa_p,hdr, &src_size);
     if (rc != 0) {
         goto total_out;

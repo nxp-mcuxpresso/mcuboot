@@ -98,6 +98,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.tinycrypt)
             include/tinycrypt/ctr_mode.h
             include/tinycrypt/ctr_prng.h
             include/tinycrypt/ecc.h
+            include/tinycrypt/ecc_dh.h
             include/tinycrypt/ecc_dsa.h
             include/tinycrypt/hmac.h
             include/tinycrypt/hmac_prng.h
@@ -112,6 +113,7 @@ if (CONFIG_MCUX_COMPONENT_middleware.mcuboot.tinycrypt)
             source/ctr_mode.c
             source/ctr_prng.c
             source/ecc.c
+            source/ecc_dh.c
             source/ecc_dsa.c
             source/hmac.c
             source/hmac_prng.c
