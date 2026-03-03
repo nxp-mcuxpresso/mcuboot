@@ -43,7 +43,7 @@
 
 #if defined(CONFIG_BOOT_USE_MBEDTLS)
 
-/* MCUboot - reduced configuration for legacy API needed by encrypted XIP */
+/* MCUboot - reduced configuration for legacy API typically needed by encrypted XIP mode */
 
 #define MBEDTLS_HAVE_ASM
 #define MBEDTLS_CIPHER_MODE_CTR
@@ -74,6 +74,40 @@
 #elif defined(CONFIG_BOOT_USE_PSA_CRYPTO)
 
 /* MCUboot - PSA configuration  */
+
+#define MBEDTLS_USE_PSA_CRYPTO
+#define MBEDTLS_PSA_CRYPTO_C
+#define MBEDTLS_PSA_CRYPTO_CONFIG
+
+#define MBEDTLS_HAVE_ASM
+//#define MBEDTLS_CIPHER_MODE_CTR
+#define MBEDTLS_ECP_DP_SECP256R1_ENABLED
+//#define MBEDTLS_ECDSA_DETERMINISTIC
+#define MBEDTLS_NO_PLATFORM_ENTROPY
+//#define MBEDTLS_PKCS1_V15
+//#define MBEDTLS_PKCS1_V21
+//#define MBEDTLS_AES_C
+#define MBEDTLS_ASN1_PARSE_C
+#define MBEDTLS_ASN1_WRITE_C
+#define MBEDTLS_BIGNUM_C
+#define MBEDTLS_CIPHER_C
+#define MBEDTLS_CTR_DRBG_C  //required for caam
+//#define MBEDTLS_ECDSA_C //Requires: MBEDTLS_ECP_C, MBEDTLS_ASN1_WRITE_C, MBEDTLS_ASN1_PARSE_C, and at least one MBEDTLS_ECP_DP_XXX_ENABLED
+//#define MBEDTLS_ECP_C
+#define MBEDTLS_ENTROPY_C
+#define MBEDTLS_HMAC_DRBG_C
+#define MBEDTLS_MD_C
+//#define MBEDTLS_OID_C
+//#define MBEDTLS_PK_C
+//#define MBEDTLS_PK_PARSE_C
+#define MBEDTLS_PLATFORM_C
+//#define MBEDTLS_SHA256_C
+
+#else
+
+#error "You have to choose legacy API or PSA Crypto API for MCUboot"
+
+/* Following defines are here left as template  */
 
 /**
  * This is an optional version symbol that enables compatibility handling of
@@ -4429,9 +4463,7 @@
 
 /** \} name SECTION: Module configuration options */
 
-#else /* CONFIG_BOOT_USE_PSA_CRYPTO */
-#error "You have to choose legacy API or PSA Crypto API for MCUboot"
-#endif
+#endif /* CONFIG_BOOT_USE_PSA_CRYPTO | CONFIG_BOOT_USE_MBEDTLS*/
 
 #include "mcux_mbedtls_accelerator_config.h"
 

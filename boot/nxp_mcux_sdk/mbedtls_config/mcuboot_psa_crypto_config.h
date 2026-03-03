@@ -47,6 +47,8 @@
 
 #ifdef CONFIG_BOOT_USE_PSA_CRYPTO
 
+#define PSA_WANT_ALG_HMAC                       1
+
 #define PSA_WANT_ALG_SHA_256                      1
 #define PSA_WANT_ALG_ECB_NO_PADDING               1
 #define PSA_WANT_KEY_TYPE_AES                     
@@ -65,7 +67,14 @@
 
 /* Remove built-in implementations from the build  */
 
+/* MCUX-81864 - DCP driver can't handle hash when dcache is enabled */
+#ifndef PSA_CRYPTO_DRIVER_DCP
 #define MBEDTLS_PSA_ACCEL_ALG_SHA_256              1
+#endif
+
+#define MBEDTLS_PSA_ACCEL_KEY_TYPE_HMAC
+#define MBEDTLS_PSA_ACCEL_ALG_HMAC
+
 /* 
  * Currently it is not possible to remove EC-256 built-in implementations even 
  * partially, for more information please see mbedtls3x/docs/driver-only-builds.md 
