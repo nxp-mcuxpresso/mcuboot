@@ -33,6 +33,8 @@
 #include "mcuxClEls_Aead.h"
 #include "mcuxClEls_Rng.h"
 
+#include "mflash_drv.h"
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -53,15 +55,12 @@
         }                                  \
     } while (0);
 
-#if !defined(CONFIG_ENCRYPT_XIP_IPED_REGION_MAX_SIZE)
-#error "Please define maximum IPED region size what suits boundaries of target flash device"
-#endif
+#define IPED_BUF_SIZE            (4*MFLASH_PAGE_SIZE)
 
 /* Encryption metadata or mcuboot trailer are not encrypted, reserve flash sector */
-#define IPED_REGION_MAX_SIZE     CONFIG_ENCRYPT_XIP_IPED_REGION_MAX_SIZE
-#define IPED_REGION_EXEC_NUM 1
+#define IPED_REGION_EXEC_NUM     1
 
-#define FLASH_FCB_OFFSET (BOOT_FLASH_BASE + 0x400) //FCB of main app
+#define FLASH_FCB_OFFSET         (BOOT_FLASH_BASE + 0x400) //FCB of main app
 
 /********************************ROM code begin********************************/
 #define MCUXCLELS_AEAD_IV_BLOCK_SIZE            16U             ///< AES-GCM IV Granularity:  128 bit (16 bytes)
@@ -79,6 +78,12 @@ const uint8_t IPED_IV_ENCRYPT_AAD[16] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0
 /*******************************************************************************
  * Types
  ******************************************************************************/
+
+typedef struct {
+    uint32_t buffer[IPED_BUF_SIZE/sizeof(uint32_t)];
+    size_t current_size;
+    uint32_t curr_addr;
+} IpedBuffer_t;
 
 /********************************ROM code begin********************************/
 typedef uint32_t nboot_status_t;
@@ -146,6 +151,7 @@ _Static_assert(sizeof(flexspi_nor_mem_image_iped_config_t) <= MFLASH_SECTOR_SIZE
  ******************************************************************************/
 static api_core_context_t apiCoreCtx;
 static uint8_t iap_api_arena[0x6000];
+static IpedBuffer_t iped_buffer;
 
 /*******************************************************************************
  * Static
@@ -445,6 +451,12 @@ status_t platform_enc_init(void)
         PRINTF("iap_mem_config returned with code 0x%X\n", status);
         return status;
     }
+    
+    IpedBuffer_t *ib = &iped_buffer;
+    //reset buf with erase value
+    memset(ib->buffer, 0xFF, IPED_BUF_SIZE);
+    ib->current_size = 0;
+    
     return status;
 }
 
@@ -461,13 +473,7 @@ status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_star
     /* End address must be aligned to 4 * page_size boundary */
     const uint32_t region_sz = img_sz + (img_sz % page_align == 0 ? 0 : (page_align - img_sz % page_align));
     const uint32_t iped_region0_end = region_start + region_sz;
-    
-    if(region_sz > IPED_REGION_MAX_SIZE)
-    {
-        PRINTF("Error: Calculated size of IPED region needed by the image exceeds the maximum region size\n");
-        return -1;
-    }
-   
+      
     flexspi_iped_config_arg_t iped_config = { 
         .option = { 
             .tag = FLEXSPI_IPED_CONFIG_TAG,
@@ -606,13 +612,66 @@ status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off, c
 {
     uint32_t addr_off = area->fa_off + off + BOOT_FLASH_BASE;
     status_t rc;
+    IpedBuffer_t *ib = &iped_buffer;
+    size_t data_offset = 0;
+    uint8_t *data_ptr = (uint8_t *)src;
+    
+    ib->curr_addr = addr_off;
+    
     /* IPED requires that size of flash write to IPED region is always a multiple of 4 pages in size */
-    ASSERT_IPED(len, 4*MFLASH_PAGE_SIZE, "Flash write size requires 0x%X bytes not 0x%X\n", 4*MFLASH_PAGE_SIZE, len);
-    rc = iap_mem_write_blocked(&apiCoreCtx, addr_off, len, (uint8_t*) src, kMemoryID_FlexspiNor);
-    if(rc != kStatus_Success){
-        PRINTF("\niap_mem_write_blocked failed with code %d, addr_off 0x%X len 0x%X\n", rc, addr_off, len);
+    /* No partial writes are allowed so last data chunk has to be "flushed" with padded dummy data */
+    while (data_offset < len) {
+        // Calculate how much space is left in the buffer
+        size_t space_left = IPED_BUF_SIZE - ib->current_size;
+        
+        // Calculate how much data we can copy
+        size_t to_copy = (len - data_offset) < space_left ? 
+                         (len - data_offset) : space_left;
+        
+        // Copy data to buffer
+        memcpy(ib->buffer + ib->current_size, data_ptr + data_offset, to_copy);
+        ib->current_size += to_copy;
+        data_offset += to_copy;
+        
+        // If buffer is full, process it
+        // Note: last data chunk is written separately
+        if (ib->current_size == IPED_BUF_SIZE) {
+            status_t ret;
+            rc = iap_mem_write_blocked(&apiCoreCtx, ib->curr_addr, ib->current_size, (uint8_t *)ib->buffer, kMemoryID_FlexspiNor);
+            if(rc != kStatus_Success){
+                PRINTF("\niap_mem_write_blocked failed with code %d, addr_off 0x%X len 0x%X\n", rc, addr_off, len);
+                return kStatus_Fail;
+            }
+            ib->curr_addr += ib->current_size;
+            //reset buf with erase value
+            memset(ib->buffer, 0xFF, IPED_BUF_SIZE);
+            ib->current_size = 0;
+        }
+    }    
+
+    return kStatus_Success;
+}
+
+status_t platform_enc_flash_write_finish(const struct flash_area *area)
+{
+    IpedBuffer_t *ib = &iped_buffer;
+    
+    //Process remaining data if any
+    //even last data chunk has to be aligned to 4 page
+    //no partial writes are allowed
+    if (ib->current_size > 0) {
+        status_t ret;
+        ret = iap_mem_write_blocked(&apiCoreCtx, ib->curr_addr, IPED_BUF_SIZE, (uint8_t *)ib->buffer, kMemoryID_FlexspiNor);
+        if(ret != kStatus_Success){
+            PRINTF("\niap_mem_write_blocked failed with code %d, addr_off 0x%X len 0x%X\n", ret, ib->curr_addr, IPED_BUF_SIZE);
+            return kStatus_Fail;
+        }
+        ib->curr_addr += ib->current_size;
+        //reset buf with erase value
+        memset(ib->buffer, 0xFF, IPED_BUF_SIZE);
+        ib->current_size = 0;
     }
-    return rc;
+    return kStatus_Success;
 }
 
 /*******************************************************************************

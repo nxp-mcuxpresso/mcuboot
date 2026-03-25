@@ -64,9 +64,8 @@ union enc_magic_t {
 /** Structure holds metadata used for confirmation of configuration blocks
  */
 typedef struct {
-	uint32_t active_slot;           // referenced slot: 0 - primary, 1 - secondary
-	uint8_t pad_0[12];              // Padding zeroes
-	uint8_t hash[16];               // Hash of configuration structure
+	uint8_t pad_0[16];              // Padding zeroes
+	uint8_t hash[16];               // Hash of the configuration structure
 	uint8_t pad_1[16];              // Padding zeroes
 	uint8_t magic[ENC_MAGIC_SZ];    // Magic number
 } enc_metadata_t;
@@ -110,7 +109,7 @@ status_t encrypted_xip_init(void)
     return platform_enc_init();
 }
 
-status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uint32_t *active_slot)
+status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid)
 {
 #ifndef ENCRYPTED_XIP_NPX
     enc_metadata_t metadata;
@@ -141,12 +140,7 @@ status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uin
         }
 
         if (memcmp(metadata.hash, sha, 16) == 0) {
-            if (metadata.active_slot == 0 || metadata.active_slot == 1) {
-              *is_valid = true;
-              if (active_slot != NULL){
-                    *active_slot = metadata.active_slot;
-              }
-            }
+            *is_valid = true;
         }
     }
 #endif
@@ -168,7 +162,7 @@ status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta)
  * This operation ensures the integrity of IPED configuration of the image in
  * execution area.
  */
-status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_slot)
+status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta)
 {
 #ifndef ENCRYPTED_XIP_NPX
     uint32_t meta_off = fa_meta->fa_size - sizeof(enc_metadata_t);
@@ -197,10 +191,12 @@ status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_s
     memset(&metadata, 0, sizeof(enc_metadata_t));
     //truncate hash to 16 bytes
     memcpy(metadata.hash, sha, 16);
-    metadata.active_slot = active_slot;
     memcpy(metadata.magic, ENC_MAGIC, ENC_MAGIC_SZ);
 
-    /*Write metadata at the end of sector - confirm integrity of configuration*/
+    /*
+     * Write metadata at the end of metadata sector - confirm integrity of 
+     * configuration block.
+     */
     if (flash_area_write(fa_meta, meta_off, &metadata, sizeof(enc_metadata_t)) != 0) {
         PRINTF("Failed to write encryption metadata\n");
         return kStatus_Fail;
@@ -228,6 +224,11 @@ status_t encrypted_xip_encrypt_data(uint32_t flash_addr, uint8_t *nonce,
 status_t encrypted_xip_flash_write(const struct flash_area *area, uint32_t off, const void *src, uint32_t len)
 {
     return platform_enc_flash_write(area, off, src, len);
+}
+
+status_t encrypted_xip_flash_write_finish(const struct flash_area *area)
+{
+    return platform_enc_flash_write_finish(area);
 }
 
 /*******************************************************************************

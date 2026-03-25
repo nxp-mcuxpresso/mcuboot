@@ -823,11 +823,7 @@ boot_copy_region(struct boot_loader_state *state,
     (void)state;
 #endif
 
-#ifndef CONFIG_ENCRYPT_XIP_OVERWRITE_ONLY_BUF_SIZE
     TARGET_STATIC uint8_t buf[BUF_SZ] __attribute__((aligned(4)));
-#else
-    TARGET_STATIC uint8_t buf[CONFIG_ENCRYPT_XIP_OVERWRITE_ONLY_BUF_SIZE] __attribute__((aligned(4)));
-#endif
 
 #ifdef MCUBOOT_ENC_IMAGES
     encrypted_src = (flash_area_get_id(fap_src) != FLASH_AREA_IMAGE_PRIMARY(image_index));
@@ -997,15 +993,7 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
         rc = boot_erase_region(fap_primary_slot, size, this_size, false);
         assert(rc == 0);
 
-        /* 
-         * NXP customization 
-         *
-         * This is modification of overwrite only mode to handle IPED encryption.
-         * IPED consumes 1.25 (5/4) time of physical memory which complicates
-         * usage of OVERWRITE_ONLY_FAST mode. For this reason the whole primary 
-         * slot is erased.
-         */
-#if defined(MCUBOOT_OVERWRITE_ONLY_FAST) && !defined(ENCRYPTED_XIP_IPED)
+#if defined(MCUBOOT_OVERWRITE_ONLY_FAST)
         if ((size + this_size) >= src_size) {
             size += src_size - size;
             size += BOOT_WRITE_SZ(state) - (size % BOOT_WRITE_SZ(state));
@@ -1045,17 +1033,6 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
     }
 #endif
 
-    /* 
-     * NXP customization
-     *
-     * In case of IPED, copy only the image binary not the whole secondary slot
-     * to speed up the update process.
-     *
-     */
-#if defined(MCUBOOT_OVERWRITE_ONLY_FAST) && defined(ENCRYPTED_XIP_IPED)
-    size = src_size;
-#endif
-    
     BOOT_LOG_INF("Image %d copying the secondary slot to the primary slot: 0x%x bytes",
                  image_index, size);
 #if defined(MCUBOOT_SWAP_USING_OFFSET)
@@ -1075,11 +1052,6 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
     }
 #endif
 
-    /* 
-     * NXP customization for encrypted XIP
-     *
-     * Image was re-encrypted. Confirm the validity of configuration block
-     */
     rc = BOOT_HOOK_CALL(boot_copy_region_post_hook, 0, BOOT_CURR_IMG(state),
                         BOOT_IMG_AREA(state, BOOT_SLOT_PRIMARY), size);
     if (rc != 0) {

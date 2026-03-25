@@ -30,8 +30,6 @@ status_t platform_enc_encrypt_data(uint32_t flash_addr, uint8_t *nonce, uint8_t 
 
 status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off, const void *src, uint32_t len);
 
-
-
-
+status_t platform_enc_flash_write_finish(const struct flash_area *area);
 
 #endif

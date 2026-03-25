@@ -29,11 +29,7 @@ static uint32_t flash_page_buf[MFLASH_PAGE_SIZE / sizeof(uint32_t)];
 
 #if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
 
-#if defined(ENCRYPTED_XIP_IPED)
-#define BUFFER_ENC_SZ   CONFIG_ENCRYPT_XIP_OVERWRITE_ONLY_BUF_SIZE
-#else
 #define BUFFER_ENC_SZ   1024
-#endif
 uint32_t enc_buffer[BUFFER_ENC_SZ / sizeof(uint32_t)];
 
 #endif
@@ -201,12 +197,6 @@ int flash_area_write(const struct flash_area *area, uint32_t off, const void *sr
     /* If execution is also done with XIP from an IPED region, the size of 
      * the written data MUST be a multiple of 4 pages.
      */
-    if(len < CONFIG_ENCRYPT_XIP_OVERWRITE_ONLY_BUF_SIZE){
-        /* Assume this is last call */
-        memset(enc_buffer, 0xFF, BUFFER_ENC_SZ);
-        memcpy(enc_buffer, src, len);
-        len = CONFIG_ENCRYPT_XIP_OVERWRITE_ONLY_BUF_SIZE;
-    }
     return encrypted_xip_flash_write(area, off, src, len);
 #else
     /* Encrypt data */

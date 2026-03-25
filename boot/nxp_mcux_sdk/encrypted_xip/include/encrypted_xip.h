@@ -25,9 +25,8 @@
 /* Preliminary initialization needed by encryption unit  */
 status_t encrypted_xip_init(void);
 
-/* Checks whether encryption metadata in metadata sector are valid and confirmed
- * Returns number of active (referenced) slot */
-status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid, uint32_t *active_slot);
+/* Checks whether encryption metadata in metadata sector are valid and confirmed */
+status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid);
 
 /* Initializes new configuration block of encryption unit and write it into metadata sector */
 status_t encrypted_xip_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz);
@@ -36,7 +35,7 @@ status_t encrypted_xip_cfg_write(struct flash_area *fa_meta, uint32_t region_sta
 status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta);
 
 /* Confirm integrity of configuration block */
-status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta, uint32_t active_slot);
+status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta);
 
 /* Get nonce from configuration block in metadata sector */
 status_t encrypted_xip_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce);
@@ -44,10 +43,13 @@ status_t encrypted_xip_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce);
 /* Finish initialization of encryption unit */
 status_t encrypted_xip_finish(void);
 
-/* Encrypts data */
+/* Encrypts data (currently valid only for BEE engine) */
 status_t encrypted_xip_encrypt_data(uint32_t flash_addr, uint8_t *nonce, uint8_t *input, uint8_t *output, uint32_t len);
 
-/* Helper function for writing to flash within encrypted region */
+/* Helper function for writing to flash within encrypted region (currenlt valid only for IPED module) */
 status_t encrypted_xip_flash_write(const struct flash_area *area, uint32_t off, const void *src, uint32_t len);
+
+/* Some encryption engines (e.g. IPED) require finish operation after OTA update */
+status_t encrypted_xip_flash_write_finish(const struct flash_area *area);
 
 #endif

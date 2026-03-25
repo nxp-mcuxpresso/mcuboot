@@ -201,7 +201,7 @@ int sbl_boot_main(void)
         BOOT_LOG_ERR("FAILED to init encrypted XIP extension!");
     }
     bool cfg_found = false;
-    rc = encrypted_xip_cfg_check(boot_flash_meta_map, &cfg_found, NULL);
+    rc = encrypted_xip_cfg_check(boot_flash_meta_map, &cfg_found);
     if(rc != kStatus_Success){
         BOOT_LOG_ERR("Fatal error of encrypted XIP extension!");
     }

@@ -765,6 +765,12 @@ status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off,
     return flash_area_write(area, off, src, len);
 }
 
+status_t platform_enc_flash_write_finish(const struct flash_area *area)
+{
+    //nothing to do here
+    return kStatus_Success;
+}
+
 /*******************************************************************************
  * Test
  ******************************************************************************/
