@@ -11,9 +11,9 @@
 #include "flash_map.h"
 #include "flash_partitioning.h"
 #include "sysflash/sysflash.h"
-#include "bootutil/bootutil_log.h"
 #include "mflash_drv.h"
-#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#include "fsl_debug_console.h"
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
 #include "encrypted_xip.h"
 #endif
 
@@ -27,7 +27,7 @@
 
 static uint32_t flash_page_buf[MFLASH_PAGE_SIZE / sizeof(uint32_t)];
 
-#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
 
 #define BUFFER_ENC_SZ   1024
 uint32_t enc_buffer[BUFFER_ENC_SZ / sizeof(uint32_t)];
@@ -103,7 +103,6 @@ int flash_device_base(uint8_t fd_id, uintptr_t *ret)
 {
     if (fd_id != FLASH_DEVICE_ID)
     {
-        BOOT_LOG_ERR("invalid flash ID %d; expected %d", fd_id, FLASH_DEVICE_ID);
         return -1;
     }
     *ret = MFLASH_BASE_ADDRESS;
@@ -181,7 +180,7 @@ int flash_area_read(const struct flash_area *area, uint32_t off, void *dst, uint
 
 int flash_area_write(const struct flash_area *area, uint32_t off, const void *src, uint32_t len)
 {
-#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
     /* Check whether offset is within encrypted area */
     uint32_t phy_addr = area->fa_off + off;
     if(phy_addr < area->fa_off || 
@@ -192,61 +191,19 @@ int flash_area_write(const struct flash_area *area, uint32_t off, const void *sr
     }
     else 
     {
-    /* Writing in encrypted region */
-#if defined(ENCRYPTED_XIP_IPED)
-    /* If execution is also done with XIP from an IPED region, the size of 
-     * the written data MUST be a multiple of 4 pages.
-     */
-    return encrypted_xip_flash_write(area, off, src, len);
-#else
-    /* Encrypt data */
-    int rc = 0;
-    uint32_t addr;
-    uint32_t nonce[16 / sizeof(uint32_t)];    
-    uint8_t *buffer_u8 = (uint8_t *)enc_buffer;
-    uint8_t *src_p = (uint8_t *)src;
-    
-    if (encrypted_xip_cfg_getNonce(boot_flash_meta_map, (uint8_t *)nonce) != kStatus_Success){
-        rc = -1;
-        goto clean;
-    }
-        
-    
-    while(len > 0){
-        uint32_t chunk_len = (len > BUFFER_ENC_SZ) ? BUFFER_ENC_SZ : len;
-    
-        memcpy(buffer_u8, src_p, chunk_len);
-
-        addr = BOOT_FLASH_BASE + area->fa_off + off;
-        if(encrypted_xip_encrypt_data(addr, (uint8_t *)nonce, buffer_u8, buffer_u8, chunk_len) != kStatus_Success){
-            rc = -1;
-            goto clean;
-        }
-    
-        if(flash_area_write_internal(area, off, buffer_u8, chunk_len) != 0){
-            rc = -1;
-            goto clean;
-        }
-    
-        len -= chunk_len;
-        off += chunk_len;
-        src_p += chunk_len;
-    }
-    clean:
-    memset(nonce, 0, 16);
-    return rc;
-#endif /* ENCRYPTED_XIP_IPED */
+        /* Writing in encrypted region */
+        return encrypted_xip_flash_write(area, off, src, len);
     }
 #else
   return flash_area_write_internal(area, off, src, len);
-#endif /* defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP) */
+#endif /* defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) */
 }
 
 int flash_area_erase(const struct flash_area *area, uint32_t off, uint32_t len)
 {
     status_t status  = kStatus_Success;
     uint32_t address = area->fa_off + off;
-
+    
     if (area->fa_device_id != FLASH_DEVICE_ID)
     {
         return -1;
@@ -256,6 +213,29 @@ int flash_area_erase(const struct flash_area *area, uint32_t off, uint32_t len)
     {
         return -1;
     }
+    
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
+    /*
+     * Any attempt to erase the encrypted region breaks the cipher. Ensure the 
+     * related configuration block is invalidated for next boot, otherwise the 
+     * device could end in infinite reset loop.
+     */
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)   
+     if((area == &boot_flash_map[0] || area == &boot_flash_map[1]) && off == 0)
+#else
+     if(area == &boot_flash_map[0] && off == 0)
+#endif
+     {
+         uint32_t slot = area->fa_id;
+         const struct flash_area *fa_meta = &boot_flash_meta_map[slot];
+         PRINTF("Encrypted XIP: Erasing configuration block slot %d\n", slot);
+         status = mflash_drv_sector_erase(fa_meta->fa_off);
+         if (status != kStatus_Success)
+         {
+            return -1;
+         }
+     }
+#endif    
 
     for (; len > 0; len -= MFLASH_SECTOR_SIZE)
     {

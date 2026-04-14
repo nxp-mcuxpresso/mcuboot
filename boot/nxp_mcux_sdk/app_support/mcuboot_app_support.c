@@ -115,7 +115,8 @@ static uint32_t get_active_image(uint32_t image)
 {
     (void)image;
 
-#if defined(CONFIG_BOOT_MODE_FLASH_REMAP) && !defined(CONFIG_MCUBOOT_FLASH_REMAP_BY_SWAP)
+#if (defined(CONFIG_BOOT_MODE_FLASH_REMAP) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)) && \
+    !defined(CONFIG_MCUBOOT_FLASH_REMAP_BY_SWAP)
 
     /* Using flash remapping by overlay done by FlexSPI IP */
     if (bl_flash_remap_active())
@@ -138,7 +139,7 @@ static uint32_t get_active_image(uint32_t image)
  * @retval kStatus_Success: all OK
  *         otherwise something failed
  */
-#ifdef CONFIG_BOOT_MODE_FLASH_REMAP
+#if defined(CONFIG_BOOT_MODE_FLASH_REMAP) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
 static int32_t mflash_drv_read_wrapper(uint32_t addr, void *dst, uint32_t len)
 {
     /* temporary buffer size has to be multiple of 4! */
@@ -203,7 +204,7 @@ static int32_t mflash_drv_read_wrapper(uint32_t addr, void *dst, uint32_t len)
 
     return kStatus_Success;
 }
-#endif /* CONFIG_BOOT_MODE_FLASH_REMAP */
+#endif /* CONFIG_BOOT_MODE_FLASH_REMAP || CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP */
 
 static int check_unset(uint8_t *p, int len)
 {
@@ -601,7 +602,7 @@ status_t bl_get_image_state(uint32_t image, uint32_t *state)
 
 int bl_flash_remap_active(void)
 {
-#ifdef CONFIG_BOOT_MODE_FLASH_REMAP
+#if (defined(CONFIG_BOOT_MODE_FLASH_REMAP) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP))
     return (*((volatile uint32_t *)FLASH_REMAP_OFFSET_REG) > 0) ? 1 : 0;
 #else
     return 0;
@@ -793,7 +794,7 @@ int32_t bl_flash_read(uint32_t addr, uint32_t *buffer, uint32_t len)
         else
 #endif
         {
-#ifdef CONFIG_BOOT_MODE_FLASH_REMAP
+#if defined(CONFIG_BOOT_MODE_FLASH_REMAP) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
             /* remapped memory is accessible only by flash peripheral */
             if (mflash_drv_read_wrapper(addr, (uint32_t *)buffer_u8, readsize) != kStatus_Success)
             {
@@ -807,7 +808,7 @@ int32_t bl_flash_read(uint32_t addr, uint32_t *buffer, uint32_t len)
             }
             /* use direct memcpy as mflash_drv_read low layer may expects len to be word aligned */
             memcpy(buffer_u8, flash_ptr, readsize);
-#endif /* CONFIG_BOOT_MODE_FLASH_REMAP */
+#endif /* CONFIG_BOOT_MODE_FLASH_REMAP || CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP */
         }
 
         len -= readsize;

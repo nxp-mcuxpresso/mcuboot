@@ -18,7 +18,7 @@
 #include "flash_map.h"
 #include "flash_partitioning.h"
 
-#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP
+#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE
 #include "encrypted_xip.h"
 #endif
 
@@ -45,7 +45,7 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
 
 int boot_copy_region_pre_hook(int img_index, const struct flash_area *area, size_t size)
 {
-#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP
+#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE
 
 #ifdef ENCRYPTED_XIP_IPED
    /* 
@@ -92,15 +92,9 @@ int boot_copy_region_pre_hook(int img_index, const struct flash_area *area, size
 #endif  
 
     status_t status;
-    const uint32_t enc_region_start = area->fa_off + BOOT_FLASH_BASE;
-       
-    status = encrypted_xip_cfg_write(boot_flash_meta_map, enc_region_start, size);
+    status = encrypted_xip_config_region(boot_flash_meta_map, area);
     if (status != kStatus_Success)
-        return -1;
-    
-    status = encrypted_xip_cfg_initEncryption(boot_flash_meta_map);
-    if (status != kStatus_Success)
-        return -1;
+        return -1;   
 #endif
     return 0;
 }
@@ -108,14 +102,14 @@ int boot_copy_region_pre_hook(int img_index, const struct flash_area *area, size
 int boot_copy_region_post_hook(int img_index, const struct flash_area *area, size_t size)
 {
     /* 
-     * Image was re-encrypted. Confirm the validity of configuration block
+     * Image was re-encrypted. Persist the configuration block in metadata sector
      */
-#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP
+#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE
     status_t status;
     
     status = encrypted_xip_flash_write_finish(area);
     
-    status = encrypted_xip_cfg_confirm(boot_flash_meta_map);
+    status = encrypted_xip_config_write(boot_flash_meta_map);
     if (status != kStatus_Success)
       return -1;
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2026 NXP
  * All rights reserved.
  *
  *
@@ -10,7 +10,7 @@
  * Includes
  ******************************************************************************/
 #include "sblconfig.h"
-#if defined(ENCRYPTED_XIP_BEE) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(ENCRYPTED_XIP_BEE) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
 #include <ctype.h>
 
 #include "encrypted_xip_platform.h"
@@ -24,8 +24,6 @@
 #include "flash_partitioning.h"
 #include "flash_map.h"
 #include "sysflash/sysflash.h"
-
-#include "mbedtls/md5.h"
 
 /*******************************************************************************
  * Definitions
@@ -130,15 +128,15 @@ _Static_assert(sizeof(prdb_t) == 256,
         "prdb_t structure has to be 256 bytes");
 
 typedef struct {
-    kib_t kib;                   // KIB info (32 bytes)
-    prdb_t prdb;                 // PRDB info (256 bytes)
-} bee_cfg_t;
+    uint32_t  ekib[32 / sizeof(uint32_t)];     // Encrypted KIB info (32 bytes)
+    uint32_t  eprdb[256 / sizeof(uint32_t)];   // Encrypted PRDB info (256 bytes)
+} bee_cfg_ctx_t;
 
 /*
  * Assume that metadata and BEE configuration structs can be written separately 
  * into common flash sector.
  */
-_Static_assert(sizeof(bee_cfg_t) <= MFLASH_SECTOR_SIZE/2,
+_Static_assert(sizeof(bee_cfg_ctx_t) <= MFLASH_SECTOR_SIZE/2,
                "Size of BEE cfg exceeds flash page size");
 
 /*******************************************************************************
@@ -168,6 +166,8 @@ static prdb_t prdb_template __attribute__((aligned)) = {
                          .mode = 0,
                        },
        };
+
+bee_cfg_ctx_t bee_cfg_ctx;
 /*******************************************************************************
  * Static
  ******************************************************************************/
@@ -279,23 +279,19 @@ static status_t dcp_bee_key_select(dcp_handle_t *handle)
     return status;
 }
 
-/**
- Function decrypts EPRDB by EKIB and saves decrypted result into PRDB.
-
- \param prdb pointer to store decrypted PRDB content
- \param ekib pointer to EKIB location
- \param eprdb pointer to EPRDB location
+/*
+ * Function takes EPRDB and EKIB blocks and decrypt them
  */
-static status_t decrypt_prdb_kib(prdb_t *prdb, uint32_t *ekib, uint32_t *eprdb) {
+static status_t decrypt_prdb_kib(uint32_t *ekib, uint32_t *eprdb, kib_t *kib, prdb_t *prdb) {
     status_t status;
     dcp_handle_t dcp_handle;
-    uint32_t kib[32 / sizeof(uint32_t)];          //Key info block
-    uint32_t prdb_tmp[256 / sizeof(uint32_t)]; //Protection Region Descriptor Block
-    kib_t *p_kib;
+    uint32_t kib_tmp[32 / sizeof(uint32_t)];       //Temporary Key info block
+    uint32_t prdb_tmp[256 / sizeof(uint32_t)];     //Temporary Protection Region Descriptor Block
+    kib_t *p_kib_tmp;
     prdb_t *p_prdb_tmp;
 
     status = kStatus_Fail;
-    p_kib = (kib_t*) kib;
+    p_kib_tmp = (kib_t*) kib_tmp;
     p_prdb_tmp = (prdb_t*) prdb_tmp;
 
     status = dcp_bee_key_select(&dcp_handle);
@@ -303,68 +299,65 @@ static status_t decrypt_prdb_kib(prdb_t *prdb, uint32_t *ekib, uint32_t *eprdb) 
         return status;
 
     /* Decrypt EKIB by ECB into KIB */
-    DCP_AES_DecryptEcb(DCP, &dcp_handle, (uint8_t*) ekib, (uint8_t*) kib,
-            sizeof(kib));
+    DCP_AES_DecryptEcb(DCP, &dcp_handle, (uint8_t*) ekib, (uint8_t*) p_kib_tmp,
+            sizeof(kib_t));
 
     /* Decrypt EPRDB by CBC into PRDB using KIB */
     dcp_handle.channel = kDCP_Channel2;
     dcp_handle.keySlot = kDCP_KeySlot2;
     dcp_handle.swapConfig = kDCP_NoSwap;
 
-    status = DCP_AES_SetKey(DCP, &dcp_handle, (uint8_t*) kib, 16);
+    status = DCP_AES_SetKey(DCP, &dcp_handle, (uint8_t*) kib_tmp, 16);
     if (status != kStatus_Success)
         return status;
 
     DCP_AES_DecryptCbc(DCP, &dcp_handle, (uint8_t*) eprdb, (uint8_t*) prdb_tmp,
-            256, p_kib->iv);
+            256, p_kib_tmp->iv);
 
     //PRINTF("Printing PRDB and KIB after decryption\n");
     //printf_prdb_kib(prdb_tmp, kib);
-    memset(kib, 0, sizeof(kib));
 
     if ((p_prdb_tmp->tagl != PRDB_TAGL) || (p_prdb_tmp->tagh != PRDB_TAGH)
             || (p_prdb_tmp->version != PRDB_VERSION)) {
-        prdb = NULL;
         PRINTF("No PRDB found!\n");
         return kStatus_Fail;
     }
 
-    memcpy(prdb, prdb_tmp, sizeof(prdb_t));
+    if(prdb != NULL){
+        memcpy(prdb, prdb_tmp, sizeof(prdb_t));
+    }
+    if(kib != NULL){
+        memcpy(kib, kib_tmp, sizeof(kib_t));
+    }
     memset(prdb_tmp, 0, sizeof(prdb_tmp));
+    memset(kib_tmp, 0, sizeof(kib_tmp));
 
     return status;
 }
 
-/**
- Function generates random KIB and counter in PRDB and encrypt them into encrypted
- blocks.
-
- \param kib_addr pointer to (E)KIB location
- \param prdb_addr pointer to (E)PRDB location
+/*
+ * Function generates random KIB and AES-CTR nonce in PRDB and encrypt them into encrypted
+ * blocks.
  */
-static status_t encrypt_prdb_kib(void *kib_addr, void *prdb_addr) 
+static status_t generate_encrypt_prdb_kib(prdb_t *prdb, void *ekib_addr, void *eprdb_addr) 
 {
     status_t status;
     dcp_handle_t dcp_handle;
-    uint32_t kib[32 / sizeof(uint32_t)];    //Key info block
-    uint32_t ekib[32 / sizeof(uint32_t)];   //Encrypted key info block
-    uint32_t prdb[256 / sizeof(uint32_t)];  //Protection Region Descriptor Block
-    uint32_t eprdb[256 / sizeof(uint32_t)]; //Encrypted Protection Region Descriptor Block
-    kib_t *p_kib;
+    uint32_t kib_tmp[32 / sizeof(uint32_t)];    //Key info block
+    uint32_t ekib_tmp[32 / sizeof(uint32_t)];   //Encrypted key info block
+    uint32_t eprdb_tmp[256 / sizeof(uint32_t)]; //Encrypted Protection Region Descriptor Block
+    kib_t *p_kib_tmp = (kib_t*) kib_tmp;
 
     status = kStatus_Fail;
-    p_kib = (kib_t*) kib;
 
-    status = generate_rand(kib, 32);
+    /* Generate random KIB */
+    status = generate_rand(kib_tmp, 32);
     if (status != kStatus_Success) {
         PRINTF("Warning: TRNG failed to generate KIB");
     }
 
-    memcpy(prdb, prdb_addr, sizeof(prdb_t));
-
     /* Generate random AES-CTR nonce */
-    prdb_t *p_prdb = (prdb_t*) prdb;
-    status = generate_rand(p_prdb->encrypt_region_info.aes_ctr_nonce, 16);
+    status = generate_rand(prdb->encrypt_region_info.aes_ctr_nonce, 16);
     if (status != kStatus_Success) {
         PRINTF("Warning: TRNG failed to generate AES-CTR counter\n");
     }
@@ -377,24 +370,24 @@ static status_t encrypt_prdb_kib(void *kib_addr, void *prdb_addr)
     if (status != kStatus_Success)
         return status;
 
-    DCP_AES_EncryptEcb(DCP, &dcp_handle, (uint8_t*) kib, (uint8_t*) ekib,
-            sizeof(kib));
+    DCP_AES_EncryptEcb(DCP, &dcp_handle, (uint8_t*) kib_tmp, (uint8_t*) ekib_tmp,
+            sizeof(kib_tmp));
 
     /* Encrypt PRDB into EPRDB using KIB */
     dcp_handle.channel = kDCP_Channel2;
     dcp_handle.keySlot = kDCP_KeySlot2;
     dcp_handle.swapConfig = kDCP_NoSwap;
 
-    status = DCP_AES_SetKey(DCP, &dcp_handle, (uint8_t*) kib, 16);
+    status = DCP_AES_SetKey(DCP, &dcp_handle, (uint8_t*) kib_tmp, 16);
     if (status != kStatus_Success)
         return status;
 
-    DCP_AES_EncryptCbc(DCP, &dcp_handle, (uint8_t*) prdb, (uint8_t*) eprdb, 256,
-            p_kib->iv);
+    DCP_AES_EncryptCbc(DCP, &dcp_handle, (uint8_t*) prdb, (uint8_t*) eprdb_tmp, 256,
+            p_kib_tmp->iv);
 
     /* Check if we are able to decrypt the PRDB */
     prdb_t prdb_tmp;
-    status = decrypt_prdb_kib(&prdb_tmp, ekib, eprdb);
+    status = decrypt_prdb_kib(ekib_tmp, eprdb_tmp, NULL, &prdb_tmp);
     if (status != kStatus_Success)
         return status;
 
@@ -404,12 +397,11 @@ static status_t encrypt_prdb_kib(void *kib_addr, void *prdb_addr)
     }
 
     /* Clear unecrypted security stuff in stack just in case */
-    memset(kib, 0, sizeof(kib));
-    memset(prdb, 0, sizeof(prdb));
+    memset(kib_tmp, 0, sizeof(kib_tmp));
 
     /* Copy finished EKIB and EPRDB back to source */
-    memcpy(kib_addr, ekib, sizeof(kib_t));
-    memcpy(prdb_addr, eprdb, sizeof(prdb_t));
+    memcpy(ekib_addr, ekib_tmp, sizeof(kib_t));
+    memcpy(eprdb_addr, eprdb_tmp, sizeof(prdb_t));
 
     return status;
 }
@@ -515,212 +507,68 @@ static status_t fac_regions_setup(prdb_t *prdb)
     return status;
 }
 
-/*******************************************************************************
- * Externs
- ******************************************************************************/
-status_t platform_enc_init(void)
-{
-    /* Initialize DCP */
-    /* ToDo Could be initialized in PSA driver */
-    dcp_config_t dcpConfig;
-
-    DCP_GetDefaultConfig(&dcpConfig);
-    DCP_Init(DCP, &dcpConfig);
-    return kStatus_Success;
-}
-
-size_t platform_enc_cfg_getSize(void)
-{
-    return sizeof(bee_cfg_t);
-}
-
-/**
- Generates new BEE configuration structure and persist it in flash memory
-
- \param fa pointer to flash metadata area
-
- \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
- */
-status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz) 
-{
-	status_t status = kStatus_Fail;
-        const uint32_t align_sz = PROT_REGION_ALIGN_SIZE;
-	const uint32_t region_sz = img_sz + (img_sz % align_sz == 0 ? 0 : (align_sz - img_sz % align_sz));
-        bee_cfg_t bee_cfg;
-	prdb_t *prdb = &bee_cfg.prdb;
-	kib_t *kib = &bee_cfg.kib;
-
-        if(region_sz > BEE_REGION_MAX_SIZE)
-        {
-            PRINTF("Error: Calculated size of BEE region needed by the image exceeds maximum region size\n");
-            goto error;;
-        }
-        
-	/* Erase metadata sector */
-	if (flash_area_erase(fa_meta, 0, MFLASH_SECTOR_SIZE) != 0) {
-            PRINTF("Erase of metadata sector failed\n");
-            goto error;
-	}
-
-	/* Prepare configuration blocks */
-	memset((void*) &bee_cfg, 0, sizeof(bee_cfg_t));
-	memcpy(prdb, &prdb_template, sizeof(prdb_t));
-        prdb->encrypt_region_info.region_1_start = region_start;
-        prdb->encrypt_region_info.region_1_end = region_start + region_sz;
-        prdb->fac_region_2.start = region_start;
-        prdb->fac_region_2.end = region_start + region_sz;
-
-	status = encrypt_prdb_kib(kib, prdb);
-	if (status != kStatus_Success) {
-            PRINTF("Encryption of PRDB failed\n");
-            return status;
-	}
-
-	/* Persist BEE configuration at particular flash offset */
-	if (flash_area_write(fa_meta, 0, &bee_cfg, sizeof(bee_cfg_t)) != 0) {
-            PRINTF("Failed to write encryption metadata\n");
-            goto error;
-	}
-
-	return kStatus_Success;
-	error: return kStatus_Fail;
-}
-
-/**
- Configures BEE encryption unit based on configuration structure.
- In this case the BEE region 1 is configured (as BEE region 0 is reserved for
- bootloader.
- After successful setup the function encrypt_platform_encrypt_data() can be used
- for data encryption and logic access into encrypted region returns decrypted data.
-
- \param fa pointer to flash area of metadata sector
-
- \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
- */
-status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta) 
-{
-	status_t status;
-	bee_region_config_t beeConfig;
-	bee_cfg_t bee_cfg;
-	prdb_t prdb;
-        uint32_t nonce128b[16 / sizeof(uint32_t)];
-        uint32_t beeKey[16 / sizeof(uint32_t)] = SW_AES_KEY;
-        
-	/* Load PRDB */
-	status = flash_area_read(fa_meta, 0, &bee_cfg, sizeof(bee_cfg_t));
-	if (status != kStatus_Success) {
-            PRINTF("Flash read failed\n");
-            goto error;
-	}
-
-	status = decrypt_prdb_kib(&prdb, (uint32_t*) &bee_cfg.kib,
-                                  (uint32_t*) &bee_cfg.prdb);
-	if (status != kStatus_Success) {
-            PRINTF("Fatal error: decrypted PRDB is invalid\n");
-            goto error;
-	}
-
-	//printf_prdb_kib((uint32_t *)&prdb, NULL);
-
-	/* Get default configuration. */
-	BEE_GetDefaultConfig(&beeConfig);
-	/* Set BEE regions to work in AES CTR mode */
-	beeConfig.region0Mode = kBEE_AesCtrMode;
-	beeConfig.region1Mode = kBEE_AesCtrMode;
-
-	/* Configure BEE region1 address */
-	assert(prdb.encrypt_region_info.region_1_start % PROT_REGION_ALIGN_SIZE == 0);
-	assert(prdb.encrypt_region_info.region_1_end % PROT_REGION_ALIGN_SIZE == 0);
-	beeConfig.region1Bot = prdb.encrypt_region_info.region_1_start;
-	beeConfig.region1Top = prdb.encrypt_region_info.region_1_end;
-
-	beeConfig.endianSwapEn = kBEE_EndianSwapEnabled;
-
-	/* Configure Start address and end address of flash access protected regions */
-	if (fac_regions_setup(&prdb) != kStatus_Success) {
-	    PRINTF("Invalid fac regions\n");
-	    goto error;
-	}
-
-	/* Init BEE driver and apply the configuration */
-	BEE_Init(BEE);
-	BEE_SetConfig(BEE, &beeConfig);
-
-	/* Set AES user key and nonce for BEE region 1 */
-	memcpy(nonce128b, prdb.encrypt_region_info.aes_ctr_nonce, 16);
-	nonce128b[0] = 0;
-	BEE_SetRegionNonce(BEE, kBEE_Region1, (uint8_t*) nonce128b, 16);
-
-	aes_block_swap((uint8_t*) beeKey);
-
-	status = BEE_SetRegionKey(BEE, kBEE_Region1, (uint8_t*) beeKey, 16);
-	if (status != kStatus_Success) {
-            PRINTF("BEE Key setup failed\n");
-	}
-
-	BEE_Enable(BEE);
-
-	/* Data cache needed for unaligned access */
-	SCB_InvalidateDCache();
-	SCB_EnableDCache();
-
-	PRINTF("Encrypted XIP initialization successful\n");
-	return kStatus_Success;
-	error: return kStatus_Fail;
-}
-
-bool platform_enc_cfg_isPresent(uint32_t addr)
+static status_t bee_init_encryption(bee_cfg_ctx_t *bee_cfg)
 {
     status_t status;
-    prdb_t prdb_decrypted;
-    bool cfg_valid = false;
-  
-    bee_cfg_t *bee_config = (bee_cfg_t*) addr;
-    status = decrypt_prdb_kib(&prdb_decrypted, (uint32_t*)&bee_config->kib, (uint32_t*)&bee_config->prdb);
-    if (status != kStatus_Success) {
-        PRINTF("decrypt_prdb_kib failed\n");
-        goto clean;
-    }
-    if (prdb_decrypted.tagh == PRDB_TAGH || prdb_decrypted.tagl == PRDB_TAGL) {
-        cfg_valid = true;
-    }   
-clean:
-    /* Destroy exposed prdb in ram */
-    memset(&prdb_decrypted, 0, sizeof(prdb_t));
-    return cfg_valid;
-    
-}
-
-status_t platform_enc_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce) 
-{
-    status_t status;
-    bee_cfg_t bee_cfg;
     prdb_t prdb;
-
-    /* Load PRDB */
-    status = flash_area_read(fa_meta, 0, &bee_cfg, sizeof(bee_cfg_t));
-    if (status != kStatus_Success) {
-        PRINTF("Flash read failed\n");
-        goto error;
-    }
-
-    status = decrypt_prdb_kib(&prdb, (uint32_t*) &bee_cfg.kib,
-                                  (uint32_t*) &bee_cfg.prdb);
+    bee_region_config_t beeConfig;
+    uint32_t nonce128b[16 / sizeof(uint32_t)];
+    uint32_t sw_beeKey[16 / sizeof(uint32_t)] = SW_AES_KEY;
+    
+    status = decrypt_prdb_kib(bee_cfg->ekib, bee_cfg->eprdb, NULL, &prdb);
     if (status != kStatus_Success) {
         PRINTF("Fatal error: decrypted PRDB is invalid\n");
         goto error;
     }
 
-    memcpy(nonce, prdb.encrypt_region_info.aes_ctr_nonce, 16);
-    memset(&prdb, 0, sizeof(prdb_t));
-    return kStatus_Success;
-    error: return kStatus_Fail;
-}
+    //printf_prdb_kib((uint32_t *)&prdb, NULL);
 
-status_t platform_enc_finish(void)
-{
-    /* Nothing needed here for BEE */
+    /* Get default configuration. */
+    BEE_GetDefaultConfig(&beeConfig);
+    /* Set BEE regions to work in AES CTR mode */
+    beeConfig.region0Mode = kBEE_AesCtrMode;
+    beeConfig.region1Mode = kBEE_AesCtrMode;
+
+    /* Configure BEE region1 address */
+    assert(prdb.encrypt_region_info.region_1_start % PROT_REGION_ALIGN_SIZE == 0);
+    assert(prdb.encrypt_region_info.region_1_end % PROT_REGION_ALIGN_SIZE == 0);
+    beeConfig.region1Bot = prdb.encrypt_region_info.region_1_start;
+    beeConfig.region1Top = prdb.encrypt_region_info.region_1_end;
+
+    beeConfig.endianSwapEn = kBEE_EndianSwapEnabled;
+
+    /* Configure Start address and end address of flash access protected regions */
+    if (fac_regions_setup(&prdb) != kStatus_Success) {
+        PRINTF("Invalid fac regions\n");
+        goto error;
+    }
+
+    /* Init BEE driver and apply the configuration */
+    BEE_Init(BEE);
+    BEE_SetConfig(BEE, &beeConfig);
+
+    /* Set AES user key and nonce for BEE region 1 */
+    memcpy(nonce128b, prdb.encrypt_region_info.aes_ctr_nonce, 16);
+    nonce128b[0] = 0;
+    BEE_SetRegionNonce(BEE, kBEE_Region1, (uint8_t*) nonce128b, 16);
+
+    aes_block_swap((uint8_t*) sw_beeKey);
+
+    /* sw_beeKey is ignored if bee selects SW_GP2 or OTMPK */
+    status = BEE_SetRegionKey(BEE, kBEE_Region1, (uint8_t*) sw_beeKey, 16);
+    if (status != kStatus_Success) {
+            PRINTF("BEE Key setup failed\n");
+    }
+
+    BEE_Enable(BEE);
+
+    /* Data cache needed for unaligned access */
+    SCB_InvalidateDCache();
+    SCB_EnableDCache();
+    
     return kStatus_Success;
+    error:
+    return kStatus_Fail;
 }
 
 /**
@@ -735,7 +583,7 @@ status_t platform_enc_finish(void)
 
  \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
  */
-status_t platform_enc_encrypt_data(uint32_t flash_addr, uint8_t *nonce,
+static status_t bee_encrypt_data(uint32_t flash_addr, uint8_t *nonce,
                                    uint8_t *input, uint8_t *output, uint32_t len)
 {
     uint32_t counter[4];
@@ -759,13 +607,201 @@ status_t platform_enc_encrypt_data(uint32_t flash_addr, uint8_t *nonce,
     return status;
 }
 
-status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off, 
-                                  const void *src, uint32_t len)
+static status_t bee_loadNonce(uint8_t *nonce)
 {
-    return flash_area_write(area, off, src, len);
+    status_t status;
+    prdb_t prdb;
+
+    /* Load PRDB */
+    status = decrypt_prdb_kib(bee_cfg_ctx.ekib, bee_cfg_ctx.eprdb, NULL, &prdb);
+    if (status != kStatus_Success) {
+        PRINTF("Fatal error: decrypted PRDB is invalid\n");
+        goto error;
+    }
+
+    memcpy(nonce, prdb.encrypt_region_info.aes_ctr_nonce, 16);
+    memset(&prdb, 0, sizeof(prdb_t));
+    return kStatus_Success;
+    error: return kStatus_Fail;
+}
+/*******************************************************************************
+ * Externs
+ ******************************************************************************/
+status_t platform_enc_xip_init(void)
+{
+    /* Initialize DCP */
+    /* ToDo Could be initialized in PSA driver */
+    dcp_config_t dcpConfig;
+
+    DCP_GetDefaultConfig(&dcpConfig);
+    DCP_Init(DCP, &dcpConfig);
+    return kStatus_Success;
 }
 
-status_t platform_enc_flash_write_finish(const struct flash_area *area)
+size_t platform_enc_xip_config_getSize(void)
+{
+    return sizeof(bee_cfg_ctx_t);
+}
+
+status_t platform_enc_xip_config_region(const struct flash_area *fa_meta, const struct flash_area *fa_slot)
+{
+	status_t status = kStatus_Fail;
+        const uint32_t region_start = fa_slot->fa_off + BOOT_FLASH_BASE;
+        const uint32_t bee_align_sz = PROT_REGION_ALIGN_SIZE;
+        /* Reserve a sector for the slot trailer */
+        //round down to align boundary
+	const uint32_t region_sz = ((fa_slot->fa_size - MFLASH_SECTOR_SIZE) / bee_align_sz) * bee_align_sz;
+        const uint32_t region_end = region_start + region_sz;
+	uint32_t *p_eprdb = (uint32_t *) &bee_cfg_ctx.eprdb;
+	uint32_t *p_ekib = (uint32_t *) &bee_cfg_ctx.ekib;
+        prdb_t prdb;
+
+        if(region_sz > BEE_REGION_MAX_SIZE)
+        {
+            PRINTF("Error: Calculated size of BEE region needed by the image exceeds maximum region size\n");
+            goto error;;
+        }
+        
+	/* Invalidate any previous iped configuration in metadata flash area */
+	if (flash_area_erase(fa_meta, 0, MFLASH_SECTOR_SIZE) != 0) {
+            PRINTF("Erase of metadata sector failed\n");
+            goto error;
+	}
+
+	/* Prepare configuration blocks */
+	memset((void*) &bee_cfg_ctx, 0, sizeof(bee_cfg_ctx_t));
+	memcpy(&prdb, &prdb_template, sizeof(prdb_t));
+        prdb.encrypt_region_info.region_1_start = region_start;
+        prdb.encrypt_region_info.region_1_end = region_end;
+        prdb.fac_region_2.start = region_start;
+        prdb.fac_region_2.end = region_end;
+
+	status = generate_encrypt_prdb_kib(&prdb, p_ekib, p_eprdb);
+	if (status != kStatus_Success) {
+            PRINTF("Encryption of PRDB failed\n");
+            return status;
+	}
+        
+        bee_init_encryption(&bee_cfg_ctx);
+
+	return kStatus_Success;
+	error: return kStatus_Fail;
+}
+
+status_t platform_enc_xip_config_persist(const struct flash_area *fa_meta)
+{
+    /* Persist BEE configuration at particular flash offset */
+    if (flash_area_write(fa_meta, 0, &bee_cfg_ctx, sizeof(bee_cfg_ctx_t)) != 0) {
+        PRINTF("Failed to write encryption metadata\n");
+        return kStatus_Fail;
+    }
+  
+    return kStatus_Success;
+}
+
+/**
+ Configures BEE encryption unit based on configuration structure.
+ In this case the BEE region 1 is configured (as BEE region 0 is reserved for
+ bootloader.
+ After successful setup the function encrypt_platform_encrypt_data() can be used
+ for data encryption and logic access into encrypted region returns decrypted data.
+
+ \param fa pointer to flash area of metadata sector
+
+ \return SDK Error Code, use kStatus_Success or kStatus_Fail to evaluate.
+ */
+status_t platform_enc_xip_config_initEncryption(const struct flash_area *fa_meta)
+{
+	status_t status;
+	bee_cfg_ctx_t bee_cfg_flash;
+	prdb_t prdb;
+        
+	/* Load PRDB */
+	status = flash_area_read(fa_meta, 0, &bee_cfg_flash, sizeof(bee_cfg_ctx_t));
+	if (status != kStatus_Success) {
+            PRINTF("Flash read failed\n");
+            goto error;
+	}
+
+	bee_init_encryption(&bee_cfg_flash);
+
+	return kStatus_Success;
+	error: return kStatus_Fail;
+}
+
+status_t platform_enc_xip_config_isValid(const struct flash_area *fa_meta, bool *isValid)
+{
+    status_t status;
+    prdb_t prdb_decrypted;
+    *isValid = false;
+    bee_cfg_ctx_t bee_cfg_flash;
+    
+    /* configuration block is located at the beginning of sector */
+    if (flash_area_read(fa_meta, 0, &bee_cfg_flash, sizeof(bee_cfg_ctx_t)) != 0){
+        return kStatus_Fail;
+    }
+    status = decrypt_prdb_kib(bee_cfg_flash.ekib, bee_cfg_flash.eprdb, NULL, &prdb_decrypted);
+    if (status != kStatus_Success) {
+        PRINTF("decrypt_prdb_kib failed\n");
+        goto clean;
+    }
+    if (prdb_decrypted.tagh == PRDB_TAGH || prdb_decrypted.tagl == PRDB_TAGL) {
+        *isValid = true;
+    }   
+clean:
+    /* Destroy exposed prdb in ram */
+    memset(&prdb_decrypted, 0, sizeof(prdb_t));
+    return kStatus_Success;
+}
+
+status_t platform_enc_xip_finish(void)
+{
+    /* Nothing needed here for BEE */
+    return kStatus_Success;
+}
+
+#define BUFFER_ENC_SZ   MFLASH_PAGE_SIZE
+status_t platform_enc_xip_flash_write(const struct flash_area *area, uint32_t off, 
+                                  const void *src, uint32_t len)
+{
+    static uint32_t page_buffer[BUFFER_ENC_SZ / sizeof(uint32_t)];
+    uint32_t addr;
+    uint32_t nonce[16 / sizeof(uint32_t)];    
+    uint8_t *p_buf = (uint8_t *)page_buffer;
+    uint8_t *src_p = (uint8_t *)src;
+    
+    if (bee_loadNonce((uint8_t *)nonce) != kStatus_Success){
+        PRINTF("encrypted_xip_config_getNonce failed\n");
+        goto error;
+    }
+    
+    while(len > 0){
+        uint32_t chunk_len = (len > BUFFER_ENC_SZ) ? BUFFER_ENC_SZ : len;
+    
+        memcpy(p_buf, src_p, chunk_len);
+
+        addr = area->fa_off + off + BOOT_FLASH_BASE;
+        if(bee_encrypt_data(addr, (uint8_t *)nonce, p_buf, p_buf, chunk_len) != kStatus_Success){
+            PRINTF("bee_encrypt_data failed\n");
+            goto error;
+        }
+    
+        if(mflash_drv_page_program(addr - BOOT_FLASH_BASE, page_buffer) != kStatus_Success){
+            PRINTF("mflash_drv_page_program failed\n");
+            goto error;
+        }
+    
+        len -= chunk_len;
+        off += chunk_len;
+        src_p += chunk_len;
+    }
+    memset(nonce, 0, 16);
+    return kStatus_Success;
+    error:
+    return kStatus_Fail;
+}
+
+status_t platform_enc_xip_flash_write_finish(const struct flash_area *area)
 {
     //nothing to do here
     return kStatus_Success;

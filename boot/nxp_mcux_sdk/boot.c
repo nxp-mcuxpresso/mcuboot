@@ -30,7 +30,7 @@
 #include "serial_recovery_support.h"
 #endif
 
-#ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
 #include "encrypted_xip.h"
 #endif
 
@@ -51,10 +51,16 @@
 #define assert(x) ((void)(x))
 #endif
 
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
+#define ENC_SLOTS  2
+#elif defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
+#define ENC_SLOTS  1
+#endif
+
 /*******************************************************************************
  * Prototypes
  ******************************************************************************/
-#ifdef CONFIG_BOOT_MODE_FLASH_REMAP
+#if defined(CONFIG_BOOT_MODE_FLASH_REMAP) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
 extern void SBL_EnableRemap(uint32_t start_addr, uint32_t end_addr, uint32_t off);
 extern void SBL_DisableRemap(void);
 #endif
@@ -105,7 +111,7 @@ void do_boot(struct boot_rsp *rsp)
     rc = flash_device_base(rsp->br_flash_dev_id, &flash_base);
     assert(rc == 0);
 
-#if defined(MCUBOOT_DIRECT_XIP) && defined(CONFIG_BOOT_MODE_FLASH_REMAP)
+#if defined(CONFIG_BOOT_MODE_FLASH_REMAP) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
 
     /* In case direct-xip mode and enabled flash remapping function check if
      * the secondary slot is chosen to boot. If so we have to modify boot_rsp
@@ -150,10 +156,9 @@ int sbl_boot_main(void)
 
 #ifdef CONFIG_BOOT_USE_PSA_CRYPTO
     psa_status_t psa_status;
-    int i;
     /* MCUX-84288,MCUX-84297 - this is workaround to fix random issues with 
      * entropy source on devices with DCP module */
-    for(i = 0; i < 10; i++)
+    for(int i = 0; i < 10; i++)
     {
         psa_status = psa_crypto_init();
         if(psa_status == PSA_SUCCESS)
@@ -193,24 +198,30 @@ int sbl_boot_main(void)
     }
 #endif
     
-#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
     /* Initialize encryption XIP extension for overwrite-only mode */
     rc = encrypted_xip_init();
     if (rc != 0)
     {
         BOOT_LOG_ERR("FAILED to init encrypted XIP extension!");
     }
-    bool cfg_found = false;
-    rc = encrypted_xip_cfg_check(boot_flash_meta_map, &cfg_found);
-    if(rc != kStatus_Success){
-        BOOT_LOG_ERR("Fatal error of encrypted XIP extension!");
+    for(int i = 0; i < ENC_SLOTS; i++)
+    {
+        bool cfg_found = false;
+        rc = encrypted_xip_config_isValid(&boot_flash_meta_map[i], &cfg_found);
+        if(rc != kStatus_Success){
+            BOOT_LOG_ERR("encrypted_xip_config_isValid failed");
+        }
+        if(cfg_found == true){
+            rc = encrypted_xip_config_initEncryption(&boot_flash_meta_map[i]);
+            if(rc != kStatus_Success){
+                BOOT_LOG_ERR("encrypted_xip_config_initEncryption failed");
+                continue;
+           }
+           BOOT_LOG_INF("Encrypted XIP: Successfuly initialiazed for slot %d", i);
+        }
     }
-    if(cfg_found == true){
-      rc = encrypted_xip_cfg_initEncryption(boot_flash_meta_map);
-      if(rc != kStatus_Success){
-        BOOT_LOG_ERR("FAILED to initialize encryption unit!");
-      }
-    }
+    
 #endif
     
     rc = boot_go(&rsp);
@@ -226,7 +237,7 @@ int sbl_boot_main(void)
             ;
     }
 
-#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
     /* Finish operations related to encryption XIP */
     rc = encrypted_xip_finish();
     if (rc != 0)

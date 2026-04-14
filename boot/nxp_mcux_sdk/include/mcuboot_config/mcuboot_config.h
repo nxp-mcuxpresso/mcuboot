@@ -31,7 +31,8 @@
 
 #if (defined(CONFIG_BOOT_MODE_OVERWRITE_ONLY) + \
      defined(CONFIG_BOOT_MODE_FLASH_REMAP) + \
-     defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP) + \
+     defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) + \
+     defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP) + \
      defined(CONFIG_BOOT_MODE_SINGLE_APPLICATION_SLOT) + \
      defined(CONFIG_BOOT_MODE_SWAP)) != 1
 #error "An upgrade mode must be defined"
@@ -53,13 +54,21 @@
 #define MCUBOOT_DIRECT_XIP_REVERT
 #define UPGRADE_MODE  "FLASH REMAP"
 
-#elif defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#elif defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
 
 /* Upgrade mode: OVERWRITE_ONLY + ENCRYPTED XIP extension */
 #define MCUBOOT_OVERWRITE_ONLY
 #define MCUBOOT_OVERWRITE_ONLY_FAST
 #define MCUBOOT_IMAGE_ACCESS_HOOKS
-#define UPGRADE_MODE  "ENCRYPTED XIP"
+#define UPGRADE_MODE  "ENCRYPTED XIP: OVERWRITE ONLY"
+
+#elif defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
+
+/* Upgrade mode: OVERWRITE_ONLY + ENCRYPTED XIP extension */
+#define MCUBOOT_DIRECT_XIP
+#define MCUBOOT_DIRECT_XIP_REVERT
+#define MCUBOOT_IMAGE_ACCESS_HOOKS
+#define UPGRADE_MODE  "ENCRYPTED XIP: FLASH REMAP"
 
 #elif defined(CONFIG_BOOT_MODE_SINGLE_APPLICATION_SLOT)
 
@@ -135,8 +144,13 @@
  * You must choose exactly one encryption type.
  */
 
-#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP) && defined(CONFIG_BOOT_USE_PSA_CRYPTO)
-#error "Currently Encrypted XIP is not supported with PSA Crypto API"
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) && defined(CONFIG_BOOT_USE_PSA_CRYPTO)
+#error "Currently Encrypted XIP using overwrite only mode is not supported with PSA Crypto API"
+#endif
+
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) && \
+    !(defined(CONFIG_BOOT_ENCRYPT_RSA) || defined(CONFIG_BOOT_ENCRYPT_EC256))
+#error "Encrypted XIP: OVERWRITE_ONLY requires MCUboot Encrypted images feature enabled"
 #endif
 
 #ifdef CONFIG_BOOT_ENCRYPT_RSA
@@ -155,7 +169,7 @@
 #define MCUBOOT_ERASE_PROGRESSIVELY
 #define MCUBOOT_BOOT_MGMT_ECHO
 
-#if defined(CONFIG_BOOT_SERIAL_RECOVERY) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(CONFIG_BOOT_SERIAL_RECOVERY) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE)
 #warning "Serial recovery currently doesn't support encrypted XIP mode"
 #endif
 

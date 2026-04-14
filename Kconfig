@@ -51,17 +51,14 @@ menu "MCUboot"
     config MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
         bool "Add support for encrypted XIP"
         default n
-        depends on MCUX_COMPONENT_middleware.mcuboot.bootutil
         depends on MCUX_HW_DEVICE_MIMXRT1062 || MCUX_HW_DEVICE_MIMXRT1064 || \
                    MCUX_HW_DEVICE_MIMXRT1042 || MCUX_HW_DEVICE_MIMXRT1021 || \
                    MCUX_HW_DEVICE_MIMXRT1052 || MCUX_HW_DEVICE_RW612      || \
                    MCUX_HW_DEVICE_MCXN947    || MCUX_HW_DEVICE_MCXN547
         help
             Enables code that implements support for running from
-            an encrypted mcuboot image. See documentation for details
-            and device compatibility. Currently it cannot be combined with
-            Flash Remapping support and PSA Crypto API. Requires TinyCrypt or 
-            legacy Mbed TLS API.
+            an encrypted mcuboot image. It utilize modified overwrite only mode
+            or flash remap. See documentation for details and device compatibility.
 
     config MCUX_COMPONENT_middleware.mcuboot.nxp_app_support
         bool "Application layer to support access to MCUboot update mechanism"
@@ -152,12 +149,18 @@ menu "MCUboot"
             help
                 Flash address of the candidate application - slot 1.
 
-        if BOOT_MODE_ENCRYPTED_XIP
+        if BOOT_MODE_ENCRYPTED_XIP_OVERWRITE || BOOT_MODE_ENCRYPTED_XIP_REMAP
 
-            config BOOT_FLASH_ENC_META_ADDRESS
-                hex "Encryption meta data address"
+            config BOOT_FLASH_SLOT0_ENC_CFG_ADDRESS
+                hex "Slot 0 encryption configuration address"
                 help
-                    Flash address of encryption meta data.
+                    Flash address of encryption configuration (metadata) - slot 0
+
+            config BOOT_FLASH_SLOT1_ENC_CFG_ADDRESS
+                hex "Slot 1 encryption configuration address"
+                help
+                    Flash address of encryption configuration (metadata) - slot 1
+                    This define is dummy for overwrite_only mode.
         endif
 
         config BOOT_FLASH_PADDING_SIZE
@@ -206,12 +209,20 @@ menu "MCUboot"
                     no second slot for image staging. The update can be only done manually by blhost/programmer
                     or from bootloader context using MCUboot's serial recovery feature.
 
-            config BOOT_MODE_ENCRYPTED_XIP
-                bool "Encrypted XIP"
+            config BOOT_MODE_ENCRYPTED_XIP_OVERWRITE
+                bool "Encrypted XIP: Overwrite only"
                 depends on MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
                 help
-                    Uses modified overwrite-only mode to utilize encrypted XIP. The encrypted image in the 
-                    secondary slot is re-encrypted to the primary slot with platform on-the-fly encryption.
+                    Uses modified overwrite-only mode to enable encrypted XIP. The MCUboot encrypted image in the 
+                    secondary slot is re-encrypted to the primary slot utilizing hardware on-the-fly encryption.
+
+            config BOOT_MODE_ENCRYPTED_XIP_REMAP
+                bool "Encrypted XIP: Flash remap"
+                depends on MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
+                depends on MCUX_HW_DEVICE_RW612
+                help
+                    (Experimental) Enable an upgrade mode utilizing encrypted XIP and flash remap.
+                    NOTE: Currently, this mode can be evaluated only with ota_mcuboot_basic_iped_remap demo
         endchoice
 
         config BOOT_SIGNATURE
@@ -235,7 +246,7 @@ menu "MCUboot"
         choice
             prompt "Encrypted image algorithm of MCUboot to secure AES key"
             default BOOT_ENCRYPT_EC256
-            depends on BOOT_MODE_ENCRYPTED_XIP
+            depends on BOOT_MODE_ENCRYPTED_XIP_OVERWRITE
             
             config BOOT_ENCRYPT_RSA
                 bool "Use RSA-OAEP to encrypt AES key"

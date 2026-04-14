@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2026 NXP
  * All rights reserved.
  *
  *
@@ -10,12 +10,12 @@
  * Includes
  ******************************************************************************/
 #include "sblconfig.h"
-#if defined(ENCRYPTED_XIP_IPED) && defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(ENCRYPTED_XIP_IPED) && (defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP))
+#include "encrypted_xip_platform.h"
 #include <ctype.h>
 #include "encrypted_xip.h"
 
 #include "fsl_debug_console.h"
-#include "fsl_trng.h"
 #include "fsl_cache.h"
 #include "fsl_iped.h"
 #include "fsl_romapi_iap.h"
@@ -25,7 +25,6 @@
 #include "mflash_drv.h"
 #include "sysflash/sysflash.h"
 #include "flash_map.h"
-#include "mbedtls/md5.h"
   
 #include "mcux_els.h"
 #include "mcuxCsslParamIntegrity.h"
@@ -57,9 +56,6 @@
 
 #define IPED_BUF_SIZE            (4*MFLASH_PAGE_SIZE)
 
-/* Encryption metadata or mcuboot trailer are not encrypted, reserve flash sector */
-#define IPED_REGION_EXEC_NUM     1
-
 #define FLASH_FCB_OFFSET         (BOOT_FLASH_BASE + 0x400) //FCB of main app
 
 /********************************ROM code begin********************************/
@@ -83,7 +79,12 @@ typedef struct {
     uint32_t buffer[IPED_BUF_SIZE/sizeof(uint32_t)];
     size_t current_size;
     uint32_t curr_addr;
-} IpedBuffer_t;
+} iped_buffer_t;
+
+typedef struct {
+    flexspi_iped_config_arg_t iped_config;
+    flexspi_iped_write_arg_t iped_write_arg;
+} iped_cfg_ctx_t;
 
 /********************************ROM code begin********************************/
 typedef uint32_t nboot_status_t;
@@ -151,11 +152,28 @@ _Static_assert(sizeof(flexspi_nor_mem_image_iped_config_t) <= MFLASH_SECTOR_SIZE
  ******************************************************************************/
 static api_core_context_t apiCoreCtx;
 static uint8_t iap_api_arena[0x6000];
-static IpedBuffer_t iped_buffer;
+static iped_buffer_t iped_buffer;
+static iped_cfg_ctx_t iped_cfg_ctx;
 
 /*******************************************************************************
  * Static
  ******************************************************************************/
+uint32_t get_image_max_size(uint32_t region_sz)
+{
+    /* 
+    * IPED consumes 1.25 (5/4) time of physical memory and requires data chunks
+    * processed by ROM IAP to be aligned to 4*page size - so every write operation
+    * writes 5 pages.
+    */
+    uint32_t sector_sz = MFLASH_SECTOR_SIZE;
+    uint32_t iped_chunk_phy_sz = 5 * MFLASH_PAGE_SIZE;
+    //calculate output IPED size
+    //round down to chunk size
+    uint32_t payload_phy_sz = (region_sz / iped_chunk_phy_sz) * iped_chunk_phy_sz;
+    //calculate resulting physical size with interleaving IPED tags
+    return  (payload_phy_sz * 4) / 5;
+}
+
 /********************************ROM code begin********************************/
 static nboot_status_t nboot_mem_crypt_decrypt_iv(const nboot_iped_encrypted_iv_t* encrypted_iv, uint8_t* plain_iv)
 {
@@ -433,7 +451,7 @@ static nboot_status_t nboot_mem_crypt_configure(nboot_mem_crypt_configure_parms_
 /*******************************************************************************
  * Externs
  ******************************************************************************/
-status_t platform_enc_init(void)
+status_t platform_enc_xip_init(void)
 {
     status_t status = kStatus_Fail;
     const kp_api_init_param_t apiInitParam = 
@@ -452,7 +470,7 @@ status_t platform_enc_init(void)
         return status;
     }
     
-    IpedBuffer_t *ib = &iped_buffer;
+    iped_buffer_t *ib = &iped_buffer;
     //reset buf with erase value
     memset(ib->buffer, 0xFF, IPED_BUF_SIZE);
     ib->current_size = 0;
@@ -460,64 +478,53 @@ status_t platform_enc_init(void)
     return status;
 }
 
-size_t platform_enc_cfg_getSize(void)
+size_t platform_enc_xip_config_getSize(void)
 {
     return sizeof(flexspi_nor_mem_image_iped_config_t);
 }
 
-status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz)
+status_t platform_enc_xip_config_region(const struct flash_area *fa_meta, const struct flash_area *fa_slot)
 {
     status_t status = kStatus_Fail;
-    const uint32_t iped_region0_start = region_start;
-    const uint32_t page_align = 4*MFLASH_PAGE_SIZE;
-    /* End address must be aligned to 4 * page_size boundary */
-    const uint32_t region_sz = img_sz + (img_sz % page_align == 0 ? 0 : (page_align - img_sz % page_align));
-    const uint32_t iped_region0_end = region_start + region_sz;
-      
-    flexspi_iped_config_arg_t iped_config = { 
-        .option = { 
-            .tag = FLEXSPI_IPED_CONFIG_TAG,
-            .offset = IPED_REGION_EXEC_NUM,
-            .count = 1, 
-        },
-        .prince_rounds = flexspi_iped_12_rounds, //must match what is used for other regions
-        .regions = { 
-            { .start = iped_region0_start, .end = iped_region0_end, .locked = 0 }, 
-            { 0 }, 
-            { 0 }, 
-            { 0 }, 
-        },
-    };
+    const uint32_t slot = fa_slot->fa_id;
+    const uint32_t iped_region_start = fa_slot->fa_off + BOOT_FLASH_BASE;
+    /* Reserve a sector for the slot trailer */
+    uint32_t region_sz = encrypted_xip_region_getImageMaxSz(fa_slot->fa_size - MFLASH_SECTOR_SIZE);
+    const uint32_t iped_region_end = iped_region_start + region_sz;
+    /* 0 -> reserved for mcuboot, 1 -> slot 0, 2 -> slot 1 */
+    const uint32_t iped_context_offset = 1 + slot;
     
-    flexspi_iped_write_arg_t iped_write_arg = { 
-      .option = {
-          .tag = FLEXSPI_WRITE_IPED_CFG_BLK_FOR_IMAGE_TAG,
-          .offset = 0,
-          .count = 3, 
-      },
-      .address = fa_meta->fa_off + BOOT_FLASH_BASE,
-    };
+    memset(&iped_cfg_ctx, 0x0, sizeof(iped_cfg_ctx_t));
     
-    /* use ROM API to configure IPED region, this also generates new IV */
-    status = iap_mem_config(&apiCoreCtx, (uint32_t *)&iped_config, kMemoryID_FlexspiNor);
+    iped_cfg_ctx.iped_config.option.tag = FLEXSPI_IPED_CONFIG_TAG;
+    iped_cfg_ctx.iped_config.option.offset = iped_context_offset;
+    iped_cfg_ctx.iped_config.option.count = 1;
+    iped_cfg_ctx.iped_config.prince_rounds = flexspi_iped_12_rounds; //must match what is used for other regions
+    iped_cfg_ctx.iped_config.regions[0].start = iped_region_start;
+    iped_cfg_ctx.iped_config.regions[0].end = iped_region_end;
+    iped_cfg_ctx.iped_config.regions[0].locked = 0;
+
+    iped_cfg_ctx.iped_write_arg.option.tag = FLEXSPI_WRITE_IPED_CFG_BLK_FOR_IMAGE_TAG;
+    iped_cfg_ctx.iped_write_arg.option.offset = iped_context_offset;
+    iped_cfg_ctx.iped_write_arg.option.count = 1;
+    iped_cfg_ctx.iped_write_arg.address = fa_meta->fa_off + BOOT_FLASH_BASE;
+    
+    /* 
+     * Use ROM API to configure IPED region, this also generates new IV.
+     * Configuration is saved in context registers of IPED.
+     */
+    status = iap_mem_config(&apiCoreCtx, (uint32_t *)&iped_cfg_ctx.iped_config, kMemoryID_FlexspiNor);
     if(status != kStatus_Success)
     {
         PRINTF("iap_mem_config returned with code 0x%X\n", status);
         return -1;
     }
        
-    /* invalidate any previous iped configuration */
-    status = iap_mem_erase(&apiCoreCtx, BOOT_FLASH_ENC_META, MFLASH_SECTOR_SIZE, kMemoryID_FlexspiNor);
+    /* Invalidate any previous iped configuration in metadata flash area */
+    status = iap_mem_erase(&apiCoreCtx, fa_meta->fa_off + BOOT_FLASH_BASE, MFLASH_SECTOR_SIZE, kMemoryID_FlexspiNor);
     if(status != kStatus_Success)
     {
         PRINTF("iap_mem_erase returned with code 0x%X\n", status);
-        return -1;
-    }
-    /* persist iped configuration at particular flash offset */
-    status = iap_mem_config(&apiCoreCtx, (uint32_t *)&iped_write_arg, kMemoryID_FlexspiNor);
-    if(status != kStatus_Success)
-    {
-        PRINTF("iap_mem_config returned with code 0x%X\n", status);
         return -1;
     }
     
@@ -528,7 +535,56 @@ status_t platform_enc_cfg_write(struct flash_area *fa_meta, uint32_t region_star
     return kStatus_Success;
 }
 
-status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
+status_t platform_enc_xip_config_persist(const struct flash_area *fa_meta)
+{
+    status_t status;
+    /* persist iped configuration at particular flash offset */
+    status = iap_mem_config(&apiCoreCtx, (uint32_t *)&iped_cfg_ctx.iped_write_arg, kMemoryID_FlexspiNor);
+    if(status != kStatus_Success)
+    {
+        PRINTF("iap_mem_config returned with code 0x%X\n", status);
+        return -1;
+    }
+    
+    /* clear AHB RX buffer and cache */
+    FLEXSPI->AHBCR |= FLEXSPI_AHBCR_CLRAHBRXBUF_MASK;
+    CACHE64_InvalidateCache(CACHE64_CTRL0);
+    return kStatus_Success;
+}
+
+uint32_t platform_enc_xip_region_getImageMaxSz(uint32_t region_sz)
+{
+    /* 
+    * IPED consumes 1.25 (5/4) time of physical memory and requires data chunks
+    * processed by ROM IAP to be aligned to 4*page size - so every write operation
+    * writes 5 pages.
+    */
+    uint32_t sector_sz = MFLASH_SECTOR_SIZE;
+    uint32_t iped_chunk_phy_sz = 5 * MFLASH_PAGE_SIZE;
+    //calculate output IPED size
+    //round down to chunk size
+    uint32_t payload_phy_sz = (region_sz / iped_chunk_phy_sz) * iped_chunk_phy_sz;
+    //calculate resulting logical size without interleaving IPED tags
+    return  (payload_phy_sz * 4) / 5;
+}
+
+status_t platform_enc_xip_config_isValid(const struct flash_area *fa_meta, bool *isValid)
+{
+    flexspi_nor_mem_image_iped_config_t iped_config;
+    
+    /* configuration block is located at the beginning of sector */
+    if (flash_area_read(fa_meta, 0, &iped_config, sizeof(iped_config)) != 0){
+        return kStatus_Fail;
+    }
+    
+    *isValid = false;
+    if (iped_config.tag == FLEXSPI_IPED_CFG_BLK_TAG) {
+        *isValid = true;
+    }
+    return kStatus_Success;
+}
+
+status_t platform_enc_xip_config_initEncryption(const struct flash_area *fa_meta)
 {
     nboot_status_t status = kStatus_NBOOT_Fail;
     bool is_iped_region_enabled = false;   
@@ -565,54 +621,38 @@ status_t platform_enc_cfg_initEncryption(struct flash_area *fa_meta)
     
     FLEXSPI->AHBCR |= FLEXSPI_AHBCR_CLRAHBRXBUF_MASK;
     CACHE64_InvalidateCache(CACHE64_CTRL0);
-    
-    PRINTF("Encrypted XIP initialization successful\n");
-    
+       
     return kStatus_Success;
 error:
     PRINTF("Skipping IPED configuration!\n");
     return kStatus_Fail;
 }
 
-/* In case of PRINCE based encryption units there is a risk when accessing to
- * unwritten pages which leads to crash of PRINCE module.
- * This operation ensures the integrity of IPED configuration of the image in
- * execution area.
- */
-bool platform_enc_cfg_isPresent(uint32_t addr)
-{
-    flexspi_nor_mem_image_iped_config_t *iped_config = (flexspi_nor_mem_image_iped_config_t*) addr;
-    if (iped_config->tag == FLEXSPI_IPED_CFG_BLK_TAG) {
-        return true;
-    }
-    PRINTF("No IPED configuration found!\n");
-    return false;
-}
-
-status_t platform_enc_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce)
+status_t platform_enc_cfg_getNonce(const struct flash_area *fa_meta, uint8_t *nonce)
 {
     /* Nonce is not needed in this case as IPED encryption is done on-the-fly */
     return kStatus_Success;
 }
 
-status_t platform_enc_finish(void)
+status_t platform_enc_xip_finish(void)
 {
     iap_api_deinit(&apiCoreCtx);
+    
     return kStatus_Success;
 }
 
-status_t platform_enc_encrypt_data(uint32_t flash_addr, uint8_t *nonce, 
+status_t platform_enc_xip_encrypt_data(uint32_t flash_addr, uint8_t *nonce, 
                                    uint8_t *input, uint8_t *output, uint32_t len)
 {
     /* Nothing needed here as encryption is done on-the-fly */
     return kStatus_Success;
 }
 
-status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off, const void *src, uint32_t len)
+status_t platform_enc_xip_flash_write(const struct flash_area *area, uint32_t off, const void *src, uint32_t len)
 {
     uint32_t addr_off = area->fa_off + off + BOOT_FLASH_BASE;
     status_t rc;
-    IpedBuffer_t *ib = &iped_buffer;
+    iped_buffer_t *ib = &iped_buffer;
     size_t data_offset = 0;
     uint8_t *data_ptr = (uint8_t *)src;
     
@@ -652,9 +692,9 @@ status_t platform_enc_flash_write(const struct flash_area *area, uint32_t off, c
     return kStatus_Success;
 }
 
-status_t platform_enc_flash_write_finish(const struct flash_area *area)
+status_t platform_enc_xip_flash_write_finish(const struct flash_area *area)
 {
-    IpedBuffer_t *ib = &iped_buffer;
+    iped_buffer_t *ib = &iped_buffer;
     
     //Process remaining data if any
     //even last data chunk has to be aligned to 4 page

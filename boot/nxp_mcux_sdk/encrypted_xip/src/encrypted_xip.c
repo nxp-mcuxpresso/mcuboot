@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 NXP
+ * Copyright 2026 NXP
  * All rights reserved.
  *
  *
@@ -10,7 +10,7 @@
  * Includes
  ******************************************************************************/
 #include "sblconfig.h"
-#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP)
+#if defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE) || defined(CONFIG_BOOT_MODE_ENCRYPTED_XIP_REMAP)
 #include <ctype.h>
 
 #include "encrypted_xip.h"
@@ -20,8 +20,6 @@
 #include "mflash_drv.h"
    
 #include "flash_partitioning.h"
-
-#include "mbedtls/sha256.h"
 
 #include "mflash_drv.h"
 #include "sysflash/sysflash.h"
@@ -48,7 +46,7 @@
         }                                 \
     } while (0);
 
-#define ENC_MAGIC_SZ 16
+#define ENC_MAGIC_SZ 32
 
 /*******************************************************************************
  * Types
@@ -61,33 +59,32 @@ union enc_magic_t {
 	uint8_t val[ENC_MAGIC_SZ];
 };
 
-/** Structure holds metadata used for confirmation of configuration blocks
+/** Structure holds a confirmation part (magic number) of configuration block
  */
 typedef struct {
-	uint8_t pad_0[16];              // Padding zeroes
-	uint8_t hash[16];               // Hash of the configuration structure
-	uint8_t pad_1[16];              // Padding zeroes
 	uint8_t magic[ENC_MAGIC_SZ];    // Magic number
-} enc_metadata_t;
+} enc_confirm_t;
 
-_Static_assert((sizeof(enc_metadata_t) % 16) == 0,
-		"Unaligned size of enc_metadata_t struct");
+_Static_assert((sizeof(enc_confirm_t) % 16) == 0,
+		"Unaligned size of enc_confirm_t struct");
 
 
 /*
  * Assume that metadata and configuration structs can be written separately 
  * into common flash sector.
  */
-_Static_assert(sizeof(enc_metadata_t) <= MFLASH_PAGE_SIZE,
+_Static_assert(sizeof(enc_confirm_t) <= MFLASH_PAGE_SIZE,
 		"Size of metadata exceeds flash page size");
 
-_Static_assert(sizeof(enc_metadata_t) <= MFLASH_SECTOR_SIZE/2,
+_Static_assert(sizeof(enc_confirm_t) <= MFLASH_SECTOR_SIZE/2,
 		"Size of metadata exceeds half flash sector size");
 /*******************************************************************************
  * Variables
  ******************************************************************************/
 const union enc_magic_t enc_magic = { .val = { 0xAA, 0xBB, 0xCC, 0xDD, 0x60,
-		0x4D, 0xBA, 0x70, 0x34, 0x79, 0x2c, 0x0f, 0x2c, 0xb6, 0x0f, 0x35 } };
+		0x4D, 0xBA, 0x70, 0x34, 0x79, 0x2c, 0x0f, 0x2c, 0xb6, 0x0f, 0x35,
+                0x7E, 0x2C, 0xA5, 0x61, 0xD9, 0x4B, 0xF3, 0x18, 0x9A, 0xE7, 0x34, 
+                0xBC, 0x50, 0x8D, 0x26, 0xFE} };
 
 #define ENC_MAGIC  (enc_magic.val)
 /*******************************************************************************
@@ -106,55 +103,47 @@ static int magic_check(const uint8_t *magic) {
  ******************************************************************************/
 status_t encrypted_xip_init(void)
 {
-    return platform_enc_init();
+    return platform_enc_xip_init();
 }
 
-status_t encrypted_xip_cfg_check(struct flash_area *fa_meta, bool *is_valid)
+status_t encrypted_xip_config_isValid(const struct flash_area *fa_meta, bool *isValid)
 {
 #ifndef ENCRYPTED_XIP_NPX
-    enc_metadata_t metadata;
+    enc_confirm_t confirm;
+    bool cfg_valid = false;
     uint32_t cfg_block[1024 / sizeof(uint32_t)];
-    /* metadata are located at the end of sector */
-    const uint32_t off_meta = fa_meta->fa_size - sizeof(enc_metadata_t);
-    /* configuration block is located at the beginning of sector */
-    const uint32_t off_cfg = 0;
+    /* confirmation block (magic) is located at the end of sector */
+    const uint32_t off_confirm = fa_meta->fa_size - sizeof(enc_confirm_t);
     
-    *is_valid = false;
+    *isValid = false;
     
-    uint32_t cfg_sz = platform_enc_cfg_getSize();
-    ASSERT_APP(0 < 1, cfg_sz <= 1024, "Configuration size exceeds size of the buffer\n");    
-   
-    if (flash_area_read(fa_meta, off_meta, &metadata, sizeof(enc_metadata_t)) != 0){
+    if (flash_area_read(fa_meta, off_confirm, &confirm, sizeof(enc_confirm_t)) != 0){
         return kStatus_Fail;
     }
-    if (flash_area_read(fa_meta, off_cfg, cfg_block, cfg_sz) != 0){
-        return kStatus_Fail;
-    }
-    if (magic_check(metadata.magic)) {
-        /* Check hash */
-        uint8_t sha[32];
-
-        if(mbedtls_sha256((unsigned char *)cfg_block, cfg_sz, sha, 0) != 0) {
-            PRINTF("mbedtls_sha256 failed\n");
+    
+    /* Check configuration block only if magic is present */
+    if (magic_check(confirm.magic)) {
+        if (platform_enc_xip_config_isValid(fa_meta, isValid) != kStatus_Success){
             return kStatus_Fail;
-        }
-
-        if (memcmp(metadata.hash, sha, 16) == 0) {
-            *is_valid = true;
         }
     }
 #endif
     return kStatus_Success;
 }
 
-status_t encrypted_xip_cfg_write(struct flash_area *fa_meta, uint32_t region_start, uint32_t img_sz)
+status_t encrypted_xip_config_region(const struct flash_area *fa_meta, const struct flash_area *fa_slot)
 { 
-    return platform_enc_cfg_write(fa_meta, region_start, img_sz);
+    return platform_enc_xip_config_region(fa_meta, fa_slot);
 }
 
-status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta)
+uint32_t encrypted_xip_region_getImageMaxSz(uint32_t region_sz)
 {
-    return platform_enc_cfg_initEncryption(fa_meta);
+    return platform_enc_xip_region_getImageMaxSz(region_sz);
+}
+
+status_t encrypted_xip_config_initEncryption(const struct flash_area *fa_meta)
+{
+    return platform_enc_xip_config_initEncryption(fa_meta);
 }
 
 /* In case of PRINCE based encryption units there is a risk when accessing to
@@ -162,73 +151,45 @@ status_t encrypted_xip_cfg_initEncryption(struct flash_area *fa_meta)
  * This operation ensures the integrity of IPED configuration of the image in
  * execution area.
  */
-status_t encrypted_xip_cfg_confirm(struct flash_area *fa_meta)
+status_t encrypted_xip_config_write(const struct flash_area *fa_meta)
 {
 #ifndef ENCRYPTED_XIP_NPX
-    uint32_t meta_off = fa_meta->fa_size - sizeof(enc_metadata_t);
-    const uint32_t cfg_addr = fa_meta->fa_off + BOOT_FLASH_BASE;
-    enc_metadata_t metadata;
+    uint32_t meta_off = fa_meta->fa_size - sizeof(enc_confirm_t);
+    enc_confirm_t confirm;
 
-    /* Sanity check the configuration is valid */
-    bool cfg_isPresent = platform_enc_cfg_isPresent(cfg_addr);
-    if (cfg_isPresent == false) {
-        PRINTF("No configuration block found!\n");
-        return kStatus_Fail;
-    }
+    platform_enc_xip_config_persist(fa_meta);
 
-    /* Calculate hash */
-    uint8_t sha[32];
     uint32_t len;
-
-    len = platform_enc_cfg_getSize();
-    ASSERT_APP(0 , len % 16, "Unaligned size of IPED struct len=%d\n", len);
-
-    if(mbedtls_sha256((unsigned char *)cfg_addr, len, sha, 0) != 0) {
-        PRINTF("mbedtls_sha256 failed\n");
-        return kStatus_Fail;
-    }
-
-    memset(&metadata, 0, sizeof(enc_metadata_t));
-    //truncate hash to 16 bytes
-    memcpy(metadata.hash, sha, 16);
-    memcpy(metadata.magic, ENC_MAGIC, ENC_MAGIC_SZ);
+    len = platform_enc_xip_config_getSize();
+    ASSERT_APP(0 , len % 16, "Unaligned size of configuration block len=%d\n", len);
+    
+    memcpy(confirm.magic, ENC_MAGIC, ENC_MAGIC_SZ);
 
     /*
-     * Write metadata at the end of metadata sector - confirm integrity of 
+     * Write confirmation at the end of metadata sector - confirm integrity of 
      * configuration block.
      */
-    if (flash_area_write(fa_meta, meta_off, &metadata, sizeof(enc_metadata_t)) != 0) {
-        PRINTF("Failed to write encryption metadata\n");
+    if (flash_area_write(fa_meta, meta_off, &confirm, sizeof(enc_confirm_t)) != 0) {
+        PRINTF("Failed to write encryption confirmation\n");
         return kStatus_Fail;
     }
 #endif
     return kStatus_Success;
 }
 
-status_t encrypted_xip_cfg_getNonce(struct flash_area *fa_meta, uint8_t *nonce)
-{  
-    return platform_enc_cfg_getNonce(fa_meta, nonce);
-}
-
 status_t encrypted_xip_finish(void)
 {
-    return platform_enc_finish();
-}
-
-status_t encrypted_xip_encrypt_data(uint32_t flash_addr, uint8_t *nonce, 
-                                   uint8_t *input, uint8_t *output, uint32_t len)
-{
-    return platform_enc_encrypt_data(flash_addr, nonce, input, output, len);
+    return platform_enc_xip_finish();
 }
 
 status_t encrypted_xip_flash_write(const struct flash_area *area, uint32_t off, const void *src, uint32_t len)
 {
-    return platform_enc_flash_write(area, off, src, len);
+    return platform_enc_xip_flash_write(area, off, src, len);
 }
 
 status_t encrypted_xip_flash_write_finish(const struct flash_area *area)
 {
-    return platform_enc_flash_write_finish(area);
+    return platform_enc_xip_flash_write_finish(area);
 }
 
 /*******************************************************************************
@@ -297,4 +258,4 @@ error:
 }
 #endif
 
-#endif /* CONFIG_BOOT_MODE_ENCRYPTED_XIP */
+#endif /* CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE */
