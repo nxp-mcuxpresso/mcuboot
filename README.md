@@ -1,12 +1,17 @@
-# MCUXpresso SDK : mcuxsdk-middleware-mcuboot_opensource
+# MCUboot in MCUXpresso SDK
 
 ## Overview
-This repository is a fork of MCUboot (https://github.com/mcu-tools/mcuboot) for MCUXpresso SDK delivery and it contains the components officially provided in NXP MCUXpresso SDK. This repository is part of the MCUXpresso SDK overall delivery which is composed of several sub-repositories/projects. Navigate to the top/parent repository (mcuxsdk-manifests) for the complete delivery of MCUXpresso SDK.
+This repository is a fork of [MCUboot](https://github.com/mcu-tools/mcuboot) for MCUXpresso SDK delivery and it contains the components officially provided in NXP MCUXpresso SDK. This repository is part of the MCUXpresso SDK overall delivery which is composed of several sub-repositories/projects. Navigate to the top/parent repository (mcuxsdk-manifests) for the complete delivery of MCUXpresso SDK.
+
+MCUboot in MCUXpresso SDK is a fork of the original project that aims to integrate HW features that haven't yet been covered by the upstream code. Currently these are:
+ - flash remapping techniques for zero-overhead image swapping
+ - support for encrypted XIP
+ - use of NXP's SB3 file
 
 ## Documentation
-Overall details can be reviewed here: [MCUXpresso SDK Online Documentation](https://mcuxpresso.nxp.com/mcuxsdk/latest/html/introduction/README.html)  
-
-Visit [MCUboot - Documentation](https://docs.mcuboot.com/) to review details on the contents in this sub-repo.
+- Overall details of MCUXpresso SDK can be reviewed here: [MCUXpresso SDK Online Documentation](https://mcuxpresso.nxp.com/mcuxsdk/latest/html/introduction/README.html)  
+- MCUXpresso SDK examples based on MCUboot are described here: [MCUXpresso SDK OTA Examples](https://mcuxpresso.nxp.com/mcuxsdk/latest/html/examples/ota_examples/mcuboot_opensource/readme.html)  
+- Visit [MCUboot - Documentation](https://docs.mcuboot.com/) to review details on the original contents in this sub-repo
 
 ## Setup
 Instructions on how to install the MCUXpresso SDK provided from GitHub via west manifest [Getting Started with SDK - Detailed Installation Instructions](https://mcuxpresso.nxp.com/mcuxsdk/latest/html/gsd/installation.html#installation)
@@ -16,94 +21,3 @@ Contributions are not currently accepted.
 If the intended contribution is not related to NXP specific code, consider contributing directly to the upstream MCUboot project. Once this MCUboot fork is synchronized with the upstream project, such contributions will end up here as well.
 If the intended contribution is a bugfix or improvement for NXP porting layer or for code added or modified by NXP, please open an issue or contact NXP support.
 
----------------------------------
-## NXP Fork
-This fork of MCUboot contains specific modifications and enhancements for NXP MCUXpresso SDK integration.
-
-See [changelog](ChangeLogKSDK.txt) for details.
-
-# [MCUboot](http://mcuboot.com/)
-
-[![Package on PyPI](https://img.shields.io/pypi/v/imgtool.svg)][pypi]
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/12307/badge.svg)][coverity]
-[![Build Status (Sim)](https://github.com/mcu-tools/mcuboot/workflows/Sim/badge.svg)][sim]
-[![Build Status (Mynewt)](https://github.com/mcu-tools/mcuboot/workflows/Mynewt/badge.svg)][mynewt]
-[![Build Status (Espressif)](https://github.com/mcu-tools/mcuboot/workflows/Espressif/badge.svg)][espressif]
-[![Publishing Status (imgtool)](https://github.com/mcu-tools/mcuboot/workflows/imgtool/badge.svg)][imgtool]
-[![Build Status (Travis CI)](https://img.shields.io/travis/mcu-tools/mcuboot/main.svg?label=travis-ci)][travis]
-[![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)][license]
-
-[pypi]: https://pypi.org/project/imgtool/
-[coverity]: https://scan.coverity.com/projects/mcuboot
-[sim]: https://github.com/mcu-tools/mcuboot/actions?query=workflow:Sim
-[mynewt]: https://github.com/mcu-tools/mcuboot/actions?query=workflow:Mynewt
-[espressif]: https://github.com/mcu-tools/mcuboot/actions?query=workflow:Espressif
-[imgtool]: https://github.com/mcu-tools/mcuboot/actions?query=workflow:imgtool
-[travis]: https://travis-ci.org/mcu-tools/mcuboot
-[license]: https://github.com/mcu-tools/mcuboot/blob/main/LICENSE
-
-This is MCUboot version 2.3.0
-
-MCUboot is a secure bootloader for 32-bits microcontrollers. It defines a
-common infrastructure for the bootloader and the system flash layout on
-microcontroller systems, and provides a secure bootloader that enables easy
-software upgrade.
-
-MCUboot is not dependent on any specific operating system and hardware and
-relies on hardware porting layers from the operating system it works with.
-Currently, MCUboot works with the following operating systems and SoCs:
-- [Zephyr](https://www.zephyrproject.org/)
-- [Apache Mynewt](https://mynewt.apache.org/)
-- [Apache NuttX](https://nuttx.apache.org/)
-- [RIOT](https://www.riot-os.org/)
-- [Mbed OS](https://os.mbed.com/)
-- [Espressif](https://www.espressif.com/)
-- [Cypress/Infineon](https://www.cypress.com/)
-
-RIOT is supported only as a boot target. We will accept any new
-port contributed by the community once it is good enough.
-
-## MCUboot How-tos
-
-See the following pages for instructions on using MCUboot with different
-operating systems and SoCs:
-- [Zephyr](docs/readme-zephyr.md)
-- [Apache Mynewt](docs/readme-mynewt.md)
-- [Apache NuttX](docs/readme-nuttx.md)
-- [RIOT](docs/readme-riot.md)
-- [Mbed OS](docs/readme-mbed.md)
-- [Espressif](docs/readme-espressif.md)
-- [Cypress/Infineon](boot/cypress/README.md)
-
-There are also instructions for the [Simulator](sim/README.rst).
-
-## Roadmap
-
-The issues being planned and worked on are tracked using GitHub issues. To
-give your input, visit [MCUboot GitHub
-Issues](https://github.com/mcu-tools/mcuboot/issues).
-
-## Source files
-
-You can find additional documentation on the bootloader in the source files.
-For more information, use the following links:
-- [boot/bootutil](https://github.com/mcu-tools/mcuboot/tree/main/boot/bootutil) - The core of the bootloader itself.
-- [boot/boot\_serial](https://github.com/mcu-tools/mcuboot/tree/main/boot/boot_serial) - Support for serial upgrade within the bootloader itself.
-- [boot/zephyr](https://github.com/mcu-tools/mcuboot/tree/main/boot/zephyr) - Port of the bootloader to Zephyr.
-- [boot/mynewt](https://github.com/mcu-tools/mcuboot/tree/main/boot/mynewt) - Bootloader application for Apache Mynewt.
-- [boot/nuttx](https://github.com/mcu-tools/mcuboot/tree/main/boot/nuttx) - Bootloader application and port of MCUboot interfaces for Apache NuttX.
-- [boot/mbed](https://github.com/mcu-tools/mcuboot/tree/main/boot/mbed) - Port of the bootloader to Mbed OS.
-- [boot/espressif](https://github.com/mcu-tools/mcuboot/tree/main/boot/espressif) - Bootloader application and MCUboot port for Espressif SoCs.
-- [boot/cypress](https://github.com/mcu-tools/mcuboot/tree/main/boot/cypress) - Bootloader application and MCUboot port for Cypress/Infineon SoCs.
-- [imgtool](https://github.com/mcu-tools/mcuboot/tree/main/scripts/imgtool.py) - A tool to securely sign firmware images for booting by MCUboot.
-- [sim](https://github.com/mcu-tools/mcuboot/tree/main/sim) - A bootloader simulator for testing and regression.
-
-## Joining the project
-
-Developers are welcome!
-
-Use the following links to join or see more about the project:
-
-* [Our developer mailing list](https://groups.io/g/MCUBoot)
-* [Our Discord channel](https://discord.com/channels/1106321706588577904/1106322802308550716) <br />
-  Get [your invite](https://discord.com/invite/5PpXhvda5p)
