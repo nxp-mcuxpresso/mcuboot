@@ -166,6 +166,7 @@ int sbl_boot_main(void)
             break;
         }
         BOOT_LOG_WRN("Warning: failed to init PSA crypto backend...trying again the initialization");
+        mbedtls_psa_crypto_free();
     }
     if (psa_status != PSA_SUCCESS)
     {
