@@ -43,7 +43,10 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
     return BOOT_HOOK_REGULAR;
 }
 
-int boot_copy_region_pre_hook(int img_index, const struct flash_area *area, size_t size)
+int boot_copy_region_pre_hook(int img_index,
+                              const struct flash_area *primary_area,
+                              const struct flash_area *secondary_area,
+                              size_t size)
 {
 #ifdef CONFIG_BOOT_MODE_ENCRYPTED_XIP_OVERWRITE
 
@@ -84,7 +87,7 @@ int boot_copy_region_pre_hook(int img_index, const struct flash_area *area, size
     size_t sect, off = sector_cnt * sector_sz;
     //delete remaining sectors
     for (sect = sector_cnt; sect < sector_iped_cnt; sect++) {
-        rc = boot_erase_region(area, off, sector_sz, false);
+        rc = boot_erase_region(primary_area, off, sector_sz, false);
         assert(rc == 0);
         off += sector_sz;
     }
@@ -92,7 +95,7 @@ int boot_copy_region_pre_hook(int img_index, const struct flash_area *area, size
 #endif  
 
     status_t status;
-    status = encrypted_xip_config_region(boot_flash_meta_map, area);
+    status = encrypted_xip_config_region(boot_flash_meta_map, primary_area);
     if (status != kStatus_Success)
         return -1;   
 #endif

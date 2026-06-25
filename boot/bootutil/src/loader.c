@@ -965,13 +965,9 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
     assert(rc == 0);
 #endif
     
-    /* 
-     * NXP customization for encrypted XIP
-     *
-     * Call the hook function to configure encrypted XIP.
-     */
     rc = BOOT_HOOK_CALL(boot_copy_region_pre_hook, 0, BOOT_CURR_IMG(state),
-                        BOOT_IMG_AREA(state, BOOT_SLOT_PRIMARY), src_size);
+                        BOOT_IMG_AREA(state, BOOT_SLOT_PRIMARY),
+                        BOOT_IMG_AREA(state, BOOT_SLOT_SECONDARY), src_size);
     if (rc != 0) {
         return rc;
     }

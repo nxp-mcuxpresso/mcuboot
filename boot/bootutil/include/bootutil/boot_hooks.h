@@ -159,7 +159,8 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
  * mode only.
  *
  * @param img_index the index of the image pair
- * @param area the flash area of the primary image.
+ * @param primary_area the flash area of the primary image.
+ * @param secondary_area the flash area of the secondary image.
  * @param size size of copied image.
  *
  * @retval 0: success, mcuboot will follow normal code execution flow after
@@ -168,7 +169,9 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
  *         boot_copy_image() with error.
  *         Update will be undone so might be resume on the next boot.
  */
-int boot_copy_region_pre_hook(int img_index, const struct flash_area *area, 
+int boot_copy_region_pre_hook(int img_index,
+                              const struct flash_area *primary_area,
+                              const struct flash_area *secondary_area,
                               size_t size);
 
 /** Hook for implement image's post copying action
