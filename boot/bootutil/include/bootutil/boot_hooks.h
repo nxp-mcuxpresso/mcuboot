@@ -158,21 +158,15 @@ int boot_perform_update_hook(int img_index, struct image_header *img_head,
  * copied to the primary slot. This hook is called in MCUBOOT_OVERWRITE_ONLY
  * mode only.
  *
- * @param img_index the index of the image pair
- * @param primary_area the flash area of the primary image.
- * @param secondary_area the flash area of the secondary image.
- * @param size size of copied image.
- *
+ * @param state pointer to the boot loader state structure
+  *
  * @retval 0: success, mcuboot will follow normal code execution flow after
  *            execution of this call.
  *         non-zero: an error, mcuboot will return from
  *         boot_copy_image() with error.
  *         Update will be undone so might be resume on the next boot.
  */
-int boot_copy_region_pre_hook(int img_index,
-                              const struct flash_area *primary_area,
-                              const struct flash_area *secondary_area,
-                              size_t size);
+int boot_copy_region_pre_hook(struct boot_loader_state *state);
 
 /** Hook for implement image's post copying action
  *
