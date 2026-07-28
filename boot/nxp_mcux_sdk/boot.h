@@ -17,7 +17,7 @@
 #include "flash_map.h"
 
 #define MAJOR_VERSION  2
-#define MINOR_VERSION  3
+#define MINOR_VERSION  4
 #define REVISE_VERSION 0
 
 #define VERSION_SPACER     "."

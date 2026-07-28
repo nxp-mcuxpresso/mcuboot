@@ -9,9 +9,9 @@
 #include <zephyr/drivers/flash.h>
 #include <zephyr/mgmt/mcumgr/mgmt/mgmt_defines.h>
 #include <zephyr/mgmt/mcumgr/grp/zephyr/zephyr_basic.h>
-#include <../subsys/mgmt/mcumgr/transport/include/mgmt/mcumgr/transport/smp_internal.h>
 
 #include <flash_map_backend/flash_map_backend.h>
+#include <zephyr/devicetree/partitions.h>
 #include <sysflash/sysflash.h>
 
 #include "bootutil/bootutil_log.h"
@@ -42,7 +42,7 @@ static int bs_custom_storage_erase(const struct nmgr_hdr *hdr,
         return MGMT_ERR_ENOTSUP;
     }
 
-    rc = flash_area_open(FIXED_PARTITION_ID(storage_partition), &fa);
+    rc = flash_area_open(PARTITION_ID(storage_partition), &fa);
 
     if (rc < 0) {
         BOOT_LOG_ERR("failed to open flash area");

@@ -2,6 +2,7 @@
 
 ## Overview
 This repository is a fork of [MCUboot](https://github.com/mcu-tools/mcuboot) for MCUXpresso SDK delivery and it contains the components officially provided in NXP MCUXpresso SDK. This repository is part of the MCUXpresso SDK overall delivery which is composed of several sub-repositories/projects. Navigate to the top/parent repository (mcuxsdk-manifests) for the complete delivery of MCUXpresso SDK.
+This is MCUboot version 2.4.0
 
 MCUboot in MCUXpresso SDK is a fork of the original project that aims to integrate HW features that haven't yet been covered by the upstream code. Currently these are:
  - flash remapping techniques for zero-overhead image swapping

@@ -623,7 +623,7 @@ boot_validate_slot(struct boot_loader_state *state, int slot,
                 &boot_img_hdr(state, BOOT_SLOT_SECONDARY)->ih_ver,
                 &boot_img_hdr(state, BOOT_SLOT_PRIMARY)->ih_ver);
         if (rc < 0 && !boot_check_header_erased(state, BOOT_SLOT_PRIMARY)) {
-            BOOT_LOG_ERR("insufficient version in secondary slot");
+            BOOT_LOG_ERR("Insufficient version in secondary slot");
             boot_scramble_slot(fap, slot);
             /* Image in the secondary slot does not satisfy version requirement.
              * Erase the image and continue booting from the primary slot.
@@ -634,6 +634,7 @@ boot_validate_slot(struct boot_loader_state *state, int slot,
     }
 #endif
     if (!boot_check_header_valid(state, slot)) {
+        BOOT_LOG_DBG("boot_validate_slot: header validation failed %d", slot);
         fih_rc = FIH_FAILURE;
     } else {
         BOOT_HOOK_CALL_FIH(boot_image_check_hook, FIH_BOOT_HOOK_REGULAR,
@@ -646,6 +647,10 @@ boot_validate_slot(struct boot_loader_state *state, int slot,
 check_validity:
 #endif
     if (FIH_NOT_EQ(fih_rc, FIH_SUCCESS)) {
+#if !defined(__BOOTSIM__)
+        BOOT_LOG_ERR("Image in the %s slot is not valid!",
+                     (slot == BOOT_SLOT_PRIMARY) ? "primary" : "secondary");
+#endif
         if ((slot != BOOT_SLOT_PRIMARY) || ARE_SLOTS_EQUIVALENT()) {
             BOOT_LOG_ERR("Image is invalid, erasing...");
             boot_scramble_slot(fap, slot);
@@ -653,10 +658,6 @@ check_validity:
              * attempts to validate and boot it.
              */
         }
-#if !defined(__BOOTSIM__)
-        BOOT_LOG_ERR("Image in the %s slot is not valid!",
-                     (slot == BOOT_SLOT_PRIMARY) ? "primary" : "secondary");
-#endif
         fih_rc = FIH_NO_BOOTABLE_IMAGE;
         goto out;
     }
@@ -998,6 +999,27 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
         size += this_size;
     }
 
+#if defined(MCUBOOT_SWAP_USING_MOVE)
+    /* When using MCUBOOT_SWAP_USING_MOVE, primary region is larger then the secondary region
+     * Optimal region configuration: # useful regions in primary region = # regions in secondary region + 1
+     * This means that we have to use the size of the secondary region (so without the swap sector)
+     */
+    sect_count = boot_img_num_sectors(state, BOOT_SLOT_SECONDARY);
+    for (sect = 0, size = 0; sect < sect_count; sect++) {
+        this_size = boot_img_sector_size(state, BOOT_SLOT_SECONDARY, sect);
+
+#if defined(MCUBOOT_OVERWRITE_ONLY_FAST)
+        if ((size + this_size) >= src_size) {
+            size += src_size - size;
+            size += BOOT_WRITE_SZ(state) - (size % BOOT_WRITE_SZ(state));
+            break;
+        }
+#endif
+
+        size += this_size;
+    }
+#endif
+
 #if defined(MCUBOOT_OVERWRITE_ONLY_FAST)
     trailer_sz = boot_trailer_sz(BOOT_WRITE_SZ(state));
     sector = boot_img_num_sectors(state, BOOT_SLOT_PRIMARY) - 1;
@@ -1060,7 +1082,7 @@ boot_copy_image(struct boot_loader_state *state, struct boot_status *bs)
      */
     rc = boot_update_security_counter(state, BOOT_SLOT_PRIMARY, BOOT_SLOT_SECONDARY);
     if (rc != 0) {
-        BOOT_LOG_ERR("Security counter update failed after image upgrade.");
+        BOOT_LOG_ERR("Security counter update failed after image upgrade: %d", rc);
         return rc;
     }
 #endif /* MCUBOOT_HW_ROLLBACK_PROT */
@@ -1199,8 +1221,7 @@ boot_swap_image(struct boot_loader_state *state, struct boot_status *bs)
 
             boot_enc_init(BOOT_CURR_ENC_SLOT(state, slot));
 
-            rc = boot_read_enc_key(fap, slot, bs);
-            if (rc) {
+            if (!boot_read_enc_key(fap, slot, bs)) {
                 BOOT_LOG_DBG("boot_swap_image: Failed loading key (%d, %d)",
                               image_index, slot);
             } else {
@@ -1288,8 +1309,7 @@ boot_perform_update(struct boot_loader_state *state, struct boot_status *bs)
          */
         rc = boot_update_security_counter(state, BOOT_SLOT_PRIMARY, BOOT_SLOT_SECONDARY);
         if (rc != 0) {
-            BOOT_LOG_ERR("Security counter update failed after "
-                         "image upgrade.");
+            BOOT_LOG_ERR("Security counter update failed after image upgrade: %d", rc);
             BOOT_SWAP_TYPE(state) = BOOT_SWAP_TYPE_PANIC;
         }
     }
@@ -1622,16 +1642,16 @@ boot_update_hw_rollback_protection(struct boot_loader_state *state)
     if (swap_state.magic != BOOT_MAGIC_GOOD || swap_state.image_ok == BOOT_FLAG_SET) {
         rc = boot_update_security_counter(state, BOOT_SLOT_PRIMARY, BOOT_SLOT_PRIMARY);
         if (rc != 0) {
-            BOOT_LOG_ERR("Security counter update failed after image %d validation.",
-                         BOOT_CURR_IMG(state));
+            BOOT_LOG_ERR("Security counter update failed after image %d validation: %d",
+                         BOOT_CURR_IMG(state), rc);
             return rc;
         }
 
 #ifdef MCUBOOT_HW_ROLLBACK_PROT_LOCK
         rc = boot_nv_security_counter_lock(BOOT_CURR_IMG(state));
         if (rc != 0) {
-            BOOT_LOG_ERR("Security counter lock failed after image %d validation.",
-                         BOOT_CURR_IMG(state));
+            BOOT_LOG_ERR("Security counter lock failed after image %d validation: %d",
+                         BOOT_CURR_IMG(state). rc);
             return rc;
         }
 #endif /* MCUBOOT_HW_ROLLBACK_PROT_LOCK */
@@ -1752,8 +1772,8 @@ context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp)
         /* Determine the sector layout of the image slots and scratch area. */
         rc = boot_read_sectors(state, sectors);
         if (rc != 0) {
-            BOOT_LOG_WRN("Failed reading sectors; BOOT_MAX_IMG_SECTORS=%d"
-                          " - too small?", BOOT_MAX_IMG_SECTORS);
+            BOOT_LOG_WRN("Failed reading sectors; BOOT_MAX_IMG_SECTORS=%d - too small?",
+                         BOOT_MAX_IMG_SECTORS);
             BOOT_SWAP_TYPE(state) = BOOT_SWAP_TYPE_NONE;
         }
 
@@ -1925,7 +1945,7 @@ context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp)
          * the magic number on the image is OK.
          */
         if (BOOT_IMG(state, BOOT_SLOT_PRIMARY).hdr.ih_magic != IMAGE_MAGIC) {
-            BOOT_LOG_ERR("bad image magic 0x%lx; Image=%u", (unsigned long)
+            BOOT_LOG_ERR("Bad image magic 0x%lx; Image=%u", (unsigned long)
                          BOOT_IMG(state, BOOT_SLOT_PRIMARY).hdr.ih_magic,
                          BOOT_CURR_IMG(state));
             rc = BOOT_EBADIMAGE;
@@ -2079,10 +2099,8 @@ boot_get_slot_usage(struct boot_loader_state *state)
                 BOOT_LOG_IMAGE_INFO(slot, hdr);
             } else {
                 state->slot_usage[BOOT_CURR_IMG(state)].slot_available[slot] = false;
-                BOOT_LOG_INF("Image %d %s slot: Image not found",
-                             BOOT_CURR_IMG(state),
-                             (slot == BOOT_SLOT_PRIMARY)
-                             ? "Primary" : "Secondary");
+                BOOT_LOG_INF("Image %d %s slot: image not found", BOOT_CURR_IMG(state),
+                             (slot == BOOT_SLOT_PRIMARY) ? "primary" : "secondary");
             }
         }
 
@@ -2150,10 +2168,8 @@ print_loaded_images(struct boot_loader_state *state)
 #endif
         active_slot = state->slot_usage[BOOT_CURR_IMG(state)].active_slot;
 
-        BOOT_LOG_INF("Image %d loaded from the %s slot",
-                     BOOT_CURR_IMG(state),
-                     (active_slot == BOOT_SLOT_PRIMARY) ?
-                     "primary" : "secondary");
+        BOOT_LOG_INF("Image %d loaded from the %s slot", BOOT_CURR_IMG(state),
+                     (active_slot == BOOT_SLOT_PRIMARY) ? "primary" : "secondary");
     }
 }
 #endif
@@ -2215,9 +2231,8 @@ boot_select_or_erase(struct boot_loader_state *state)
              */
             rc = boot_write_copy_done(fap);
             if (rc != 0) {
-                BOOT_LOG_WRN("Failed to set copy_done flag of the image in "
-                             "the %s slot.", (active_slot == BOOT_SLOT_PRIMARY) ?
-                             "primary" : "secondary");
+                BOOT_LOG_WRN("Failed to set copy_done flag of the image in the %s slot.",
+                             (active_slot == BOOT_SLOT_PRIMARY) ? "primary" : "secondary");
                 rc = 0;
             }
         }
@@ -2261,8 +2276,7 @@ boot_load_and_validate_images(struct boot_loader_state *state)
             }
 
             if (active_slot == BOOT_SLOT_NONE) {
-                BOOT_LOG_INF("No slot to load for image %d",
-                             BOOT_CURR_IMG(state));
+                BOOT_LOG_INF("No slot to load for image %d", BOOT_CURR_IMG(state));
                 FIH_RET(FIH_FAILURE);
             }
 
@@ -2358,16 +2372,16 @@ boot_update_hw_rollback_protection(struct boot_loader_state *state)
                                           state->slot_usage[BOOT_CURR_IMG(state)].active_slot,
                                           state->slot_usage[BOOT_CURR_IMG(state)].active_slot);
         if (rc != 0) {
-            BOOT_LOG_ERR("Security counter update failed after image %d validation.",
-                         BOOT_CURR_IMG(state));
+            BOOT_LOG_ERR("Security counter update failed after image %d validation: %d",
+                         BOOT_CURR_IMG(state), rc);
             return rc;
         }
 
 #ifdef MCUBOOT_HW_ROLLBACK_PROT_LOCK
         rc = boot_nv_security_counter_lock(BOOT_CURR_IMG(state));
         if (rc != 0) {
-            BOOT_LOG_ERR("Security counter lock failed after image %d validation.",
-                         BOOT_CURR_IMG(state));
+            BOOT_LOG_ERR("Security counter lock failed after image %d validation: %d",
+                         BOOT_CURR_IMG(state), rc);
             return rc;
         }
 #endif /* MCUBOOT_HW_ROLLBACK_PROT_LOCK */

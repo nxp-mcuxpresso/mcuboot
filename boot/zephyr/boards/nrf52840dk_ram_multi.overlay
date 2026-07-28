@@ -11,21 +11,25 @@
 &flash0 {
 	partitions {
 		boot_partition: partition@0 {
+			compatible = "zephyr,mapped-partition";
 			label = "mcuboot";
 			reg = <0x000000000 0x00010000>;
 		};
 
 		slot0_partition: partition@10000 {
+			compatible = "zephyr,mapped-partition";
 			label = "image-0";
 			reg = <0x000010000 0x00000A000>;
 		};
 
 		slot1_partition: partition@1A000 {
+			compatible = "zephyr,mapped-partition";
 			label = "image-1";
 			reg = <0x00001A000 0x00000A000>;
 		};
 
 		slot3_partition: partition@24000 {
+			compatible = "zephyr,mapped-partition";
 			label = "image-3";
 			reg = <0x000024000 0x00000A000>;
 		};
@@ -37,7 +41,6 @@
 		flash_controller2: flash-controller@2 {
 			compatible = "zephyr,sim-flash";
 			reg = <0x00000000 DT_SIZE_K(40)>;
-
 			#address-cells = <1>;
 			#size-cells = <1>;
 			erase-value = <0xff>;
@@ -48,6 +51,9 @@
 				erase-block-size = <4096>;
 				write-block-size = <1>;
 				reg = <0x00000000 DT_SIZE_K(40)>;
+				ranges = <0x0 0x00000000 DT_SIZE_K(40)>;
+				#address-cells = <1>;
+				#size-cells = <1>;
 
 				partitions {
 					compatible = "fixed-partitions";

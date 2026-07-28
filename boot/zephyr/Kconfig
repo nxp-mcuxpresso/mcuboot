@@ -28,7 +28,7 @@ config BOOT_USE_PSA_CRYPTO
 	bool
 	# Hidden option
 	help
-	  Hidden option set if using PSA crypt for cryptography functionality
+	  Hidden option set if using PSA crypto for cryptography functionality
 
 config BOOT_USE_TINYCRYPT
 	bool
@@ -125,7 +125,8 @@ config BOOT_ECDSA_PSA_DEPENDENCIES
 if MBEDTLS_ENABLE_HEAP
 
 config MBEDTLS_HEAP_SIZE
-	default 2048 if BOOT_USE_PSA_CRYPTO
+	default 8192 if BOOT_RSA_PSA
+	default 2048 if BOOT_ED25519_PSA
 	help
 	  The PSA internals need to be able to allocate memory for operation
 	  and it uses mbedTLS heap for that.
@@ -244,14 +245,8 @@ config BOOT_SIGNATURE_TYPE_NONE
 
 config BOOT_SIGNATURE_TYPE_RSA
 	bool "RSA signatures"
-	select BOOT_USE_MBEDTLS
-	select MBEDTLS
 	select MBEDTLS_ASN1_PARSE_C if MBEDTLS_BUILTIN
 	select MBEDTLS_MD_C if MBEDTLS_BUILTIN
-	select MBEDTLS_RSA_C if MBEDTLS_BUILTIN
-	select MBEDTLS_PKCS1_V15 if MBEDTLS_BUILTIN
-	select MBEDTLS_PKCS1_V21 if MBEDTLS_BUILTIN
-	select MBEDTLS_KEY_EXCHANGE_RSA_ENABLED if MBEDTLS_BUILTIN
 	select BOOT_ENCRYPTION_SUPPORT
 	select BOOT_IMG_HASH_ALG_SHA256_ALLOW
 	select BOOT_AES_MBEDTLS_DEPENDENCIES if MBEDTLS_BUILTIN && BOOT_ENCRYPT_IMAGE
@@ -261,7 +256,54 @@ config BOOT_SIGNATURE_TYPE_RSA_LEN
 	int "RSA signature length"
 	range 2048 3072
 	default 2048
-endif
+
+choice BOOT_RSA_IMPLEMENTATION
+	prompt "RSA implementation"
+	# In TF-PSA-Crypto legacy crypto modules are internal and not meant
+	# to be used by the app. PSA API should be used instead. However this
+	# is not always possible in MCUboot due to the constrained partition
+	# size, so we default to using legacy crypto.
+	default BOOT_RSA_TF_PSA_CRYPTO_LEGACY if MBEDTLS_VERSION_4_x
+	default BOOT_RSA_MBEDTLS_LEGACY
+
+config BOOT_RSA_MBEDTLS_LEGACY
+	bool "Use legacy crypto from Mbed TLS 3.x"
+	select BOOT_USE_MBEDTLS
+	select MBEDTLS
+	select MBEDTLS_RSA_C if MBEDTLS_BUILTIN
+	select MBEDTLS_PKCS1_V15 if MBEDTLS_BUILTIN
+	select MBEDTLS_PKCS1_V21 if MBEDTLS_BUILTIN
+
+	# This is a mix between BOOT_RSA_MBEDTLS_LEGACY and BOOT_RSA_PSA in the
+	# sense that we select PSA_WANT but still use legacy crypto under the
+	# hood to minimize footprint.
+config BOOT_RSA_TF_PSA_CRYPTO_LEGACY
+	bool "Use legacy crypto from TF-PSA-Crypto (i.e. Mbed TLS 4.x)"
+	select BOOT_USE_MBEDTLS
+	select PSA_CRYPTO
+	select TEST_RANDOM_GENERATOR if !ENTROPY_HAS_DRIVER
+	select PSA_WANT_KEY_TYPE_RSA_PUBLIC_KEY
+	select PSA_WANT_ALG_RSA_PKCKS1_V15
+	select PSA_WANT_ALG_RSA_PSS
+	select PSA_WANT_ALG_SHA_256
+	select PSA_WANT_KEY_TYPE_AES if BOOT_ENCRYPT_IMAGE
+	select PSA_WANT_ALG_CTR if BOOT_ENCRYPT_IMAGE
+	select MBEDTLS_DECLARE_PRIVATE_IDENTIFIERS
+
+config BOOT_RSA_PSA
+	bool "Use PSA API crypto"
+	select BOOT_USE_PSA_CRYPTO
+	select PSA_CRYPTO
+	select TEST_RANDOM_GENERATOR if !ENTROPY_HAS_DRIVER
+	select MBEDTLS_ENABLE_HEAP if MBEDTLS_BUILTIN
+	select PSA_WANT_KEY_TYPE_RSA_PUBLIC_KEY
+	select PSA_WANT_ALG_RSA_PKCKS1_V15
+	select PSA_WANT_ALG_RSA_PSS
+	select PSA_WANT_ALG_SHA_256
+
+endchoice
+
+endif # BOOT_SIGNATURE_TYPE_RSA
 
 config BOOT_SIGNATURE_TYPE_ECDSA_P256
 	bool "Elliptic curve digital signatures with curve P-256"
@@ -269,6 +311,7 @@ config BOOT_SIGNATURE_TYPE_ECDSA_P256
 	select BOOT_IMG_HASH_ALG_SHA256_ALLOW
 
 if BOOT_SIGNATURE_TYPE_ECDSA_P256
+
 choice BOOT_ECDSA_IMPLEMENTATION
 	prompt "Ecdsa implementation"
 	default BOOT_ECDSA_TINYCRYPT
@@ -276,6 +319,20 @@ choice BOOT_ECDSA_IMPLEMENTATION
 config BOOT_ECDSA_TINYCRYPT
 	bool "Use tinycrypt"
 	select BOOT_USE_TINYCRYPT
+
+config BOOT_ECDSA_MBEDTLS
+	bool "Use mbedTLS"
+	select BOOT_USE_MBEDTLS
+	select MBEDTLS
+	select MBEDTLS_ECP_C if MBEDTLS_BUILTIN
+	select MBEDTLS_ECDSA_C if MBEDTLS_BUILTIN
+	select MBEDTLS_ECP_DP_SECP256R1_ENABLED if MBEDTLS_BUILTIN
+	select MBEDTLS_ASN1_PARSE_C if MBEDTLS_BUILTIN
+	select MBEDTLS_ECP_NIST_OPTIM if MBEDTLS_BUILTIN
+	select MBEDTLS_SHA256 if MBEDTLS_BUILTIN
+	select MBEDTLS_MD if MBEDTLS_BUILTIN
+	select MBEDTLS_ECDH_C if MBEDTLS_BUILTIN && BOOT_ENCRYPT_IMAGE
+	select BOOT_AES_MBEDTLS_DEPENDENCIES if MBEDTLS_BUILTIN && BOOT_ENCRYPT_IMAGE
 
 config BOOT_ECDSA_CC310
 	bool "Use CC310"
@@ -286,7 +343,7 @@ config BOOT_ECDSA_CC310
 	select BOOT_USE_CC310
 
 config BOOT_ECDSA_PSA
-	bool "Use psa cryptoo"
+	bool "Use PSA crypto"
 	select BOOT_USE_PSA_CRYPTO
 	select PSA_CRYPTO_CLIENT
 	select PSA_CRYPTO_C
@@ -295,6 +352,7 @@ config BOOT_ECDSA_PSA
 	select BOOT_ECDSA_PSA_DEPENDENCIES
 
 endchoice # Ecdsa implementation
+
 endif
 
 config BOOT_SIGNATURE_TYPE_ED25519
@@ -343,7 +401,6 @@ config BOOT_ED25519_MBEDTLS
 
 config BOOT_ED25519_PSA
 	bool "Use PSA crypto"
-	select MBEDTLS
 	select BOOT_USE_PSA_CRYPTO
 	select PSA_CRYPTO_CLIENT
 	select PSA_CRYPTO_C
@@ -369,6 +426,32 @@ endif
 
 endchoice
 
+if BOOT_USE_PSA_CRYPTO
+
+config BOOT_HAS_PSA_CRYPTO_BACKEND_EXTERNAL
+	bool
+	help
+	  Hidden option which can be set by external modules if an external PSA crypto backend is
+	  supported which does not require mbedTLS.
+
+choice BOOT_PSA_CRYPTO_BACKEND
+	prompt "PSA crypto backend"
+	default BOOT_PSA_CRYPTO_BACKEND_MBEDTLS if !BOOT_HAS_PSA_CRYPTO_BACKEND_EXTERNAL
+	help
+	  Selects which backend should be used for the PSA crypto implementation. Defaults to
+	  mbedTLS if no external library is enabled.
+
+config BOOT_PSA_CRYPTO_BACKEND_EXTERNAL
+	bool "External"
+	depends on BOOT_HAS_PSA_CRYPTO_BACKEND_EXTERNAL
+
+config BOOT_PSA_CRYPTO_BACKEND_MBEDTLS
+	bool "mbedTLS"
+
+endchoice
+
+endif # BOOT_USE_PSA_CRYPTO
+
 config BOOT_BYPASS_KEY_MATCH
 	bool "Do not match TLV key hash against built in key"
 	depends on !BOOT_SIGNATURE_TYPE_NONE
@@ -390,6 +473,7 @@ config BOOT_SIGNATURE_KEY_FILE
 	default "root-rsa-3072.pem" if BOOT_SIGNATURE_TYPE_RSA && BOOT_SIGNATURE_TYPE_RSA_LEN=3072
 	default "root-rsa-2048.pem" if BOOT_SIGNATURE_TYPE_RSA && BOOT_SIGNATURE_TYPE_RSA_LEN=2048
 	default ""
+	depends on !BOOT_BUILTIN_KEY
 	help
 	  You can use either absolute or relative path.
 	  In case relative path is used, the build system assumes that it starts
@@ -432,7 +516,7 @@ config MCUBOOT_INFINITE_LOOP_AFTER_RAM_CLEANUP
 	  Verification option that keeps execution in infinite loop after
 	  RAM cleanup has been performed.
 
-config MBEDTLS_CFG_FILE
+config MBEDTLS_CONFIG_FILE
 	# It might be awkward to define an Mbed TLS header file when TinyCrypt
 	# is used, but the fact is that Mbed TLS' ASN1 parse module is used
 	# also when TinyCrypt is used as crypto backend.
@@ -446,6 +530,11 @@ config BOOT_HW_KEY
 	  in MCUBoot. If enabled the public key is appended to the signed image
 	  and requires the hash of the public key to be provisioned to the device
 	  beforehand.
+
+config BOOT_BUILTIN_KEY
+	bool "Use built-in key for image verification"
+	help
+	  Use built-in key for image verification, otherwise the public key is embedded in MCUBoot.
 
 config BOOT_VALIDATE_SLOT0
 	bool "Validate image in the primary slot on every boot"
@@ -626,6 +715,7 @@ endif # !SINGLE_APPLICATION_SLOT
 DT_CHOSEN_Z_SRAM := zephyr,sram
 
 if BOOT_RAM_LOAD || SINGLE_APPLICATION_SLOT_RAM_LOAD
+
 config BOOT_IMAGE_EXECUTABLE_RAM_START
 	hex "Boot image executable ram start"
 	default $(dt_chosen_reg_addr_hex,$(DT_CHOSEN_Z_SRAM))
@@ -633,6 +723,7 @@ config BOOT_IMAGE_EXECUTABLE_RAM_START
 config BOOT_IMAGE_EXECUTABLE_RAM_SIZE
 	int "Boot image executable base size"
 	default $(dt_chosen_reg_size_int,$(DT_CHOSEN_Z_SRAM),0)
+
 endif
 
 config MULTIPLE_EXECUTABLE_RAM_REGIONS
@@ -1318,6 +1409,35 @@ config BOOT_FIH_PROFILE_DEFAULT_HIGH
 
 endmenu
 
+config MCUBOOT_CHECK_HEADER_LOAD_ADDRESS
+	bool "Use load address to verify application is in proper slot"
+	help
+	  The bootloader will use the load address, from the image header,
+	  to verify that binary is in slot designated for its execution.
+	  When not selected reset vector, read from image, is used for
+	  the same purpose.
+
+config MCUBOOT_VERIFY_IMG_ADDRESS
+	bool "Verify reset address of image in secondary slot [DEPRECATED]"
+	select DEPRECATED
+	depends on UPDATEABLE_IMAGE_NUMBER > 1
+	depends on !BOOT_ENCRYPT_IMAGE
+	depends on ARM
+	default y if BOOT_UPGRADE_ONLY
+	help
+	  This option is deprecated, please use MCUBOOT_CHECK_HEADER_LOAD_ADDRESS
+	  instead.
+	  Verify that the reset address in the image located in the secondary slot
+	  is contained within the corresponding primary slot. This is recommended
+	  if swapping is not used (that is, BOOT_UPGRADE_ONLY is set). If a user
+	  incorrectly uploads an update for image 1 to image 0's secondary slot
+	  MCUboot will overwrite image 0's primary slot with this image even
+	  though it will not boot. If swapping is enabled this will be handled
+	  since the image will not confirm itself. If, however, swapping is not
+	  enabled then the only mitigation is serial recovery. This feature can
+	  also be useful when BOOT_DIRECT_XIP is enabled, to ensure that the image
+	  linked at the correct address is loaded.
+
 config MCUBOOT_DEVICE_SETTINGS
 	# Hidden selector for device-specific settings
 	bool
@@ -1362,34 +1482,5 @@ config USB_DEVICE_PRODUCT
 # use MCUboot's own log configuration
 config MCUBOOT_BOOTUTIL_LIB_OWN_LOG
 	bool
-
-config MCUBOOT_CHECK_HEADER_LOAD_ADDRESS
-	bool "Use load address to verify application is in proper slot"
-	help
-	  The bootloader will use the load address, from the image header,
-	  to verify that binary is in slot designated for its execution.
-	  When not selected reset vector, read from image, is used for
-	  the same purpose.
-
-config MCUBOOT_VERIFY_IMG_ADDRESS
-	bool "Verify reset address of image in secondary slot [DEPRECATED]"
-	select DEPRECATED
-	depends on UPDATEABLE_IMAGE_NUMBER > 1
-	depends on !BOOT_ENCRYPT_IMAGE
-	depends on ARM
-	default y if BOOT_UPGRADE_ONLY
-	help
-	  This option is deprecated, please use MCUBOOT_CHECK_HEADER_LOAD_ADDRESS
-	  instead.
-	  Verify that the reset address in the image located in the secondary slot
-	  is contained within the corresponding primary slot. This is recommended
-	  if swapping is not used (that is, BOOT_UPGRADE_ONLY is set). If a user
-	  incorrectly uploads an update for image 1 to image 0's secondary slot
-	  MCUboot will overwrite image 0's primary slot with this image even
-	  though it will not boot. If swapping is enabled this will be handled
-	  since the image will not confirm itself. If, however, swapping is not
-	  enabled then the only mitigation is serial recovery. This feature can
-	  also be useful when BOOT_DIRECT_XIP is enabled, to ensure that the image
-	  linked at the correct address is loaded.
 
 source "Kconfig.zephyr"

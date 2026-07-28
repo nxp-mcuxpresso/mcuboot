@@ -1,7 +1,7 @@
-# CMakeLists.txt for building mcuboot as a Zephyr project
+# CMakeLists.txt for building MCUboot as a Zephyr project
 #
 # Copyright (c) 2017 Open Source Foundries Limited
-# Copyright (c) 2023-2025 Nordic Semiconductor ASA
+# Copyright (c) 2023-2026 Nordic Semiconductor ASA
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -16,7 +16,7 @@ endif()
 # find_package(Zephyr) in order to load application boilerplate:
 # http://docs.zephyrproject.org/application/application.html
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(NONE)
+project(MCUboot)
 
 # Path to "boot" subdirectory of repository root.
 get_filename_component(BOOT_DIR ${APPLICATION_SOURCE_DIR} DIRECTORY)
@@ -38,68 +38,48 @@ endif()
 set(NRF_DIR "${MCUBOOT_DIR}/ext/nrf")
 
 if(CONFIG_BOOT_USE_NRF_CC310_BL)
-set(NRFXLIB_DIR ${ZEPHYR_BASE}/../nrfxlib)
-if(NOT EXISTS ${NRFXLIB_DIR})
-  message(FATAL_ERROR "
-    ------------------------------------------------------------------------
-    No such file or directory: ${NRFXLIB_DIR}
-    The current configuration enables nRF CC310 crypto accelerator hardware
-    with the `CONFIG_BOOT_USE_NRF_CC310_BL` option. Please follow
-    `ext/nrf/README.md` guide to fix your setup or use tinycrypt instead of
-    the HW accelerator.
-    To use the tinycrypt set `CONFIG_BOOT_ECDSA_TINYCRYPT` to y.
-    ------------------------------------------------------------------------")
-endif()
-# Don't include this if we are using west
- add_subdirectory(${NRFXLIB_DIR} ${PROJECT_BINARY_DIR}/nrfxlib)
+  if(NOT ZEPHYR_NRFXLIB_MODULE_DIR OR NOT EXISTS ${ZEPHYR_NRFXLIB_MODULE_DIR})
+    message(FATAL_ERROR "
+      ------------------------------------------------------------------------
+      No such file or directory: ${ZEPHYR_NRFXLIB_MODULE_DIR}
+      The current configuration enables nRF CC310 crypto accelerator hardware
+      with the `CONFIG_BOOT_USE_NRF_CC310_BL` option. Please follow
+      `ext/nrf/README.md` guide to fix your setup or use tinycrypt instead of
+      the HW accelerator.
+      To use the tinycrypt set `CONFIG_BOOT_ECDSA_TINYCRYPT` to y.
+      ------------------------------------------------------------------------")
+  endif()
+
+  # Don't include this if we are using west
+  add_subdirectory(${ZEPHYR_NRFXLIB_MODULE_DIR} ${PROJECT_BINARY_DIR}/nrfxlib)
 endif()
 
-zephyr_library_include_directories(
-  include
-  )
+zephyr_include_directories(include)
 
 if(DEFINED CONFIG_MBEDTLS)
-  zephyr_library_include_directories(
+  zephyr_include_directories(
     ${ZEPHYR_MBEDTLS_MODULE_DIR}/include
+    ${ZEPHYR_MBEDTLS_MODULE_DIR}/library
   )
 endif()
 
 # Zephyr port-specific sources.
-zephyr_library_sources(
+target_sources(app PRIVATE
   main.c
   io.c
   flash_map_extended.c
   os.c
   keys.c
   watchdog.c
-  )
+)
 
-if(DEFINED CONFIG_ENABLE_MGMT_PERUSER)
-  zephyr_library_sources(
-    boot_serial_extensions.c
-    )
-
-  zephyr_linker_sources_ifdef(
-    CONFIG_ENABLE_MGMT_PERUSER
-    SECTIONS include/boot_serial/boot_serial.ld
-  )
-
-  if(DEFINED CONFIG_BOOT_MGMT_CUSTOM_STORAGE_ERASE)
-    zephyr_library_sources(
-      boot_serial_extension_zephyr_basic.c
-      )
-  endif()
-endif()
-
-if(DEFINED CONFIG_BOOT_SHARE_BACKEND_RETENTION)
-  zephyr_library_sources(
-    shared_data.c
-    )
+if(CONFIG_BOOT_SHARE_BACKEND_RETENTION)
+  zephyr_sources(shared_data.c)
 endif()
 
 # Generic bootutil sources and includes.
-zephyr_library_include_directories(${BOOT_DIR}/bootutil/include)
-zephyr_library_sources(
+zephyr_include_directories(${BOOT_DIR}/bootutil/include)
+zephyr_sources(
   ${BOOT_DIR}/bootutil/src/image_validate.c
   ${BOOT_DIR}/bootutil/src/bootutil_find_key.c
   ${BOOT_DIR}/bootutil/src/bootutil_img_hash.c
@@ -113,75 +93,70 @@ zephyr_library_sources(
   ${BOOT_DIR}/bootutil/src/bootutil_area.c
   ${BOOT_DIR}/bootutil/src/bootutil_loader.c
   ${BOOT_DIR}/bootutil/src/fault_injection_hardening.c
-  )
+)
 
 if((CONFIG_BOOT_ENCRYPT_X25519 AND CONFIG_BOOT_ED25519_PSA)
-   OR (CONFIG_BOOT_ENCRYPT_EC256 AND CONFIG_BOOT_ECDSA_PSA))
-  zephyr_library_sources(${BOOT_DIR}/bootutil/src/encrypted_psa.c)
+  OR (CONFIG_BOOT_ENCRYPT_EC256 AND CONFIG_BOOT_ECDSA_PSA))
+  zephyr_sources(${BOOT_DIR}/bootutil/src/encrypted_psa.c)
 endif()
 
 if(CONFIG_MEASURED_BOOT OR CONFIG_BOOT_SHARE_DATA)
-  zephyr_library_sources(
+  zephyr_sources(
     ${BOOT_DIR}/bootutil/src/boot_record.c
-    )
+  )
 
   # Set a define for this file which will allow inclusion of the Zephyr version
   # include file
   set_source_files_properties(
     ${BOOT_DIR}/bootutil/src/boot_record.c
+    TARGET_DIRECTORY zephyr
     PROPERTIES COMPILE_FLAGS -DZEPHYR_VER_INCLUDE=1
-    )
+  )
 endif()
 
 # library which might be common source code for MCUBoot and an application
 zephyr_link_libraries(MCUBOOT_BOOTUTIL)
 
 if(CONFIG_BOOT_FIH_PROFILE_HIGH)
-zephyr_library_sources(
-  ${BOOT_DIR}/bootutil/src/fault_injection_hardening_delay_rng_mbedtls.c
-  )
+  zephyr_sources(${BOOT_DIR}/bootutil/src/fault_injection_hardening_delay_rng_mbedtls.c)
 endif()
 
 if(CONFIG_SINGLE_APPLICATION_SLOT_RAM_LOAD)
-  zephyr_library_sources(
+  zephyr_sources(
     ${BOOT_DIR}/zephyr/single_loader.c
     ${BOOT_DIR}/bootutil/src/ram_load.c
-    )
-  zephyr_library_include_directories(${BOOT_DIR}/bootutil/src)
+  )
+  zephyr_include_directories(${BOOT_DIR}/bootutil/src)
 elseif(CONFIG_SINGLE_APPLICATION_SLOT)
-  zephyr_library_sources(
-    ${BOOT_DIR}/zephyr/single_loader.c
-    )
-  zephyr_library_include_directories(${BOOT_DIR}/bootutil/src)
+  zephyr_sources(${BOOT_DIR}/zephyr/single_loader.c)
+  zephyr_include_directories(${BOOT_DIR}/bootutil/src)
 elseif(CONFIG_BOOT_FIRMWARE_LOADER)
-  zephyr_library_sources(
-    ${BOOT_DIR}/zephyr/firmware_loader.c
-    )
-  zephyr_library_include_directories(${BOOT_DIR}/bootutil/src)
+  zephyr_sources(${BOOT_DIR}/zephyr/firmware_loader.c)
+  zephyr_include_directories(${BOOT_DIR}/bootutil/src)
 else()
-  zephyr_library_sources(
+  zephyr_sources(
     ${BOOT_DIR}/bootutil/src/loader.c
     ${BOOT_DIR}/bootutil/src/swap_misc.c
     ${BOOT_DIR}/bootutil/src/caps.c
-    )
+  )
 
   if(CONFIG_BOOT_SWAP_USING_MOVE)
-    zephyr_library_sources(
+    zephyr_sources(
       ${BOOT_DIR}/bootutil/src/swap_move.c
-      )
+    )
   elseif(CONFIG_BOOT_SWAP_USING_OFFSET)
-    zephyr_library_sources(
+    zephyr_sources(
       ${BOOT_DIR}/bootutil/src/swap_offset.c
-      )
+    )
   else()
-    zephyr_library_sources(
+    zephyr_sources(
       ${BOOT_DIR}/bootutil/src/swap_scratch.c
-      )
+    )
 
     if(CONFIG_BOOT_RAM_LOAD)
-      zephyr_library_sources(
+      zephyr_sources(
         ${BOOT_DIR}/bootutil/src/ram_load.c
-        )
+      )
     endif()
   endif()
 endif()
@@ -191,10 +166,8 @@ if(CONFIG_BOOT_SIGNATURE_TYPE_ECDSA_P256 OR CONFIG_BOOT_ENCRYPT_EC256)
   # directories or sources, as it would cause incorrect header files
   # to be included.
   if(MBEDTLS_ASN1_DIR AND NOT CONFIG_BOOT_ECDSA_PSA)
-    zephyr_library_include_directories(
-      ${MBEDTLS_ASN1_DIR}/include
-    )
-    zephyr_library_sources(
+    zephyr_include_directories(${MBEDTLS_ASN1_DIR}/include)
+    zephyr_sources(
       # Additionally pull in just the ASN.1 parser from mbedTLS.
       ${MBEDTLS_ASN1_DIR}/src/asn1parse.c
       ${MBEDTLS_ASN1_DIR}/src/platform_util.c
@@ -202,144 +175,147 @@ if(CONFIG_BOOT_SIGNATURE_TYPE_ECDSA_P256 OR CONFIG_BOOT_ENCRYPT_EC256)
   endif()
   if(CONFIG_BOOT_USE_TINYCRYPT)
     # When using ECDSA signatures, pull in our copy of the tinycrypt library.
-    zephyr_library_include_directories(
+    zephyr_include_directories(
       ${BOOT_DIR}/zephyr/include
       ${TINYCRYPT_DIR}/include
     )
     zephyr_include_directories(${TINYCRYPT_DIR}/include)
 
-    zephyr_library_sources(
+    zephyr_sources(
       ${TINYCRYPT_DIR}/source/ecc.c
       ${TINYCRYPT_DIR}/source/ecc_dsa.c
       ${TINYCRYPT_DIR}/source/sha256.c
       ${TINYCRYPT_DIR}/source/utils.c
     )
   elseif(CONFIG_BOOT_USE_NRF_CC310_BL)
-    zephyr_library_sources(${NRF_DIR}/cc310_glue.c)
-    zephyr_library_include_directories(${NRF_DIR})
+    zephyr_sources(${NRF_DIR}/cc310_glue.c)
+    zephyr_include_directories(
+      ${NRF_DIR}
+      ${ZEPHYR_HAL_NORDIC_MODULE_DIR}/nrfx/bsp/stable/mdk
+    )
     zephyr_link_libraries(nrfxlib_crypto)
   endif()
 
-  if(CONFIG_MBEDTLS_CFG_FILE)
+  if(CONFIG_MBEDTLS_CONFIG_FILE)
     # Since here we are not using Zephyr's mbedTLS but rather our own, we need
     # to set MBEDTLS_CONFIG_FILE ourselves. When using Zephyr's copy, this
     # variable is set by its Kconfig in the Zephyr codebase.
-    zephyr_library_compile_definitions(
-      MBEDTLS_CONFIG_FILE="${CONFIG_MBEDTLS_CFG_FILE}"
-    )
+    zephyr_compile_definitions(MBEDTLS_CONFIG_FILE="${CONFIG_MBEDTLS_CONFIG_FILE}")
   endif()
 elseif(CONFIG_BOOT_SIGNATURE_TYPE_NONE)
-  zephyr_library_include_directories(
+  zephyr_include_directories(
     ${BOOT_DIR}/zephyr/include
     ${TINYCRYPT_DIR}/include
-    )
+  )
 
-  zephyr_library_sources(
+  zephyr_sources(
     ${TINYCRYPT_DIR}/source/sha256.c
     ${TINYCRYPT_DIR}/source/utils.c
-    )
+  )
 elseif(CONFIG_BOOT_SIGNATURE_TYPE_RSA)
   # Use mbedTLS provided by Zephyr for RSA signatures. (Its config file
   # is set using Kconfig.)
-  zephyr_include_directories(include)
   if(CONFIG_BOOT_ENCRYPT_RSA)
-    set_source_files_properties(
-      ${BOOT_DIR}/bootutil/src/encrypted.c
+    set_source_files_properties(${BOOT_DIR}/bootutil/src/encrypted.c
       PROPERTIES
-      INCLUDE_DIRECTORIES ${ZEPHYR_MBEDTLS_MODULE_DIR}/library
-      )
+        INCLUDE_DIRECTORIES ${ZEPHYR_MBEDTLS_MODULE_DIR}/library
+    )
   endif()
 elseif(CONFIG_BOOT_SIGNATURE_TYPE_ED25519 OR CONFIG_BOOT_ENCRYPT_X25519)
   if(CONFIG_BOOT_USE_TINYCRYPT)
     if(MBEDTLS_ASN1_DIR)
-      zephyr_library_include_directories(
+      zephyr_include_directories(
         ${MBEDTLS_ASN1_DIR}/include
       )
-      zephyr_library_sources(
+      zephyr_sources(
         # Additionally pull in just the ASN.1 parser from mbedTLS.
         ${MBEDTLS_ASN1_DIR}/src/asn1parse.c
         ${MBEDTLS_ASN1_DIR}/src/platform_util.c
       )
     endif()
-    zephyr_library_include_directories(
+    zephyr_include_directories(
       ${BOOT_DIR}/zephyr/include
       ${TINYCRYPT_DIR}/include
       ${TINYCRYPT_SHA512_DIR}/include
-      )
-    zephyr_library_sources(
+    )
+    zephyr_sources(
       ${TINYCRYPT_DIR}/source/sha256.c
       ${TINYCRYPT_DIR}/source/utils.c
       ${TINYCRYPT_SHA512_DIR}/source/sha512.c
-      )
-    zephyr_library_compile_definitions(
-      MBEDTLS_CONFIG_FILE="${CONFIG_MBEDTLS_CFG_FILE}"
-      )
-  else()
-    zephyr_include_directories(include)
+    )
+    zephyr_compile_definitions(MBEDTLS_CONFIG_FILE="${CONFIG_MBEDTLS_CONFIG_FILE}")
   endif()
 
-  zephyr_library_include_directories(
+  zephyr_include_directories(
     ${BOOT_DIR}/zephyr/include
     ${FIAT_DIR}/include/
   )
 
   if(NOT CONFIG_BOOT_ED25519_PSA)
-    zephyr_library_sources(
-      ${FIAT_DIR}/src/curve25519.c
-    )
+    zephyr_sources(${FIAT_DIR}/src/curve25519.c)
   else()
     if(MBEDTLS_ASN1_DIR)
-      zephyr_library_sources(
-        ${MBEDTLS_ASN1_DIR}/src/asn1parse.c
-      )
+      zephyr_sources(${MBEDTLS_ASN1_DIR}/src/asn1parse.c)
     endif()
 
-    zephyr_library_sources(
-      ${BOOT_DIR}/bootutil/src/ed25519_psa.c
-    )
+    zephyr_sources(${BOOT_DIR}/bootutil/src/ed25519_psa.c)
   endif()
 endif()
 
 if(NOT CONFIG_BOOT_ED25519_PSA AND NOT CONFIG_BOOT_ECDSA_PSA)
-  if(CONFIG_BOOT_ENCRYPT_EC256 OR CONFIG_BOOT_ENCRYPT_X25519)
-    zephyr_library_sources(
-      ${TINYCRYPT_DIR}/source/aes_encrypt.c
-      ${TINYCRYPT_DIR}/source/aes_decrypt.c
-      ${TINYCRYPT_DIR}/source/ctr_mode.c
-      ${TINYCRYPT_DIR}/source/hmac.c
-      ${TINYCRYPT_DIR}/source/ecc_dh.c
-    )
+  if(CONFIG_BOOT_USE_TINYCRYPT)
+    if(CONFIG_BOOT_ENCRYPT_EC256 OR CONFIG_BOOT_ENCRYPT_X25519)
+      zephyr_sources(
+        ${TINYCRYPT_DIR}/source/aes_encrypt.c
+        ${TINYCRYPT_DIR}/source/aes_decrypt.c
+        ${TINYCRYPT_DIR}/source/ctr_mode.c
+        ${TINYCRYPT_DIR}/source/hmac.c
+        ${TINYCRYPT_DIR}/source/ecc_dh.c
+      )
+    endif()
   endif()
 endif()
 
-if(CONFIG_BOOT_ENCRYPT_EC256 AND NOT CONFIG_BOOT_ECDSA_PSA)
-  zephyr_library_sources(
-    ${TINYCRYPT_DIR}/source/ecc_dh.c
-    )
+if(CONFIG_BOOT_USE_TINYCRYPT)
+  if(CONFIG_BOOT_ENCRYPT_EC256 AND NOT CONFIG_BOOT_ECDSA_PSA)
+    zephyr_sources(
+      ${TINYCRYPT_DIR}/source/ecc_dh.c
+      )
+  endif()
 endif()
 
 if(CONFIG_MCUBOOT_SERIAL)
-  zephyr_sources(${BOOT_DIR}/zephyr/serial_adapter.c)
-  zephyr_sources(${BOOT_DIR}/boot_serial/src/boot_serial.c)
-  zephyr_sources(${BOOT_DIR}/boot_serial/src/zcbor_bulk.c)
+  zephyr_sources(
+    ${BOOT_DIR}/zephyr/serial_adapter.c
+    ${BOOT_DIR}/boot_serial/src/boot_serial.c
+    ${BOOT_DIR}/boot_serial/src/zcbor_bulk.c
+  )
 
-  zephyr_include_directories(${BOOT_DIR}/bootutil/include)
-  zephyr_include_directories(${BOOT_DIR}/boot_serial/include)
-  zephyr_include_directories(include)
+  zephyr_include_directories(
+    ${BOOT_DIR}/bootutil/include
+    ${BOOT_DIR}/boot_serial/include
+  )
 
-  zephyr_include_directories_ifdef(
-    CONFIG_BOOT_ERASE_PROGRESSIVELY
+  zephyr_include_directories_ifdef(CONFIG_BOOT_ERASE_PROGRESSIVELY
     ${BOOT_DIR}/bootutil/src
-    )
+  )
 
   if(CONFIG_BOOT_ENCRYPT_IMAGE)
-    zephyr_library_sources(
-      ${BOOT_DIR}/boot_serial/src/boot_serial_encryption.c
-    )
+    zephyr_sources(${BOOT_DIR}/boot_serial/src/boot_serial_encryption.c)
+  endif()
+
+  if(CONFIG_ENABLE_MGMT_PERUSER)
+    zephyr_sources(boot_serial_extensions.c)
+    zephyr_linker_sources(SECTIONS include/boot_serial/boot_serial.ld)
+
+    if(CONFIG_BOOT_MGMT_CUSTOM_STORAGE_ERASE)
+      zephyr_sources(boot_serial_extension_zephyr_basic.c)
+    endif()
   endif()
 endif()
 
-if(NOT CONFIG_BOOT_SIGNATURE_TYPE_NONE AND NOT CONFIG_BOOT_SIGNATURE_KEY_FILE STREQUAL "")
+if(NOT CONFIG_BOOT_SIGNATURE_TYPE_NONE AND NOT CONFIG_BOOT_BUILTIN_KEY AND NOT
+  CONFIG_BOOT_SIGNATURE_KEY_FILE STREQUAL "")
   set(key_file "${CONFIG_BOOT_SIGNATURE_KEY_FILE}")
   string(CONFIGURE "${key_file}" key_file)
 
@@ -353,13 +329,13 @@ if(NOT CONFIG_BOOT_SIGNATURE_TYPE_NONE AND NOT CONFIG_BOOT_SIGNATURE_KEY_FILE ST
   message("MCUBoot bootloader key file: ${signing_key_file}")
 
   set(mcuboot_default_signature_files
-      ${MCUBOOT_DIR}/root-ec-p256-pkcs8.pem
-      ${MCUBOOT_DIR}/root-ec-p384.pem
-      ${MCUBOOT_DIR}/root-ec-p384-pkcs8.pem
-      ${MCUBOOT_DIR}/root-ed25519.pem
-      ${MCUBOOT_DIR}/root-rsa-2048.pem
-      ${MCUBOOT_DIR}/root-rsa-3072.pem
-      ${MCUBOOT_DIR}/root-ec-p256.pem
+    ${MCUBOOT_DIR}/root-ec-p256-pkcs8.pem
+    ${MCUBOOT_DIR}/root-ec-p384.pem
+    ${MCUBOOT_DIR}/root-ec-p384-pkcs8.pem
+    ${MCUBOOT_DIR}/root-ed25519.pem
+    ${MCUBOOT_DIR}/root-rsa-2048.pem
+    ${MCUBOOT_DIR}/root-rsa-3072.pem
+    ${MCUBOOT_DIR}/root-ec-p256.pem
   )
 
   # Emit a warning if using one of the default MCUboot key files
@@ -367,19 +343,21 @@ if(NOT CONFIG_BOOT_SIGNATURE_TYPE_NONE AND NOT CONFIG_BOOT_SIGNATURE_KEY_FILE ST
     message(WARNING "WARNING: Using default MCUboot signing key file, this file is for debug use only and is not secure!")
   endif()
 
-  set(GENERATED_PUBKEY ${ZEPHYR_BINARY_DIR}/autogen-pubkey.c)
+  set(generated_pubkey ${ZEPHYR_BINARY_DIR}/autogen-pubkey.c)
   add_custom_command(
-    OUTPUT ${GENERATED_PUBKEY}
+    OUTPUT ${generated_pubkey}
     COMMAND
     ${PYTHON_EXECUTABLE}
     ${MCUBOOT_DIR}/scripts/imgtool.py
     getpub
     -k
     ${signing_key_file}
-    > ${GENERATED_PUBKEY}
+    > ${generated_pubkey}
     DEPENDS ${signing_key_file}
-    )
-  zephyr_library_sources(${GENERATED_PUBKEY})
+  )
+  target_sources(app PRIVATE
+    ${generated_pubkey}
+  )
 endif()
 
 if(CONFIG_BOOT_ENCRYPTION_KEY_FILE AND NOT CONFIG_BOOT_ENCRYPTION_KEY_FILE STREQUAL "")
@@ -397,43 +375,43 @@ if(CONFIG_BOOT_ENCRYPTION_KEY_FILE AND NOT CONFIG_BOOT_ENCRYPTION_KEY_FILE STREQ
 
   # Emit a warning if using one of the default MCUboot key files
   set(mcuboot_default_encryption_files
-      ${MCUBOOT_DIR}/enc-ec256-priv.pem
-      ${MCUBOOT_DIR}/enc-ec256-pub.pem
-      ${MCUBOOT_DIR}/enc-rsa2048-priv.pem
-      ${MCUBOOT_DIR}/enc-rsa2048-pub.pem
-      ${MCUBOOT_DIR}/enc-x25519-priv.pem
-      ${MCUBOOT_DIR}/enc-x25519-pub.pem
+    ${MCUBOOT_DIR}/enc-ec256-priv.pem
+    ${MCUBOOT_DIR}/enc-ec256-pub.pem
+    ${MCUBOOT_DIR}/enc-rsa2048-priv.pem
+    ${MCUBOOT_DIR}/enc-rsa2048-pub.pem
+    ${MCUBOOT_DIR}/enc-x25519-priv.pem
+    ${MCUBOOT_DIR}/enc-x25519-pub.pem
   )
 
   if(${encryption_key_file} IN_LIST mcuboot_default_encryption_files)
     message(WARNING "WARNING: Using default MCUboot encryption key file, this file is for debug use only and is not secure!")
   endif()
 
-  set(GENERATED_ENCKEY ${ZEPHYR_BINARY_DIR}/autogen-enckey.c)
+  set(generated_enckey ${ZEPHYR_BINARY_DIR}/autogen-enckey.c)
   add_custom_command(
-    OUTPUT ${GENERATED_ENCKEY}
+    OUTPUT ${generated_enckey}
     COMMAND
     ${PYTHON_EXECUTABLE}
     ${MCUBOOT_DIR}/scripts/imgtool.py
     getpriv
     -k
     ${encryption_key_file}
-    > ${GENERATED_ENCKEY}
+    > ${generated_enckey}
     DEPENDS ${encryption_key_file}
-    )
-  zephyr_library_sources(${GENERATED_ENCKEY})
+  )
+  target_sources(app PRIVATE
+    ${generated_enckey}
+  )
 endif()
 
 if(CONFIG_MCUBOOT_CLEANUP_ARM_CORE)
   # ARM Cortex-M
-  zephyr_library_sources_ifdef(
-    CONFIG_CPU_CORTEX_M
+  zephyr_sources_ifdef(CONFIG_CPU_CORTEX_M
     ${BOOT_DIR}/zephyr/cleanup/arm_cortex_m.c
   )
 
   # ARM Cortex-R
-  zephyr_library_sources_ifdef(
-    CONFIG_ARMV7_R
+  zephyr_sources_ifdef(CONFIG_ARMV7_R
     ${BOOT_DIR}/zephyr/cleanup/arm_cortex_r.c
   )
 endif()
@@ -448,23 +426,59 @@ function(align_up num align result)
   set(${result} "${out}" PARENT_SCOPE)
 endfunction()
 
-function(dt_get_parent node)
-  string(FIND "${${node}}" "/" pos REVERSE)
+# Takes a node path to a partition and goes up until a parent with the soc-nv-flash compatible
+# is found, then reads the erase and write block sizes from it
+function(dt_get_erase_write_block_sizes node erase_block_size write_block_size)
+  string(FIND "${node}" "/" node_first_slash)
+  string(FIND "${node}" "/" node_final_slash REVERSE)
+  string(SUBSTRING "${node}" 0 ${node_final_slash} current_path)
 
-  if(pos EQUAL -1)
-    message(FATAL_ERROR "Unable to get parent of node: ${${node}}")
-  endif()
+  while(${node_final_slash} GREATER ${node_first_slash})
+    set(current_compatible)
+    dt_prop(current_compatible PATH "${current_path}" PROPERTY "compatible")
 
-  string(SUBSTRING "${${node}}" 0 ${pos} ${node})
-  set(${node} "${${node}}" PARENT_SCOPE)
+    if("soc-nv-flash" IN_LIST current_compatible)
+      dt_prop(erase_size PATH "${current_path}" PROPERTY "erase-block-size")
+      dt_prop(write_size PATH "${current_path}" PROPERTY "write-block-size")
+      set(${erase_block_size} ${erase_size} PARENT_SCOPE)
+      set(${write_block_size} ${write_size} PARENT_SCOPE)
+      break()
+    endif()
+
+    string(FIND "${current_path}" "/" node_final_slash REVERSE)
+    string(SUBSTRING "${current_path}" 0 ${node_final_slash} current_path)
+  endwhile()
+endfunction()
+
+# Takes a node path to a partition and goes up until a parent with the soc-nv-flash compatible
+# is found, then returns the path for that device
+function(dt_get_nvm_device node nvm_device)
+  string(FIND "${node}" "/" node_first_slash)
+  string(FIND "${node}" "/" node_final_slash REVERSE)
+  string(SUBSTRING "${node}" 0 ${node_final_slash} current_path)
+
+  while(${node_final_slash} GREATER ${node_first_slash})
+    set(current_compatible)
+    dt_prop(current_compatible PATH "${current_path}" PROPERTY "compatible")
+
+    if("soc-nv-flash" IN_LIST current_compatible)
+      set(${nvm_device} ${current_path} PARENT_SCOPE)
+      break()
+    elseif("fixed-partitions" IN_LIST current_compatible)
+      string(FIND "${current_path}" "/" node_final_slash REVERSE)
+      string(SUBSTRING "${current_path}" 0 ${node_final_slash} current_path)
+      set(${nvm_device} ${current_path} PARENT_SCOPE)
+      break()
+    endif()
+
+    string(FIND "${current_path}" "/" node_final_slash REVERSE)
+    string(SUBSTRING "${current_path}" 0 ${node_final_slash} current_path)
+  endwhile()
 endfunction()
 
 dt_nodelabel(slot0_flash NODELABEL "slot0_partition" REQUIRED)
 dt_prop(slot0_size PATH "${slot0_flash}" PROPERTY "reg" INDEX 1)
-dt_get_parent(slot0_flash)
-dt_get_parent(slot0_flash)
-dt_prop(erase_size_slot0 PATH "${slot0_flash}" PROPERTY "erase-block-size")
-dt_prop(write_size_slot0 PATH "${slot0_flash}" PROPERTY "write-block-size")
+dt_get_erase_write_block_sizes(${slot0_flash} erase_size_slot0 write_size_slot0)
 
 if(CONFIG_BOOT_SWAP_USING_MOVE OR CONFIG_BOOT_SWAP_USING_OFFSET)
   if(DEFINED erase_size_slot0)
@@ -479,10 +493,7 @@ endif()
 if(NOT CONFIG_SINGLE_APPLICATION_SLOT AND NOT CONFIG_SINGLE_APPLICATION_SLOT_RAM_LOAD)
   dt_nodelabel(slot1_flash NODELABEL "slot1_partition" REQUIRED)
   dt_prop(slot1_size PATH "${slot1_flash}" PROPERTY "reg" INDEX 1)
-  dt_get_parent(slot1_flash)
-  dt_get_parent(slot1_flash)
-  dt_prop(erase_size_slot1 PATH "${slot1_flash}" PROPERTY "erase-block-size")
-  dt_prop(write_size_slot1 PATH "${slot1_flash}" PROPERTY "write-block-size")
+  dt_get_erase_write_block_sizes(${slot0_flash} erase_size_slot1 write_size_slot1)
 
   if(CONFIG_BOOT_SWAP_USING_MOVE OR CONFIG_BOOT_SWAP_USING_OFFSET)
     if(DEFINED erase_size_slot1)
@@ -527,31 +538,29 @@ if(CONFIG_BOOT_MAX_IMG_SECTORS_AUTO)
 endif()
 
 if((CONFIG_BOOT_SWAP_USING_SCRATCH OR CONFIG_BOOT_SWAP_USING_MOVE OR CONFIG_BOOT_SWAP_USING_OFFSET) AND (DEFINED write_size_slot0 OR DEFINED write_size_slot1))
-  zephyr_library_sources(flash_check.c)
+  zephyr_sources(flash_check.c)
 endif()
 
 if(CONFIG_MULTIPLE_EXECUTABLE_RAM_REGIONS_DEFAULT_FILE)
-  zephyr_library_sources(ram_load.c)
+  zephyr_sources(ram_load.c)
 endif()
 
 if(SYSBUILD)
   if(CONFIG_SINGLE_APPLICATION_SLOT OR CONFIG_BOOT_FIRMWARE_LOADER OR CONFIG_BOOT_SWAP_USING_SCRATCH OR CONFIG_BOOT_SWAP_USING_MOVE OR CONFIG_BOOT_SWAP_USING_OFFSET OR CONFIG_BOOT_UPGRADE_ONLY OR CONFIG_BOOT_DIRECT_XIP OR CONFIG_BOOT_RAM_LOAD)
     # TODO: RAM LOAD support
     dt_nodelabel(slot0_flash NODELABEL "slot0_partition" REQUIRED)
-    dt_get_parent(slot0_flash)
-    dt_get_parent(slot0_flash)
+    dt_get_nvm_device(${slot0_flash} slot0_device)
 
     if(NOT CONFIG_SINGLE_APPLICATION_SLOT)
       dt_nodelabel(slot1_flash NODELABEL "slot1_partition" REQUIRED)
-      dt_get_parent(slot1_flash)
-      dt_get_parent(slot1_flash)
+      dt_get_nvm_device(${slot1_flash} slot1_device)
 
-      if(NOT "${slot0_flash}" STREQUAL "${slot1_flash}")
+      if(NOT "${slot0_device}" STREQUAL "${slot1_device}")
         # Check both slots for the one with the largest write/erase block size
-        dt_prop(erase_size_slot0 PATH "${slot0_flash}" PROPERTY "erase-block-size")
-        dt_prop(write_size_slot0 PATH "${slot0_flash}" PROPERTY "write-block-size")
-        dt_prop(erase_size_slot1 PATH "${slot1_flash}" PROPERTY "erase-block-size")
-        dt_prop(write_size_slot1 PATH "${slot1_flash}" PROPERTY "write-block-size")
+        dt_prop(erase_size_slot0 PATH "${slot0_device}" PROPERTY "erase-block-size")
+        dt_prop(write_size_slot0 PATH "${slot0_device}" PROPERTY "write-block-size")
+        dt_prop(erase_size_slot1 PATH "${slot1_device}" PROPERTY "erase-block-size")
+        dt_prop(write_size_slot1 PATH "${slot1_device}" PROPERTY "write-block-size")
 
         if(DEFINED erase_size_slot0 AND DEFINED erase_size_slot1)
           if(${erase_size_slot0} GREATER ${erase_size_slot1})
@@ -577,12 +586,12 @@ if(SYSBUILD)
           set(write_size ${write_size_slot1})
         endif()
       else()
-        dt_prop(erase_size PATH "${slot0_flash}" PROPERTY "erase-block-size")
-        dt_prop(write_size PATH "${slot0_flash}" PROPERTY "write-block-size")
+        dt_prop(erase_size PATH "${slot0_device}" PROPERTY "erase-block-size")
+        dt_prop(write_size PATH "${slot0_device}" PROPERTY "write-block-size")
       endif()
     else()
-      dt_prop(erase_size PATH "${slot0_flash}" PROPERTY "erase-block-size")
-      dt_prop(write_size PATH "${slot0_flash}" PROPERTY "write-block-size")
+      dt_prop(erase_size PATH "${slot0_device}" PROPERTY "erase-block-size")
+      dt_prop(write_size PATH "${slot0_device}" PROPERTY "write-block-size")
     endif()
 
     if(NOT DEFINED erase_size)
