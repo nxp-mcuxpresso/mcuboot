@@ -54,6 +54,8 @@ menu "MCUboot"
         depends on MCUX_HW_DEVICE_MIMXRT1062 || MCUX_HW_DEVICE_MIMXRT1064 || \
                    MCUX_HW_DEVICE_MIMXRT1042 || MCUX_HW_DEVICE_MIMXRT1021 || \
                    MCUX_HW_DEVICE_MIMXRT1052 || MCUX_HW_DEVICE_RW612      || \
+                   MCUX_HW_DEVICE_MIMXRT1166 || MCUX_HW_DEVICE_MIMXRT1176 || \
+                   MCUX_HW_DEVICE_MIMXRT1152 || \
                    MCUX_HW_DEVICE_MCXN947    || MCUX_HW_DEVICE_MCXN547
         help
             Enables code that implements support for running from
@@ -211,14 +213,12 @@ menu "MCUboot"
 
             config BOOT_MODE_ENCRYPTED_XIP_OVERWRITE
                 bool "Encrypted XIP: Overwrite only"
-                depends on MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
                 help
                     Uses modified overwrite-only mode to enable encrypted XIP. The MCUboot encrypted image in the 
                     secondary slot is re-encrypted to the primary slot utilizing hardware on-the-fly encryption.
 
             config BOOT_MODE_ENCRYPTED_XIP_REMAP
                 bool "Encrypted XIP: Flash remap"
-                depends on MCUX_COMPONENT_middleware.mcuboot.nxp_encrypted_xip
                 depends on MCUX_HW_DEVICE_RW612
                 help
                     (Experimental) Enable an upgrade mode utilizing encrypted XIP and flash remap.
